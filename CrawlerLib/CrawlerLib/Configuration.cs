@@ -14,7 +14,7 @@ namespace CrawlerLib
 
         public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(10);
         public int RetriesNumber { get; set; } = 3;
-        
+
         public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(10);
     }
 }

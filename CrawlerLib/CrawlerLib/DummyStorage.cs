@@ -6,16 +6,23 @@ namespace CrawlerLib
     using System.Threading;
     using System.Threading.Tasks;
 
+    public class UriDump
+    {
+        public string Uri { get; set; }
+
+        public string Content { get; set; }
+    }
+
     public class DummyStorage : ICrawlerStorage
     {
-        public ConcurrentBag<string> DumpedPages { get; } = new ConcurrentBag<string>();
+        public ConcurrentBag<UriDump> DumpedPages { get; } = new ConcurrentBag<UriDump>();
 
         public int DumpedPagesNumber => DumpedPages.Count;
 
-        public Task DumpPage(string uri, Stream content)
+        public async Task DumpPage(string uri, Stream content)
         {
-            DumpedPages.Add(uri);
-            return Task.CompletedTask;
+            var reader = new StreamReader(content);
+            DumpedPages.Add(new UriDump { Uri = uri, Content = await reader.ReadToEndAsync() });
         }
     }
 }

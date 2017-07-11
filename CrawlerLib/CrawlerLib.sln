@@ -1,11 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.14
+VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib", "CrawlerLib\CrawlerLib.csproj", "{29677CD8-B420-4CD7-B117-0C60C9061AFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Tests", "Crawler.Tests\CrawlerLib.Tests.csproj", "{2E3DF5C2-8A38-4A03-86D7-8D463C917E47}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Tests", "CrawlerLib.Tests\CrawlerLib.Tests.csproj", "{2E3DF5C2-8A38-4A03-86D7-8D463C917E47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Console", "CrawlerLib.Console\CrawlerLib.Console.csproj", "{E51EFA12-2FE8-413A-B457-30AD6F523A02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Storage", "Azure.Storage\Azure.Storage.csproj", "{0CD01D6F-11B4-47A4-BD03-52FEF05F773D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Azure", "CrawlerLib.Azure\CrawlerLib.Azure.csproj", "{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +27,18 @@ Global
 		{2E3DF5C2-8A38-4A03-86D7-8D463C917E47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E3DF5C2-8A38-4A03-86D7-8D463C917E47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E3DF5C2-8A38-4A03-86D7-8D463C917E47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E51EFA12-2FE8-413A-B457-30AD6F523A02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E51EFA12-2FE8-413A-B457-30AD6F523A02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E51EFA12-2FE8-413A-B457-30AD6F523A02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E51EFA12-2FE8-413A-B457-30AD6F523A02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CD01D6F-11B4-47A4-BD03-52FEF05F773D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CD01D6F-11B4-47A4-BD03-52FEF05F773D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CD01D6F-11B4-47A4-BD03-52FEF05F773D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CD01D6F-11B4-47A4-BD03-52FEF05F773D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

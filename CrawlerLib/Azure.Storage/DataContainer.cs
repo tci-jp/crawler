@@ -2,24 +2,18 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace Azure.Storage
 {
     using System;
-    using System.Linq;
-
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Net;
     using System.Reflection;
     using System.Threading.Tasks;
-    using Microsoft.Azure;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Table;
-    using System.Configuration;
-
-    using System;
 
     public class DataStorage
     {
@@ -46,19 +40,19 @@ namespace CrawlerLib
             var attr = GetEntityAttribute<TEntity>();
 
             var query = table.CreateQuery<TEntity>();
-            if (attr.Partition != null && attr.Key != null)
+            if (attr.PartitionKey != null && attr.RowKey != null)
             {
-                return query.Where(i => i.PartitionKey == attr.Partition && i.RowKey == attr.Key);
+                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == attr.RowKey);
             }
 
-            if (attr.Partition != null && attr.Key == null)
+            if (attr.PartitionKey != null && attr.RowKey == null)
             {
-                return query.Where(i => i.PartitionKey == attr.Partition);
+                return query.Where(i => i.PartitionKey == attr.PartitionKey);
             }
 
-            if (attr.Partition == null && attr.Key != null)
+            if (attr.PartitionKey == null && attr.RowKey != null)
             {
-                return query.Where(i => i.RowKey == attr.Key);
+                return query.Where(i => i.RowKey == attr.RowKey);
             }
 
             return query;
@@ -77,12 +71,12 @@ namespace CrawlerLib
             var attr = GetEntityAttribute<TEntity>();
             if (entity.PartitionKey == null)
             {
-                entity.PartitionKey = attr.Partition;
+                entity.PartitionKey = attr.PartitionKey;
             }
 
             if (entity.RowKey == null)
             {
-                entity.RowKey = attr.Key;
+                entity.RowKey = attr.RowKey;
             }
         }
 
@@ -119,8 +113,8 @@ namespace CrawlerLib
             where TEntity : TableEntity
         {
             var attr = GetEntityAttribute<TEntity>();
-            var partition = entity.PartitionKey ?? attr.Partition;
-            var key = entity.RowKey ?? attr.Key;
+            var partition = entity.PartitionKey ?? attr.PartitionKey;
+            var key = entity.RowKey ?? attr.RowKey;
             return RetreiveAsync<TEntity>(partition, key);
         }
 
@@ -129,7 +123,7 @@ namespace CrawlerLib
         {
             var retrieveOperation = TableOperation.Delete(entity);
             var retrievedResult = await GetTable<TEntity>().ExecuteAsync(retrieveOperation);
-            return retrievedResult.Http​Status​Code == 200;
+            return retrievedResult.HttpStatusCode == 200;
         }
 
         public Task<TEntity> RetreiveAsync<TEntity>(string key)
@@ -142,15 +136,15 @@ namespace CrawlerLib
             where TEntity : TableEntity
         {
             var attr = GetEntityAttribute<TEntity>();
-            return RetreiveAsync<TEntity>(attr.Partition, attr.Key);
+            return RetreiveAsync<TEntity>(attr.PartitionKey, attr.RowKey);
         }
 
         public async Task<TEntity> RetreiveOrCreateAsync<TEntity>(TEntity entity)
                             where TEntity : TableEntity
         {
             var attr = GetEntityAttribute<TEntity>();
-            var partition = entity.PartitionKey ?? attr.Partition;
-            var key = entity.RowKey ?? attr.Key;
+            var partition = entity.PartitionKey ?? attr.PartitionKey;
+            var key = entity.RowKey ?? attr.RowKey;
             return await RetreiveAsync<TEntity>(partition, key) ?? entity;
         }
 
@@ -169,12 +163,12 @@ namespace CrawlerLib
 
         private string GetEntityKey_<T>()
         {
-            return GetEntityAttribute<T>().Key ?? throw new ArgumentException($"Type {typeof(T)} does not have default Key");
+            return GetEntityAttribute<T>().RowKey ?? throw new ArgumentException($"Type {typeof(T)} does not have default Key");
         }
 
         private string GetEntityPartiton_<T>()
         {
-            return GetEntityAttribute<T>().Partition ?? throw new ArgumentException($"Type {typeof(T)} does not have default Partition");
+            return GetEntityAttribute<T>().PartitionKey ?? throw new ArgumentException($"Type {typeof(T)} does not have default Partition");
         }
 
         private string GetEntityTable<T>()

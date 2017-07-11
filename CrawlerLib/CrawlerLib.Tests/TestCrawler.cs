@@ -1,11 +1,8 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace CrawlerLib.Tests
+﻿namespace CrawlerLib.Tests
 {
-    using System.Diagnostics;
+    using System;
+    using System.Threading.Tasks;
+    using Xunit;
     using Xunit.Abstractions;
 
     public class TestCrawler
@@ -33,8 +30,9 @@ namespace CrawlerLib.Tests
             await crawler.Incite(new Uri(url));
             foreach (var line in storage.DumpedPages)
             {
-                output.WriteLine(line);
+                output.WriteLine(line.Uri);
             }
+
             output.WriteLine(storage.DumpedPagesNumber.ToString());
         }
     }

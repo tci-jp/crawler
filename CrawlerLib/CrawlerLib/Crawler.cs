@@ -7,14 +7,13 @@ namespace CrawlerLib
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
     using HtmlAgilityPack;
+    using Logger;
     using Nito.AsyncEx;
 
     public class Crawler
@@ -92,7 +91,7 @@ namespace CrawlerLib
                 var hostUri = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
 
                 var robotstxt = await GetRobotsTxt(hostUri);
-
+                Exception lastException = null;
                 for (var trycount = 0; trycount < Config.RetriesNumber; trycount++)
                 {
                     try
@@ -100,7 +99,9 @@ namespace CrawlerLib
                         var result = await client.GetAsync(uri);
                         if (!result.IsSuccessStatusCode)
                         {
+                            Config.Logger.Error($"{uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
                             await Task.Delay(Config.RequestErrorRetryDelay);
+
                             // TODO process error;
                             continue;
                         }
@@ -123,10 +124,10 @@ namespace CrawlerLib
                                 {
                                     linkuri = new Uri(hostUri, linkuri);
                                     linkuri = new Uri(linkuri.GetComponents(
-                                        UriComponents.SchemeAndServer
-                                        | UriComponents.UserInfo
-                                        | UriComponents.PathAndQuery,
-                                        UriFormat.UriEscaped)); // remove fragment
+                                                          UriComponents.SchemeAndServer
+                                                          | UriComponents.UserInfo
+                                                          | UriComponents.PathAndQuery,
+                                                          UriFormat.UriEscaped)); // remove fragment
 
                                     AddUrl(linkuri, depth + 1, hostDepth);
                                 }
@@ -134,29 +135,45 @@ namespace CrawlerLib
                                 {
                                     var newhostUri =
                                         new Uri(linkuri.GetComponents(
-                                            UriComponents.SchemeAndServer,
-                                            UriFormat.UriEscaped));
+                                                    UriComponents.SchemeAndServer,
+                                                    UriFormat.UriEscaped));
                                     linkuri = new Uri(linkuri.GetComponents(
-                                        UriComponents.SchemeAndServer
-                                        | UriComponents.UserInfo
-                                        | UriComponents.PathAndQuery,
-                                        UriFormat.UriEscaped)); // remove fragment
+                                                          UriComponents.SchemeAndServer
+                                                          | UriComponents.UserInfo
+                                                          | UriComponents.PathAndQuery,
+                                                          UriFormat.UriEscaped)); // remove fragment
 
                                     AddUrl(linkuri, depth + 1, hostDepth + (hostUri == newhostUri ? 0 : 1));
                                 }
                             }
                         }
+
+                        Config.Logger.Trace($"{uri} - OK");
                         break;
                     }
-                    catch (HttpRequestException ex)
+                    catch (TaskCanceledException ex)
                     {
+                        lastException = ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
                         await Task.Delay(Config.RequestErrorRetryDelay);
                     }
                 }
+
+                if (lastException != null)
+                {
+                    throw lastException;
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                Config.Logger.Error($"{uri} - Timeout");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Can not process: {uri}");
+                Config.Logger.Error($"{uri} - Failed : ", ex);
             }
             finally
             {

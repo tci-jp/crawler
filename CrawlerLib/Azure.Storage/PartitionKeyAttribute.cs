@@ -2,7 +2,7 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace Azure.Storage
 {
     using System;
 

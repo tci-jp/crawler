@@ -1,6 +1,7 @@
 namespace CrawlerLib
 {
     using System;
+    using Logger;
 
     public class Configuration
     {
@@ -13,8 +14,11 @@ namespace CrawlerLib
         public int HostDepth { get; set; } = 0;
 
         public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
         public int RetriesNumber { get; set; } = 3;
 
-        public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(10);
+        public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
+
+        public ILogger Logger { get; set; }
     }
 }

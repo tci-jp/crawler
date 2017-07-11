@@ -1,19 +1,15 @@
-﻿// <copyright file="AssemblyInfo.cs" company="DECTech.Tokyo">
-// Copyright (c) DECTech.Tokyo. All rights reserved.
-// </copyright>
-
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CrawlerLib")]
+[assembly: AssemblyTitle("Crawler.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CrawlerLib")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyProduct("Crawler.Tests")]
+[assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -23,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("29677cd8-b420-4cd7-b117-0c60c9061afe")]
+[assembly: Guid("9abbd6a9-5f95-442a-88db-3fc1ebf374a7")]
 
 // Version information for an assembly consists of the following four values:
 //

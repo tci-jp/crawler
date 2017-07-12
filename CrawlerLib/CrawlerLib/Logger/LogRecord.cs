@@ -24,6 +24,7 @@ namespace CrawlerLib.Logger
 
         public object Object { get; set; }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             var str = new StringBuilder();

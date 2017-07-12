@@ -1,6 +1,7 @@
 namespace CrawlerLib
 {
     using System;
+    using System.Threading;
     using Logger;
 
     public class Configuration
@@ -9,9 +10,11 @@ namespace CrawlerLib
 
         public ICrawlerStorage Storage { get; set; } = new DummyStorage();
 
+        public bool KeepReferer { get; set; } = true;
+
         public int Depth { get; set; } = 3;
 
-        public int HostDepth { get; set; } = 0;
+        public int HostDepth { get; set; } = 2;
 
         public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
@@ -20,5 +23,10 @@ namespace CrawlerLib
         public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
 
         public ILogger Logger { get; set; }
+
+        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
+
+        public TimeSpan HostRequestsDelay { get; set; } = TimeSpan.FromSeconds(1);
+        public int NumberOfSimulataneousRequests { get; set; } = 8;
     }
 }

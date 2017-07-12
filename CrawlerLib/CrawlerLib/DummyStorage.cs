@@ -20,12 +20,14 @@ namespace CrawlerLib
 
         public int DumpedPagesNumber => DumpedPages.Count;
 
+        /// <inheritdoc/>
         public async Task DumpPage(string uri, Stream content)
         {
             var reader = new StreamReader(content);
             DumpedPages.Add(new UriDump { Uri = uri, Content = await reader.ReadToEndAsync() });
         }
 
+        /// <inheritdoc/>
         public Task StorePageError(string uri, HttpStatusCode code)
         {
             DumpedPages.Add(new UriDump { Uri = uri, Status = code.ToString() });

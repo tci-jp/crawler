@@ -10,6 +10,7 @@ namespace CrawlerLib
     using System.IO;
     using System.Linq;
     using System.Net.Http;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using HtmlAgilityPack;
@@ -19,44 +20,74 @@ namespace CrawlerLib
     public class Crawler
     {
         private readonly HttpClient client;
+        private readonly AsyncManualResetEvent lastEvent;
+        private readonly ConcurrentDictionary<Uri, Task<RobotsTxt>> robots;
         private readonly ICrawlerStorage storage;
+        private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
+        private readonly ConcurrentBag<Task> tasks;
+
+        private readonly AsyncSemaphore totalRequestsSemaphore;
+        private readonly HashSet<string> visited;
+        private readonly object visitedLock = new object();
         private int countdown;
-        private AsyncManualResetEvent lastEvent;
-        private ConcurrentDictionary<string, Task<RobotsTxt>> robots;
-        private ConcurrentBag<Task> tasks;
-        private HashSet<string> visited;
 
         public Crawler(Configuration con = null)
         {
+            EncodingRedirector.RegisterEncodings();
+
             Config = con ?? new Configuration();
 
-            client = new HttpClient();
-            client.Timeout = Config.RequestTimeout;
+            client = new HttpClient
+            {
+                Timeout = Config.RequestTimeout
+            };
+
             client.DefaultRequestHeaders.UserAgent.ParseAdd(Config.UserAgent);
             storage = Config.Storage;
+
+            tasks = new ConcurrentBag<Task>();
+            robots = new ConcurrentDictionary<Uri, Task<RobotsTxt>>();
+            taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
+            visited = new HashSet<string>();
+            lastEvent = new AsyncManualResetEvent(false);
+
+            Config.CancellationToken.Register(() => lastEvent.Set());
+
+            totalRequestsSemaphore = new AsyncSemaphore(Config.NumberOfSimulataneousRequests);
         }
 
         public Configuration Config { get; }
 
         public async Task Incite(Uri uri)
         {
-            tasks = new ConcurrentBag<Task>();
-            robots = new ConcurrentDictionary<string, Task<RobotsTxt>>();
-            visited = new HashSet<string>();
-            lastEvent = new AsyncManualResetEvent(false);
-            AddUrl(uri, 0, 0);
+            await AddUrl(null, uri, 0, 0);
+
             await lastEvent.WaitAsync();
             await Task.WhenAll(tasks);
+            Config.CancellationToken.ThrowIfCancellationRequested();
         }
 
-        private void AddUrl(Uri uri, int depth, int hostDepth)
+        public async Task Incite(IEnumerable<Uri> uris)
+        {
+            foreach (var uri in uris)
+            {
+                await AddUrl(null, uri, 0, 0);
+            }
+
+            await lastEvent.WaitAsync();
+            await Task.WhenAll(tasks);
+            Config.CancellationToken.ThrowIfCancellationRequested();
+        }
+
+
+        private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
         {
             if (depth > Config.Depth || hostDepth > Config.HostDepth)
             {
                 return;
             }
 
-            lock (visited)
+            lock (visitedLock)
             {
                 if (!visited.Add(uri.ToString()))
                 {
@@ -64,95 +95,149 @@ namespace CrawlerLib
                 }
             }
 
+
+
+            var newstate = new State
+            {
+                Uri = uri,
+                Depth = depth,
+                HostDepth = hostDepth,
+                Referrer = state?.Uri
+            };
+            var robotstxt = await GetRobotsTxt(newstate.Host);
+
             Interlocked.Increment(ref countdown);
-            tasks.Add(Task.Run(() => InnerIncite(uri, depth, hostDepth)));
+            var runner = taskRunners.GetOrAdd(
+                newstate.Host,
+                host => new QueuedTaskRunner(Config.HostRequestsDelay, Config.CancellationToken));
+            var task = new Task(async () => await InnerIncite(newstate));
+            tasks.Add(task);
+            runner.Enqueue(task);
         }
 
         private Task<RobotsTxt> GetRobotsTxt(Uri host)
         {
-            return robots.GetOrAdd(host.ToString(), async (roburi) =>
-            {
-                try
+            return robots.GetOrAdd(
+                host,
+                async roburi =>
                 {
-                    var robotstxt = await client.GetStringAsync(roburi + "/robots.txt");
-                    return new RobotsTxt(robotstxt);
-                }
-                catch (HttpRequestException)
-                {
-                    return RobotsTxt.DefaultInstance;
-                }
-            });
+                    try
+                    {
+                        var robotstxt =
+                            await client.GetStringAsync(roburi + "/robots.txt");
+                        return new RobotsTxt(robotstxt);
+                    }
+                    catch (HttpRequestException)
+                    {
+                        return RobotsTxt.DefaultInstance;
+                    }
+                });
         }
 
-        private async Task InnerIncite(Uri uri, int depth, int hostDepth)
+        private async Task InnerIncite(State state)
         {
             try
             {
-                var hostUri = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
-
-                var robotstxt = await GetRobotsTxt(hostUri);
                 Exception lastException = null;
+                var nofollow = false;
+                var noindex = false;
+
                 for (var trycount = 0; trycount < Config.RetriesNumber; trycount++)
                 {
                     try
                     {
-                        var result = await client.GetAsync(uri);
-                        if (!result.IsSuccessStatusCode)
+                        byte[] page;
+                        try
                         {
-                            Config.Logger.Error($"{uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
-                            await Task.Delay(Config.RequestErrorRetryDelay);
+                            await totalRequestsSemaphore.WaitAsync(Config.CancellationToken);
+                            if (Config.CancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
 
-                            // TODO process error;
-                            continue;
+                            var request = new HttpRequestMessage(HttpMethod.Get, state.Uri);
+                            if (state.Referrer != null)
+                            {
+                                request.Headers.Referrer = state.Referrer;
+                            }
+
+                            var result = await client.SendAsync(request, Config.CancellationToken);
+                            if (!result.IsSuccessStatusCode)
+                            {
+                                Config.Logger.Error(
+                                    $"{state.Uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
+                                await Task.Delay(Config.RequestErrorRetryDelay);
+
+                                // TODO process error;
+                                continue;
+                            }
+
+                            page = await result.Content.ReadAsByteArrayAsync();
                         }
-
-                        var page = await result.Content.ReadAsByteArrayAsync();
-                        await storage.DumpPage(uri.ToString(), new MemoryStream(page));
+                        finally
+                        {
+                            totalRequestsSemaphore.Release();
+                        }
 
                         var html = new HtmlDocument();
                         html.Load(new MemoryStream(page));
-                        var links = html.DocumentNode.SelectNodes("//a")
-                                        ?.Select(l => l.Attributes["href"]).Where(l => l != null)
-                                        .Select(l => l.Value).Where(l => !string.IsNullOrWhiteSpace(l))
-                                        .ToList() ?? new List<string>();
 
-                        foreach (var link in links)
+                        foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
+                                                 .Select(m => m.Attributes["content"].Value) ?? new string[0])
                         {
-                            if (Uri.TryCreate(link, UriKind.RelativeOrAbsolute, out var linkuri))
+                            if (meta.IndexOf("NOFOLLOW", StringComparison.InvariantCultureIgnoreCase) >= 0)
                             {
-                                if (!linkuri.IsAbsoluteUri)
-                                {
-                                    linkuri = new Uri(hostUri, linkuri);
-                                    linkuri = new Uri(linkuri.GetComponents(
-                                                          UriComponents.SchemeAndServer
-                                                          | UriComponents.UserInfo
-                                                          | UriComponents.PathAndQuery,
-                                                          UriFormat.UriEscaped)); // remove fragment
+                                nofollow = true;
+                            }
 
-                                    AddUrl(linkuri, depth + 1, hostDepth);
-                                }
-                                else
-                                {
-                                    var newhostUri =
-                                        new Uri(linkuri.GetComponents(
-                                                    UriComponents.SchemeAndServer,
-                                                    UriFormat.UriEscaped));
-                                    linkuri = new Uri(linkuri.GetComponents(
-                                                          UriComponents.SchemeAndServer
-                                                          | UriComponents.UserInfo
-                                                          | UriComponents.PathAndQuery,
-                                                          UriFormat.UriEscaped)); // remove fragment
+                            if (meta.IndexOf("NOINDEX", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                            {
+                                noindex = true;
+                            }
 
-                                    AddUrl(linkuri, depth + 1, hostDepth + (hostUri == newhostUri ? 0 : 1));
-                                }
+                            if (nofollow && noindex)
+                            {
+                                break;
                             }
                         }
 
-                        Config.Logger.Trace($"{uri} - OK");
+                        var trace = new StringBuilder(state.Uri.ToString()).Append(" -");
+
+                        if (!noindex)
+                        {
+                            await storage.DumpPage(state.Uri.ToString(), new MemoryStream(page));
+                        }
+                        else
+                        {
+                            trace.Append(" NOFOLLOW is in force: Skip Indexing.");
+                        }
+
+                        if (!nofollow)
+                        {
+                            await ParseLinks(state, html);
+                        }
+                        else
+                        {
+                            trace.Append(" NOINDEX is in force: Skip Indexing.");
+                        }
+
+                        if (!nofollow && !noindex)
+                        {
+                            trace.Append(" OK");
+                        }
+
+                        Config.Logger.Trace(trace.ToString());
+
+                        lastException = null;
                         break;
                     }
                     catch (TaskCanceledException ex)
                     {
+                        if (Config.CancellationToken.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                        
                         lastException = ex;
                     }
                     catch (Exception ex)
@@ -169,11 +254,11 @@ namespace CrawlerLib
             }
             catch (TaskCanceledException)
             {
-                Config.Logger.Error($"{uri} - Timeout");
+                Config.Logger.Error($"{state.Uri} - Timeout");
             }
             catch (Exception ex)
             {
-                Config.Logger.Error($"{uri} - Failed : ", ex);
+                Config.Logger.Error($"{state.Uri} - Failed : ", ex);
             }
             finally
             {
@@ -182,6 +267,81 @@ namespace CrawlerLib
                     lastEvent.Set();
                 }
             }
+        }
+
+        private async Task ParseLinks(State state, HtmlDocument html)
+        {
+            var links = html.DocumentNode.SelectNodes("//a")
+                            ?.Select(l => l.Attributes["href"]).Where(l => l != null)
+                            .Select(l => l.Value).Where(l => !string.IsNullOrWhiteSpace(l))
+                            .ToList() ?? new List<string>();
+
+            foreach (var link in links)
+            {
+                if (Config.CancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                if (Uri.TryCreate(link, UriKind.RelativeOrAbsolute, out var linkuri))
+                {
+                    if (linkuri.IsAbsoluteUri)
+                    {
+                        if (linkuri.Scheme.StartsWith("http"))
+                        {
+                            var newhostUri =
+                                new Uri(linkuri.GetComponents(
+                                            UriComponents.SchemeAndServer,
+                                            UriFormat.UriEscaped));
+                            linkuri = new Uri(linkuri.GetComponents(
+                                                  UriComponents.SchemeAndServer
+                                                  | UriComponents.UserInfo
+                                                  | UriComponents.PathAndQuery,
+                                                  UriFormat.UriEscaped)); // remove fragment
+
+                            await AddUrl(
+                                state,
+                                linkuri,
+                                state.Depth + 1,
+                                state.HostDepth + (state.Host == newhostUri ? 0 : 1));
+                        }
+                    }
+                    else
+                    {
+                        linkuri = new Uri(state.Host, linkuri);
+                        linkuri = new Uri(linkuri.GetComponents(
+                                              UriComponents.SchemeAndServer
+                                              | UriComponents.UserInfo
+                                              | UriComponents.PathAndQuery,
+                                              UriFormat.UriEscaped)); // remove fragment
+
+                        await AddUrl(state, linkuri, state.Depth + 1, state.HostDepth);
+                    }
+                }
+            }
+        }
+
+        private class State
+        {
+            private Uri uri;
+
+            public Uri Uri
+            {
+                get => uri;
+                set
+                {
+                    uri = value;
+                    Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
+                }
+            }
+
+            public Uri Host { get; private set; }
+
+            public int Depth { get; set; }
+
+            public int HostDepth { get; set; }
+
+            public Uri Referrer { get; set; }
         }
     }
 }

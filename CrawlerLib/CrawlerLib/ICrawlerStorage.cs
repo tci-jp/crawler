@@ -7,7 +7,7 @@
     public interface ICrawlerStorage
     {
         Task DumpPage(string uri, Stream content);
-        
+
         Task StorePageError(string uri, HttpStatusCode code);
     }
 }

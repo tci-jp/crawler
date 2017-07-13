@@ -136,7 +136,7 @@ namespace CrawlerLib
                 Referrer = state?.Uri
             };
             var robotstxt = await GetRobotsTxt(newstate.Host);
-
+            
             Interlocked.Increment(ref countdown);
             var runner = taskRunners.GetOrAdd(
                 newstate.Host,
@@ -156,11 +156,11 @@ namespace CrawlerLib
                     {
                         var robotstxt =
                             await client.GetStringAsync(roburi + "/robots.txt");
-                        return new RobotsTxt(robotstxt);
+                        return new RobotsTxt(config.UserAgent, robotstxt);
                     }
                     catch (HttpRequestException)
                     {
-                        return RobotsTxt.DefaultInstance;
+                        return null;
                     }
                 });
         }

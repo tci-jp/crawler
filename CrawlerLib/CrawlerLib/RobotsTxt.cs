@@ -5,18 +5,37 @@
 namespace CrawlerLib
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
 
+    /// <summary>
+    ///     Reading and parsing robots.txt
+    /// </summary>
     public class RobotsTxt
     {
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, List<string>>> _parsedValue;
+        private readonly string _userAgent;
+        private string _lastKey;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RobotsTxt"/> class.
+        /// </summary>
+        /// <param name="userAgent">UserAgent name</param>
+        /// <param name="robotsContent">Content of robot.txt file</param>
         public RobotsTxt(string userAgent, string robotsContent)
         {
-            this._parsedValue = new Dictionary<string, Dictionary<string, List<string>>>();
+            this._parsedValue = new ConcurrentDictionary<string, ConcurrentDictionary<string, List<string>>>();
             this._userAgent = userAgent;
             this._lastKey = null;
             Parse(robotsContent);
         }
 
+        /// <summary>
+        ///     Search if the URI is accessible for this user
+        /// </summary>
+        /// <param name="userAgent">UserAgent name</param>
+        /// <param name="search">URI to check</param>
+        /// <returns>return if the access is allow or not</returns>
         public bool IsAllowedUrl(string userAgent, string search)
         {
             bool contain = true;
@@ -134,6 +153,11 @@ namespace CrawlerLib
             return contain;
         }
 
+        /// <summary>
+        ///     Search if the URI is accessible for the user set in the constructor
+        /// </summary>
+        /// <param name="search">URI to check</param>
+        /// <returns>return if the access is allow or not</returns>
         public bool IsAllowedUrl(string search)
         {
             bool contain = true;
@@ -285,6 +309,7 @@ namespace CrawlerLib
             const string userAgentEnd = "\n";
 
             int start = robotsContent.IndexOf(userAgentStart, StringComparison.Ordinal) + userAgentStart.Length;
+
             if (robotsContent.Contains(userAgentEnd))
             {
                 end = robotsContent.IndexOf(userAgentEnd, start, StringComparison.Ordinal);
@@ -296,9 +321,9 @@ namespace CrawlerLib
 
             userAgentContent = robotsContent.Substring(start, end - start);
 
-            this._parsedValue.Add(userAgentContent, new Dictionary<string, List<string>>());
-            this._parsedValue[userAgentContent].Add("Disallow", new List<string>());
-            this._parsedValue[userAgentContent].Add("Allow", new List<string>());
+            this._parsedValue.TryAdd(userAgentContent, new ConcurrentDictionary<string, List<string>>());
+            this._parsedValue[userAgentContent].TryAdd("Disallow", new List<string>());
+            this._parsedValue[userAgentContent].TryAdd("Allow", new List<string>());
             this._lastKey = userAgentContent;
 
             if (robotsContent.Contains(userAgentEnd))
@@ -327,9 +352,5 @@ namespace CrawlerLib
                 this._parsedValue[key][disallow].Add(value);
             }
         }
-
-        private readonly Dictionary<string, Dictionary<string, List<string>>> _parsedValue;
-        private readonly string _userAgent;
-        private string _lastKey;
     }
 }

@@ -4,24 +4,12 @@ namespace CrawlerLib.Azure
     using System.Net;
     using System.Threading.Tasks;
     using global::Azure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
+    using JetBrains.Annotations;
 
-    [Table("common", PartitionKey = "url")]
-    public class CrawlRecord : TableEntity
-    {
-        public CrawlRecord(string url)
-            : base(null, url)
-        {
-        }
-
-        public string Url => RowKey;
-
-        public string Status { get; set; }
-    }
-
+    [UsedImplicitly]
     public class CrawlerAzureStorage : ICrawlerStorage
     {
-        private DataStorage storage;
+        private readonly DataStorage storage;
 
         public CrawlerAzureStorage(DataStorage storage)
         {

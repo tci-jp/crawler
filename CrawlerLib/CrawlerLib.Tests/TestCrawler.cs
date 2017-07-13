@@ -7,27 +7,30 @@
 
     public class TestCrawler
     {
-        private readonly Crawler crawler;
+        private readonly ITestOutputHelper output;
         private readonly DummyStorage storage;
 
-        private readonly ITestOutputHelper output;
+        private readonly Configuration config = new Configuration();
+
+        private Crawler crawler;
 
         public TestCrawler(ITestOutputHelper output)
         {
             this.output = output;
-            crawler = new Crawler();
-            storage = crawler.Config.Storage as DummyStorage;
+            storage = config.Storage as DummyStorage;
         }
 
+        private Crawler Crawler => crawler ?? (crawler = new Crawler(config));
+
         [Theory]
-        [InlineData(3, 1, "http://www.dectech.tokyo")]
-        [InlineData(3, 0, "http://schema.org")]
+        [InlineData(3, 0, "http://www.dectech.tokyo")]
         public async Task TestInciteStability(int depth, int hostDepth, string url)
         {
-            crawler.Config.HostDepth = hostDepth;
-            crawler.Config.Depth = depth;
+            config.HostDepth = hostDepth;
+            config.Depth = depth;
 
-            await crawler.Incite(new Uri(url));
+            await Crawler.Incite(new Uri(url));
+
             foreach (var line in storage.DumpedPages)
             {
                 output.WriteLine(line.Uri);

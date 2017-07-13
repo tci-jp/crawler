@@ -19,6 +19,7 @@
         static void Main(string[] args)
         {
             var logger = new ConsoleLogger();
+
             while (true)
             {
                 Console.Write("> ");
@@ -28,16 +29,19 @@
                     break;
                 }
 
-                cancellation = new CancellationTokenSource();
                 Console.CancelKeyPress += Console_CancelKeyPress;
+
+                cancellation = new CancellationTokenSource();
+
                 var storage = new DummyStorage();
                 var config = new Configuration
                 {
                     Logger = logger,
                     Storage = storage,
-                    CancellationToken = cancellation.Token
+                    CancellationToken = cancellation.Token,
+                    HostDepth = 0,
+                    Depth = 1
                 };
-
                 var crawler = new Crawler(config);
 
                 try

@@ -27,6 +27,20 @@ namespace CrawlerLib
         public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
         public TimeSpan HostRequestsDelay { get; set; } = TimeSpan.FromSeconds(1);
+
         public int NumberOfSimulataneousRequests { get; set; } = 8;
+
+        public Configuration()
+        {
+
+        }
+
+        public Configuration(Configuration config)
+        {
+            foreach (var prop in typeof(Configuration).GetProperties())
+            {
+                prop.SetMethod.Invoke(this, new object[] { prop.GetMethod.Invoke(config, new object[0]) });
+            }
+        }
     }
 }

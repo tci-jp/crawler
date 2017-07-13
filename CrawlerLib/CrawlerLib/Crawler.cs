@@ -17,10 +17,15 @@ namespace CrawlerLib
     using Logger;
     using Nito.AsyncEx;
 
+    /// <summary>
+    ///     Crawls, parses and indexing web pages.
+    /// </summary>
     public class Crawler
     {
         private readonly HttpClient client;
-        private readonly AsyncManualResetEvent lastEvent;
+
+        private readonly Configuration config;
+        private readonly AsyncAutoResetEvent lastEvent;
         private readonly ConcurrentDictionary<Uri, Task<RobotsTxt>> robots;
         private readonly ICrawlerStorage storage;
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
@@ -31,42 +36,54 @@ namespace CrawlerLib
         private readonly object visitedLock = new object();
         private int countdown;
 
-        public Crawler(Configuration con = null)
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Crawler" /> class.
+        /// </summary>
+        /// <param name="conf">Configuration for crawler.</param>
+        public Crawler(Configuration conf = null)
         {
             EncodingRedirector.RegisterEncodings();
 
-            Config = con ?? new Configuration();
+            config = new Configuration(conf) ?? new Configuration();
 
             client = new HttpClient
             {
-                Timeout = Config.RequestTimeout
+                Timeout = config.RequestTimeout
             };
 
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(Config.UserAgent);
-            storage = Config.Storage;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
+            storage = config.Storage;
 
             tasks = new ConcurrentBag<Task>();
             robots = new ConcurrentDictionary<Uri, Task<RobotsTxt>>();
             taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
             visited = new HashSet<string>();
-            lastEvent = new AsyncManualResetEvent(false);
+            lastEvent = new AsyncAutoResetEvent(false);
 
-            Config.CancellationToken.Register(() => lastEvent.Set());
+            config.CancellationToken.Register(() => lastEvent.Set());
 
-            totalRequestsSemaphore = new AsyncSemaphore(Config.NumberOfSimulataneousRequests);
+            totalRequestsSemaphore = new AsyncSemaphore(config.NumberOfSimulataneousRequests);
         }
 
-        public Configuration Config { get; }
-
+        /// <summary>
+        ///     Starts crawling by single URI
+        /// </summary>
+        /// <param name="uri">URI to crawl.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         public async Task Incite(Uri uri)
         {
             await AddUrl(null, uri, 0, 0);
 
-            await lastEvent.WaitAsync();
+            await lastEvent.WaitAsync(config.CancellationToken);
             await Task.WhenAll(tasks);
-            Config.CancellationToken.ThrowIfCancellationRequested();
+            config.CancellationToken.ThrowIfCancellationRequested();
         }
 
+        /// <summary>
+        ///     Starts crawling by collection of URIs
+        /// </summary>
+        /// <param name="uris">URIs to crawl.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         public async Task Incite(IEnumerable<Uri> uris)
         {
             foreach (var uri in uris)
@@ -76,13 +93,12 @@ namespace CrawlerLib
 
             await lastEvent.WaitAsync();
             await Task.WhenAll(tasks);
-            Config.CancellationToken.ThrowIfCancellationRequested();
+            config.CancellationToken.ThrowIfCancellationRequested();
         }
-
 
         private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
         {
-            if (depth > Config.Depth || hostDepth > Config.HostDepth)
+            if (depth > config.Depth || hostDepth > config.HostDepth)
             {
                 return;
             }
@@ -94,8 +110,6 @@ namespace CrawlerLib
                     return;
                 }
             }
-
-
 
             var newstate = new State
             {
@@ -109,7 +123,7 @@ namespace CrawlerLib
             Interlocked.Increment(ref countdown);
             var runner = taskRunners.GetOrAdd(
                 newstate.Host,
-                host => new QueuedTaskRunner(Config.HostRequestsDelay, Config.CancellationToken));
+                host => new QueuedTaskRunner(config.HostRequestsDelay, config.CancellationToken));
             var task = new Task(async () => await InnerIncite(newstate));
             tasks.Add(task);
             runner.Enqueue(task);
@@ -142,15 +156,15 @@ namespace CrawlerLib
                 var nofollow = false;
                 var noindex = false;
 
-                for (var trycount = 0; trycount < Config.RetriesNumber; trycount++)
+                for (var trycount = 0; trycount < config.RetriesNumber; trycount++)
                 {
                     try
                     {
                         byte[] page;
                         try
                         {
-                            await totalRequestsSemaphore.WaitAsync(Config.CancellationToken);
-                            if (Config.CancellationToken.IsCancellationRequested)
+                            await totalRequestsSemaphore.WaitAsync(config.CancellationToken);
+                            if (config.CancellationToken.IsCancellationRequested)
                             {
                                 break;
                             }
@@ -161,12 +175,12 @@ namespace CrawlerLib
                                 request.Headers.Referrer = state.Referrer;
                             }
 
-                            var result = await client.SendAsync(request, Config.CancellationToken);
+                            var result = await client.SendAsync(request, config.CancellationToken);
                             if (!result.IsSuccessStatusCode)
                             {
-                                Config.Logger.Error(
+                                config.Logger.Error(
                                     $"{state.Uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
-                                await Task.Delay(Config.RequestErrorRetryDelay);
+                                await Task.Delay(config.RequestErrorRetryDelay);
 
                                 // TODO process error;
                                 continue;
@@ -226,24 +240,24 @@ namespace CrawlerLib
                             trace.Append(" OK");
                         }
 
-                        Config.Logger.Trace(trace.ToString());
+                        config.Logger.Trace(trace.ToString());
 
                         lastException = null;
                         break;
                     }
                     catch (TaskCanceledException ex)
                     {
-                        if (Config.CancellationToken.IsCancellationRequested)
+                        if (config.CancellationToken.IsCancellationRequested)
                         {
                             return;
                         }
-                        
+
                         lastException = ex;
                     }
                     catch (Exception ex)
                     {
                         lastException = ex;
-                        await Task.Delay(Config.RequestErrorRetryDelay);
+                        await Task.Delay(config.RequestErrorRetryDelay);
                     }
                 }
 
@@ -254,11 +268,11 @@ namespace CrawlerLib
             }
             catch (TaskCanceledException)
             {
-                Config.Logger.Error($"{state.Uri} - Timeout");
+                config.Logger.Error($"{state.Uri} - Timeout");
             }
             catch (Exception ex)
             {
-                Config.Logger.Error($"{state.Uri} - Failed : ", ex);
+                config.Logger.Error($"{state.Uri} - Failed : ", ex);
             }
             finally
             {
@@ -278,7 +292,7 @@ namespace CrawlerLib
 
             foreach (var link in links)
             {
-                if (Config.CancellationToken.IsCancellationRequested)
+                if (config.CancellationToken.IsCancellationRequested)
                 {
                     break;
                 }

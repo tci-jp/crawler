@@ -24,6 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\CrawlerLib.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>..\SolutionRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -89,7 +90,6 @@
     <Compile Include="Crawler.cs" />
     <Compile Include="DummyStorage.cs" />
     <Compile Include="EncodingRedirector.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ICrawlerStorage.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LoggerExtensions.cs" />

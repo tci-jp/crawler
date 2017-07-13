@@ -88,9 +88,10 @@
   <ItemGroup>
     <Compile Include="Configuration.cs" />
     <Compile Include="Crawler.cs" />
-    <Compile Include="DummyStorage.cs" />
+    <Compile Include="Data\DummyStorage.cs" />
+    <Compile Include="Data\SessionInfo.cs" />
     <Compile Include="EncodingRedirector.cs" />
-    <Compile Include="ICrawlerStorage.cs" />
+    <Compile Include="Data\ICrawlerStorage.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LoggerExtensions.cs" />
     <Compile Include="Logger\LogRecord.cs" />
@@ -108,9 +109,7 @@
     <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.2\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
     <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.2\analyzers\dotnet\cs\StyleCop.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

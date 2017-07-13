@@ -1,7 +1,12 @@
-﻿namespace CrawlerLib.Console
+﻿// <copyright file="Program.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace CrawlerLib.Console
 {
     using System;
     using System.Threading;
+    using Data;
     using Logger;
 
     public class ConsoleLogger : ILogger
@@ -33,21 +38,21 @@
 
                 cancellation = new CancellationTokenSource();
 
-                var storage = new DummyStorage();
                 var config = new Configuration
                 {
                     Logger = logger,
-                    Storage = storage,
                     CancellationToken = cancellation.Token,
                     HostDepth = 0,
                     Depth = 1
                 };
                 var crawler = new Crawler(config);
+                var crawledUriNumbder = 0;
+                crawler.UriCrawled += u => { Interlocked.Increment(ref crawledUriNumbder); };
 
                 try
                 {
                     crawler.Incite(new Uri(uri)).Wait();
-                    Console.WriteLine($"Done! {storage.DumpedPagesNumber} URIs processed.");
+                    Console.WriteLine($"Done! {crawledUriNumbder} URIs processed.");
                     Console.CancelKeyPress -= Console_CancelKeyPress;
                 }
                 catch (Exception ex)

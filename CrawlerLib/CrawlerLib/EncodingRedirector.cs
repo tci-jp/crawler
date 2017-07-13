@@ -1,3 +1,7 @@
+// <copyright file="EncodingRedirector.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib
 {
     using System;
@@ -7,27 +11,30 @@ namespace CrawlerLib
 
     public class EncodingRedirector : EncodingProvider
     {
-        public static void RegisterEncodings()
-        {
-            if (!Encoding.GetEncodings()
-                        .Any(e => e.Name.Equals("\"UTF-8\"", StringComparison.InvariantCultureIgnoreCase)))
-            {
-                Encoding.RegisterProvider(new EncodingRedirector());
-            }
-        }
-
         private static readonly Dictionary<string, Encoding> encodings = new Dictionary<string, Encoding>
-        {
-            ["\"UTF-8\""] = Encoding.UTF8
-        };
+                                                                         {
+                                                                             ["\"UTF-8\""] = Encoding.UTF8
+                                                                         };
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Encoding GetEncoding(string name)
         {
             return encodings.TryGetValue(name, out var res) ? res : null;
         }
 
-        /// <inheritdoc/>
-        public override Encoding GetEncoding(int codepage) => null;
+        /// <inheritdoc />
+        public override Encoding GetEncoding(int codepage)
+        {
+            return null;
+        }
+
+        public static void RegisterEncodings()
+        {
+            if (!Encoding.GetEncodings()
+                         .Any(e => e.Name.Equals("\"UTF-8\"", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                Encoding.RegisterProvider(new EncodingRedirector());
+            }
+        }
     }
 }

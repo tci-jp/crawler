@@ -1,3 +1,7 @@
+// <copyright file="LogRecord.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib.Logger
 {
     using System;
@@ -24,7 +28,7 @@ namespace CrawlerLib.Logger
 
         public object Object { get; set; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string ToString()
         {
             var str = new StringBuilder();

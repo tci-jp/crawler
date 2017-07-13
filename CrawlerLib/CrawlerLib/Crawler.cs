@@ -9,16 +9,18 @@ namespace CrawlerLib
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Data;
     using HtmlAgilityPack;
     using Logger;
     using Nito.AsyncEx;
 
     /// <summary>
-    ///     Crawls, parses and indexing web pages.
+    /// Crawls, parses and indexing web pages.
     /// </summary>
     public class Crawler
     {
@@ -35,9 +37,10 @@ namespace CrawlerLib
         private readonly HashSet<string> visited;
         private readonly object visitedLock = new object();
         private int countdown;
+        private string sessionid;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Crawler" /> class.
+        /// Initializes a new instance of the <see cref="Crawler" /> class.
         /// </summary>
         /// <param name="conf">Configuration for crawler.</param>
         public Crawler(Configuration conf = null)
@@ -66,26 +69,34 @@ namespace CrawlerLib
         }
 
         /// <summary>
-        ///     Starts crawling by single URI
+        /// Called when crawler parsed and dumped new page
+        /// </summary>
+        public event Action<string> UriCrawled;
+
+        /// <summary>
+        /// Starts crawling by single URI
         /// </summary>
         /// <param name="uri">URI to crawl.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        public async Task Incite(Uri uri)
+        public async Task<string> Incite(Uri uri)
         {
+            sessionid = await storage.CreateSession(new[] { uri.ToString() });
             await AddUrl(null, uri, 0, 0);
 
             await lastEvent.WaitAsync(config.CancellationToken);
             await Task.WhenAll(tasks);
             config.CancellationToken.ThrowIfCancellationRequested();
+            return sessionid;
         }
 
         /// <summary>
-        ///     Starts crawling by collection of URIs
+        /// Starts crawling by collection of URIs
         /// </summary>
         /// <param name="uris">URIs to crawl.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        public async Task Incite(IEnumerable<Uri> uris)
+        public async Task<string> Incite(IList<Uri> uris)
         {
+            sessionid = await storage.CreateSession(uris.Select(u => u.ToString()));
             foreach (var uri in uris)
             {
                 await AddUrl(null, uri, 0, 0);
@@ -94,6 +105,7 @@ namespace CrawlerLib
             await lastEvent.WaitAsync();
             await Task.WhenAll(tasks);
             config.CancellationToken.ThrowIfCancellationRequested();
+            return sessionid;
         }
 
         private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
@@ -101,6 +113,11 @@ namespace CrawlerLib
             if (depth > config.Depth || hostDepth > config.HostDepth)
             {
                 return;
+            }
+
+            if (state != null)
+            {
+                await config.Storage.AddPageReferer(sessionid, uri.ToString(), state.Uri.ToString());
             }
 
             lock (visitedLock)
@@ -153,6 +170,7 @@ namespace CrawlerLib
             try
             {
                 Exception lastException = null;
+                var lastCode = HttpStatusCode.OK;
                 var nofollow = false;
                 var noindex = false;
 
@@ -178,6 +196,7 @@ namespace CrawlerLib
                             var result = await client.SendAsync(request, config.CancellationToken);
                             if (!result.IsSuccessStatusCode)
                             {
+                                lastCode = result.StatusCode;
                                 config.Logger.Error(
                                     $"{state.Uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
                                 await Task.Delay(config.RequestErrorRetryDelay);
@@ -186,6 +205,7 @@ namespace CrawlerLib
                                 continue;
                             }
 
+                            lastCode = HttpStatusCode.OK;
                             page = await result.Content.ReadAsByteArrayAsync();
                         }
                         finally
@@ -243,6 +263,8 @@ namespace CrawlerLib
                         config.Logger.Trace(trace.ToString());
 
                         lastException = null;
+
+                        UriCrawled?.Invoke(state.Uri.ToString());
                         break;
                     }
                     catch (TaskCanceledException ex)
@@ -265,6 +287,8 @@ namespace CrawlerLib
                 {
                     throw lastException;
                 }
+
+                await config.Storage.StorePageError(sessionid, state.Uri.ToString(), lastCode);
             }
             catch (TaskCanceledException)
             {

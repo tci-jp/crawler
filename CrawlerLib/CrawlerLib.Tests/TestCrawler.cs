@@ -1,39 +1,53 @@
-﻿namespace CrawlerLib.Tests
+﻿// <copyright file="TestCrawler.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace CrawlerLib.Tests
 {
     using System;
+    using System.Linq;
     using System.Threading.Tasks;
     using Xunit;
     using Xunit.Abstractions;
 
     public class TestCrawler
     {
-        private readonly Crawler crawler;
-        private readonly DummyStorage storage;
-
+        private readonly Configuration config = new Configuration();
         private readonly ITestOutputHelper output;
+
+        private Crawler crawler;
+
+        private string sessionId;
 
         public TestCrawler(ITestOutputHelper output)
         {
             this.output = output;
-            crawler = new Crawler();
-            storage = crawler.Config.Storage as DummyStorage;
         }
 
+        private Crawler Crawler => crawler ?? NewCrawler();
+
         [Theory]
-        [InlineData(3, 1, "http://www.dectech.tokyo")]
-        [InlineData(3, 0, "http://schema.org")]
+        [InlineData(1, 0, "http://www.dectech.tokyo")]
         public async Task TestInciteStability(int depth, int hostDepth, string url)
         {
-            crawler.Config.HostDepth = hostDepth;
-            crawler.Config.Depth = depth;
+            config.HostDepth = hostDepth;
+            config.Depth = depth;
 
-            await crawler.Incite(new Uri(url));
-            foreach (var line in storage.DumpedPages)
+            var id = await Crawler.Incite(new Uri(url));
+
+            var urls = (await config.Storage.GetSessionUris(id)).ToList();
+            foreach (var line in urls)
             {
-                output.WriteLine(line.Uri);
+                output.WriteLine(line);
             }
 
-            output.WriteLine(storage.DumpedPagesNumber.ToString());
+            output.WriteLine(urls.Count.ToString());
+        }
+
+        private Crawler NewCrawler()
+        {
+            crawler = new Crawler(config);
+            return crawler;
         }
     }
 }

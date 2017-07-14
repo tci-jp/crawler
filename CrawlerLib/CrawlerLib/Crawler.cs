@@ -9,19 +9,27 @@ namespace CrawlerLib
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Data;
     using HtmlAgilityPack;
     using Logger;
     using Nito.AsyncEx;
+    using RobotsTxt;
 
+    /// <summary>
+    /// Crawls, parses and indexing web pages.
+    /// </summary>
     public class Crawler
     {
         private readonly HttpClient client;
-        private readonly AsyncManualResetEvent lastEvent;
-        private readonly ConcurrentDictionary<Uri, Task<RobotsTxt>> robots;
+
+        private readonly Configuration config;
+        private readonly AsyncAutoResetEvent lastEvent;
+        private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
         private readonly ICrawlerStorage storage;
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
         private readonly ConcurrentBag<Task> tasks;
@@ -30,45 +38,66 @@ namespace CrawlerLib
         private readonly HashSet<string> visited;
         private readonly object visitedLock = new object();
         private int countdown;
+        private string sessionid;
 
-        public Crawler(Configuration con = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Crawler" /> class.
+        /// </summary>
+        /// <param name="conf">Configuration for crawler.</param>
+        public Crawler(Configuration conf = null)
         {
             EncodingRedirector.RegisterEncodings();
 
-            Config = con ?? new Configuration();
+            config = new Configuration(conf) ?? new Configuration();
 
             client = new HttpClient
             {
-                Timeout = Config.RequestTimeout
+                Timeout = config.RequestTimeout
             };
 
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(Config.UserAgent);
-            storage = Config.Storage;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
+            storage = config.Storage;
 
             tasks = new ConcurrentBag<Task>();
-            robots = new ConcurrentDictionary<Uri, Task<RobotsTxt>>();
+            robots = new ConcurrentDictionary<Uri, Task<Robots>>();
             taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
             visited = new HashSet<string>();
-            lastEvent = new AsyncManualResetEvent(false);
+            lastEvent = new AsyncAutoResetEvent(false);
 
-            Config.CancellationToken.Register(() => lastEvent.Set());
+            config.CancellationToken.Register(() => lastEvent.Set());
 
-            totalRequestsSemaphore = new AsyncSemaphore(Config.NumberOfSimulataneousRequests);
+            totalRequestsSemaphore = new AsyncSemaphore(config.NumberOfSimulataneousRequests);
         }
 
-        public Configuration Config { get; }
+        /// <summary>
+        /// Called when crawler parsed and dumped new page
+        /// </summary>
+        public event Action<string> UriCrawled;
 
-        public async Task Incite(Uri uri)
+        /// <summary>
+        /// Starts crawling by single URI
+        /// </summary>
+        /// <param name="uri">URI to crawl.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        public async Task<string> Incite(Uri uri)
         {
+            sessionid = await storage.CreateSession(new[] { uri.ToString() });
             await AddUrl(null, uri, 0, 0);
 
-            await lastEvent.WaitAsync();
+            await lastEvent.WaitAsync(config.CancellationToken);
             await Task.WhenAll(tasks);
-            Config.CancellationToken.ThrowIfCancellationRequested();
+            config.CancellationToken.ThrowIfCancellationRequested();
+            return sessionid;
         }
 
-        public async Task Incite(IEnumerable<Uri> uris)
+        /// <summary>
+        /// Starts crawling by collection of URIs
+        /// </summary>
+        /// <param name="uris">URIs to crawl.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        public async Task<string> Incite(IList<Uri> uris)
         {
+            sessionid = await storage.CreateSession(uris.Select(u => u.ToString()));
             foreach (var uri in uris)
             {
                 await AddUrl(null, uri, 0, 0);
@@ -76,15 +105,20 @@ namespace CrawlerLib
 
             await lastEvent.WaitAsync();
             await Task.WhenAll(tasks);
-            Config.CancellationToken.ThrowIfCancellationRequested();
+            config.CancellationToken.ThrowIfCancellationRequested();
+            return sessionid;
         }
-
 
         private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
         {
-            if (depth > Config.Depth || hostDepth > Config.HostDepth)
+            if (depth > config.Depth || hostDepth > config.HostDepth)
             {
                 return;
+            }
+
+            if (state != null)
+            {
+                await config.Storage.AddPageReferer(sessionid, uri.ToString(), state.Uri.ToString());
             }
 
             lock (visitedLock)
@@ -95,8 +129,6 @@ namespace CrawlerLib
                 }
             }
 
-
-
             var newstate = new State
             {
                 Uri = uri,
@@ -104,18 +136,23 @@ namespace CrawlerLib
                 HostDepth = hostDepth,
                 Referrer = state?.Uri
             };
+
             var robotstxt = await GetRobotsTxt(newstate.Host);
+            if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
+            {
+                return;
+            }
 
             Interlocked.Increment(ref countdown);
             var runner = taskRunners.GetOrAdd(
                 newstate.Host,
-                host => new QueuedTaskRunner(Config.HostRequestsDelay, Config.CancellationToken));
+                host => new QueuedTaskRunner(config.HostRequestsDelay, config.CancellationToken));
             var task = new Task(async () => await InnerIncite(newstate));
             tasks.Add(task);
             runner.Enqueue(task);
         }
 
-        private Task<RobotsTxt> GetRobotsTxt(Uri host)
+        private Task<Robots> GetRobotsTxt(Uri host)
         {
             return robots.GetOrAdd(
                 host,
@@ -123,13 +160,12 @@ namespace CrawlerLib
                 {
                     try
                     {
-                        var robotstxt =
-                            await client.GetStringAsync(roburi + "/robots.txt");
-                        return new RobotsTxt(robotstxt);
+                        var robotstxt = await client.GetStringAsync(roburi + "/robots.txt");
+                        return new Robots(robotstxt);
                     }
                     catch (HttpRequestException)
                     {
-                        return RobotsTxt.DefaultInstance;
+                        return null;
                     }
                 });
         }
@@ -139,18 +175,19 @@ namespace CrawlerLib
             try
             {
                 Exception lastException = null;
+                var lastCode = HttpStatusCode.OK;
                 var nofollow = false;
                 var noindex = false;
 
-                for (var trycount = 0; trycount < Config.RetriesNumber; trycount++)
+                for (var trycount = 0; trycount < config.RetriesNumber; trycount++)
                 {
                     try
                     {
                         byte[] page;
                         try
                         {
-                            await totalRequestsSemaphore.WaitAsync(Config.CancellationToken);
-                            if (Config.CancellationToken.IsCancellationRequested)
+                            await totalRequestsSemaphore.WaitAsync(config.CancellationToken);
+                            if (config.CancellationToken.IsCancellationRequested)
                             {
                                 break;
                             }
@@ -161,17 +198,19 @@ namespace CrawlerLib
                                 request.Headers.Referrer = state.Referrer;
                             }
 
-                            var result = await client.SendAsync(request, Config.CancellationToken);
+                            var result = await client.SendAsync(request, config.CancellationToken);
                             if (!result.IsSuccessStatusCode)
                             {
-                                Config.Logger.Error(
+                                lastCode = result.StatusCode;
+                                config.Logger.Error(
                                     $"{state.Uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
-                                await Task.Delay(Config.RequestErrorRetryDelay);
+                                await Task.Delay(config.RequestErrorRetryDelay);
 
                                 // TODO process error;
                                 continue;
                             }
 
+                            lastCode = HttpStatusCode.OK;
                             page = await result.Content.ReadAsByteArrayAsync();
                         }
                         finally
@@ -226,24 +265,26 @@ namespace CrawlerLib
                             trace.Append(" OK");
                         }
 
-                        Config.Logger.Trace(trace.ToString());
+                        config.Logger.Trace(trace.ToString());
 
                         lastException = null;
+
+                        UriCrawled?.Invoke(state.Uri.ToString());
                         break;
                     }
                     catch (TaskCanceledException ex)
                     {
-                        if (Config.CancellationToken.IsCancellationRequested)
+                        if (config.CancellationToken.IsCancellationRequested)
                         {
                             return;
                         }
-                        
+
                         lastException = ex;
                     }
                     catch (Exception ex)
                     {
                         lastException = ex;
-                        await Task.Delay(Config.RequestErrorRetryDelay);
+                        await Task.Delay(config.RequestErrorRetryDelay);
                     }
                 }
 
@@ -251,14 +292,16 @@ namespace CrawlerLib
                 {
                     throw lastException;
                 }
+
+                await config.Storage.StorePageError(sessionid, state.Uri.ToString(), lastCode);
             }
             catch (TaskCanceledException)
             {
-                Config.Logger.Error($"{state.Uri} - Timeout");
+                config.Logger.Error($"{state.Uri} - Timeout");
             }
             catch (Exception ex)
             {
-                Config.Logger.Error($"{state.Uri} - Failed : ", ex);
+                config.Logger.Error($"{state.Uri} - Failed : ", ex);
             }
             finally
             {
@@ -278,7 +321,7 @@ namespace CrawlerLib
 
             foreach (var link in links)
             {
-                if (Config.CancellationToken.IsCancellationRequested)
+                if (config.CancellationToken.IsCancellationRequested)
                 {
                     break;
                 }
@@ -332,8 +375,11 @@ namespace CrawlerLib
                 {
                     uri = value;
                     Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
+                    UriHostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.UriEscaped);
                 }
             }
+
+            public string UriHostAndPort { get; private set; }
 
             public Uri Host { get; private set; }
 

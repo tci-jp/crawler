@@ -1,3 +1,7 @@
+// <copyright file="QueuedTaskRunner.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib
 {
     using System;
@@ -9,9 +13,9 @@ namespace CrawlerLib
     public class QueuedTaskRunner
     {
         private readonly TimeSpan delay;
-        private readonly CancellationToken token;
 
         private readonly AsyncCollection<Task> queue = new AsyncCollection<Task>(new ConcurrentQueue<Task>());
+        private readonly CancellationToken token;
 
         public QueuedTaskRunner(TimeSpan delay, CancellationToken token)
         {

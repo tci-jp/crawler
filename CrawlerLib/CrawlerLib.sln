@@ -13,6 +13,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Storage", "Azure.Stor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Azure", "CrawlerLib.Azure\CrawlerLib.Azure.csproj", "{C1C4EFC7-6C11-4202-B5FD-98CF3963FA42}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5EF3004C-83EE-4961-ACF8-B3FA573D4E38}"
+	ProjectSection(SolutionItems) = preProject
+		SolutionRules.ruleset = SolutionRules.ruleset
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

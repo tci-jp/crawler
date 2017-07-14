@@ -18,6 +18,7 @@ namespace CrawlerLib
     using HtmlAgilityPack;
     using Logger;
     using Nito.AsyncEx;
+    using RobotsTxt;
 
     /// <summary>
     /// Crawls, parses and indexing web pages.
@@ -28,7 +29,7 @@ namespace CrawlerLib
 
         private readonly Configuration config;
         private readonly AsyncAutoResetEvent lastEvent;
-        private readonly ConcurrentDictionary<Uri, Task<RobotsTxt>> robots;
+        private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
         private readonly ICrawlerStorage storage;
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
         private readonly ConcurrentBag<Task> tasks;
@@ -58,7 +59,7 @@ namespace CrawlerLib
             storage = config.Storage;
 
             tasks = new ConcurrentBag<Task>();
-            robots = new ConcurrentDictionary<Uri, Task<RobotsTxt>>();
+            robots = new ConcurrentDictionary<Uri, Task<Robots>>();
             taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
             visited = new HashSet<string>();
             lastEvent = new AsyncAutoResetEvent(false);
@@ -135,8 +136,13 @@ namespace CrawlerLib
                 HostDepth = hostDepth,
                 Referrer = state?.Uri
             };
+
             var robotstxt = await GetRobotsTxt(newstate.Host);
-            
+            if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
+            {
+                return;
+            }
+
             Interlocked.Increment(ref countdown);
             var runner = taskRunners.GetOrAdd(
                 newstate.Host,
@@ -146,7 +152,7 @@ namespace CrawlerLib
             runner.Enqueue(task);
         }
 
-        private Task<RobotsTxt> GetRobotsTxt(Uri host)
+        private Task<Robots> GetRobotsTxt(Uri host)
         {
             return robots.GetOrAdd(
                 host,
@@ -154,9 +160,8 @@ namespace CrawlerLib
                 {
                     try
                     {
-                        var robotstxt =
-                            await client.GetStringAsync(roburi + "/robots.txt");
-                        return new RobotsTxt(config.UserAgent, robotstxt);
+                        var robotstxt = await client.GetStringAsync(roburi + "/robots.txt");
+                        return new Robots(robotstxt);
                     }
                     catch (HttpRequestException)
                     {
@@ -370,8 +375,11 @@ namespace CrawlerLib
                 {
                     uri = value;
                     Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
+                    UriHostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.UriEscaped);
                 }
             }
+
+            public string UriHostAndPort { get; private set; }
 
             public Uri Host { get; private set; }
 

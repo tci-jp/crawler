@@ -42,8 +42,8 @@ namespace CrawlerLib.Console
                 {
                     Logger = logger,
                     CancellationToken = cancellation.Token,
-                    HostDepth = 0,
-                    Depth = 1
+                    HostDepth = 1,
+                    Depth = 3
                 };
                 var crawler = new Crawler(config);
                 var crawledUriNumbder = 0;

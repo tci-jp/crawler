@@ -84,10 +84,15 @@ namespace CrawlerLib
             sessionid = await storage.CreateSession(new[] { uri.ToString() });
             await AddUrl(null, uri, 0, 0);
 
+            await WaitForTheEnd();
+            return sessionid;
+        }
+
+        private async Task WaitForTheEnd()
+        {
             await lastEvent.WaitAsync(config.CancellationToken);
             await Task.WhenAll(tasks);
             config.CancellationToken.ThrowIfCancellationRequested();
-            return sessionid;
         }
 
         /// <summary>
@@ -103,9 +108,7 @@ namespace CrawlerLib
                 await AddUrl(null, uri, 0, 0);
             }
 
-            await lastEvent.WaitAsync();
-            await Task.WhenAll(tasks);
-            config.CancellationToken.ThrowIfCancellationRequested();
+            await WaitForTheEnd();
             return sessionid;
         }
 

@@ -78,6 +78,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="FalseToVisible.cs" />
+    <Compile Include="GuiLogger.cs" />
     <Compile Include="InputItem.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="TasksForEachUrl.cs" />

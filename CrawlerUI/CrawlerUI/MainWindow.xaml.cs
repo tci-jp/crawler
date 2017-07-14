@@ -3,6 +3,8 @@
     using System;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Input;
     using CrawlerLib;
@@ -40,6 +42,14 @@
             }
         }
 
+        private void Crawler_UriCrawled(string uri)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Model.Found.Add(uri);
+            });
+        }
+
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             e.Handled = NumberRegex.IsMatch(e.Text);
@@ -53,27 +63,49 @@
 
         private async void StartCrawl(object sender, RoutedEventArgs e)
         {
+            if (Model.Running)
+            {
+                return;
+            }
+
             Model.Running = true;
             try
             {
+                Model.Cancellation = new CancellationTokenSource();
                 var config = new Configuration
                 {
+                    CancellationToken = Model.Cancellation.Token,
                     Depth = Model.DefaultDepth,
-                    HostDepth = Model.DefaultHostDepth
+                    HostDepth = Model.DefaultHostDepth,
+                    Logger = new GuiLogger(Model)
                 };
 
                 var crawler = new Crawler(config);
-                await crawler.Incite(Model.Input.Select(i => new Uri(i.Url)));
+                crawler.UriCrawled += Crawler_UriCrawled;
+                try
+                {
+                    await crawler.Incite(Model.Input.Select(i => new Uri(i.Url)).ToList());
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore
+                }
+                finally
+                {
+                    crawler.UriCrawled -= Crawler_UriCrawled;
+                }
             }
             finally
             {
+                Model.Cancellation.Dispose();
+                Model.Cancellation = null;
                 Model.Running = false;
             }
         }
 
         private void StopCrawl(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            Model.Cancellation?.Cancel();
         }
 
         private void TextBox_KeyDown(object sender, KeyEventArgs e)
@@ -82,6 +114,11 @@
             {
                 AddUrl();
             }
+        }
+
+        private void TextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            LogScrollViewer.ScrollToBottom();
         }
     }
 }

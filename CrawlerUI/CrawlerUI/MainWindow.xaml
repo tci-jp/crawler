@@ -14,6 +14,10 @@
         <local:Model/>
     </Window.DataContext>
     <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="400"/>
             <ColumnDefinition Width="400"/>
@@ -56,8 +60,10 @@
             </DataGrid>
 
             <Grid Grid.Row="2" Margin="0,0,0,10">
-                <Button Content="Crawl !" Click="StartCrawl" Visibility="{Binding Running, Converter={StaticResource FalseToVisible}}" />
-                <Button Content="STOP!!!" Click="StopCrawl" Visibility="{Binding Running, Converter={StaticResource TrueToVisible}}" />
+                <Button Content="Crawl !" Click="StartCrawl" 
+                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource FalseToVisible}}" />
+                <Button Content="STOP!!!" Click="StopCrawl" 
+                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource TrueToVisible}}" />
             </Grid>
             <Expander Header="Settings" Grid.Row="1" Margin="0,0,0,10">
                 <Grid Background="#FFE5E5E5">
@@ -87,9 +93,14 @@
             <Label Content="Search Keyword" Grid.Row="0" />
             <TextBox Grid.Row="1" Margin="0,0,0,10"/>
             <Label Content="Sub Urls" Grid.Row="2" />
-            <ListView Grid.Row="3" />
+            <ListView Grid.Row="3" ItemsSource="{Binding Found}"/>
         </Grid>
         <Label Content="Content" Grid.Column="2"/>
 
+        <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3">
+            <ScrollViewer Name="LogScrollViewer" MaxHeight="100">
+                <TextBlock TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log}" SizeChanged="TextBlock_SizeChanged"/>
+            </ScrollViewer>
+        </Expander>
     </Grid>
 </Window>

@@ -102,6 +102,11 @@ namespace CrawlerLib
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         public async Task<string> Incite(IList<Uri> uris)
         {
+            if (uris.Count == 0)
+            {
+                return null;
+            }
+
             sessionid = await storage.CreateSession(uris.Select(u => u.ToString()));
             foreach (var uri in uris)
             {

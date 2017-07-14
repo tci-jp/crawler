@@ -15,6 +15,9 @@ namespace WpfApp2
         private readonly StringBuilder log = new StringBuilder("Test\r\nTest");
         private string newUri;
         private bool running;
+        private string currentContentUri;
+        private string currentContent="";
+        private string searchString;
 
         public string NewUri
         {
@@ -78,6 +81,38 @@ namespace WpfApp2
         public CancellationTokenSource Cancellation { get; set; }
 
         public string Log => log.ToString();
+
+        public string CurrentContentUri
+        {
+            get => currentContentUri; set
+            {
+                if (value == currentContentUri) return;
+                currentContentUri = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string CurrentContent
+        {
+            get => currentContent;
+            set
+            {
+                if (value == currentContent) return;
+                currentContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SearchString
+        {
+            get => searchString;
+            set
+            {
+                if (value == searchString) return;
+                searchString = value;
+                OnPropertyChanged();
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

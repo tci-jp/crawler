@@ -13,94 +13,135 @@
     <Window.DataContext>
         <local:Model/>
     </Window.DataContext>
-    <Grid Margin="5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="400"/>
-            <ColumnDefinition Width="400"/>
-            <ColumnDefinition Width="200*"/>
-        </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid Margin="0,0,0,10">
+    <TabControl>
+        <TabItem Header="Crawl">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="400"/>
+                    <ColumnDefinition Width="400"/>
+                    <ColumnDefinition Width="200*"/>
                 </Grid.ColumnDefinitions>
-                <Label Content="Url" Grid.Column="0"/>
-                <TextBox Text="{Binding NewUri, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" KeyDown="TextBox_KeyDown"/>
-                <Button Content="Add" Padding="10,0,10,0" Click="AddButton_Click" Grid.Column="2"/>
-            </Grid>
-
-            <Label Grid.Row="3"  Content="List of urls to be crawled"/>
-
-            <DataGrid Grid.Row="4" AutoGenerateColumns="false" CanUserAddRows="False" ItemsSource="{Binding Input}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Url" Width="*" Binding="{Binding Url}" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Depth" Width="Auto" Binding="{Binding Depth}"/>
-                    <DataGridTextColumn Header="HostDepth" Width="Auto" Binding="{Binding HostDepth}"/>
-                    <DataGridTemplateColumn Header="Remove" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="RemoveBtn_Click" Tag="{Binding}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-
-            <Grid Grid.Row="2" Margin="0,0,0,10">
-                <Button Content="Crawl !" Click="StartCrawl" 
-                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource FalseToVisible}}" />
-                <Button Content="STOP!!!" Click="StopCrawl" 
-                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource TrueToVisible}}" />
-            </Grid>
-            <Expander Header="Settings" Grid.Row="1" Margin="0,0,0,10">
-                <Grid Background="#FFE5E5E5">
+                <Grid Grid.Column="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="100"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Content="Depth"   Grid.Column="0"/>
-                    <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding DefaultDepth}" PreviewTextInput="NumberValidationTextBox"/>
-                    <Label Content="Host-Depth" Grid.Column="0" Grid.Row="1" />
-                    <TextBox  Grid.Column="1" Grid.Row="1" Text="{Binding DefaultHostDepth}" PreviewTextInput="NumberValidationTextBox"/>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Url" Grid.Column="0"/>
+                        <TextBox Text="{Binding NewUri, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" KeyDown="TextBox_KeyDown"/>
+                        <Button Content="Add" Padding="10,0,10,0" Click="AddButton_Click" Grid.Column="2"/>
+                    </Grid>
 
+                    <Label Grid.Row="3"  Content="List of urls to be crawled"/>
+
+                    <DataGrid Grid.Row="4" AutoGenerateColumns="false" CanUserAddRows="False" ItemsSource="{Binding Input}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Url" Width="*" Binding="{Binding Url}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Depth" Width="Auto" Binding="{Binding Depth}"/>
+                            <DataGridTextColumn Header="HostDepth" Width="Auto" Binding="{Binding HostDepth}"/>
+                            <DataGridTemplateColumn Header="Remove" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="RemoveBtn_Click" Tag="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Grid Grid.Row="2" Margin="0,0,0,10">
+                        <Button Content="Crawl !" Click="StartCrawl" 
+                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource FalseToVisible}}" />
+                        <Button Content="STOP!!!" Click="StopCrawl" 
+                        Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource TrueToVisible}}" />
+                    </Grid>
+                    <Expander Header="Settings" Grid.Row="1" Margin="0,0,0,10">
+                        <Grid Background="#FFE5E5E5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Depth"   Grid.Column="0"/>
+                            <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding DefaultDepth}" PreviewTextInput="NumberValidationTextBox"/>
+                            <Label Content="Host-Depth" Grid.Column="0" Grid.Row="1" />
+                            <TextBox  Grid.Column="1" Grid.Row="1" Text="{Binding DefaultHostDepth}" PreviewTextInput="NumberValidationTextBox"/>
+
+                        </Grid>
+                    </Expander>
                 </Grid>
-            </Expander>
-        </Grid>
-        <Grid Grid.Column="1" Margin="10,0,10,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Label Content="Search Keyword" Grid.Row="0" />
-            <TextBox Grid.Row="1" Margin="0,0,0,10"/>
-            <Label Content="Sub Urls" Grid.Row="2" />
-            <ListView Grid.Row="3" ItemsSource="{Binding Found}"/>
-        </Grid>
-        <Label Content="Content" Grid.Column="2"/>
+                <Grid Grid.Column="1" Margin="10,0,10,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Label Content="Search Keyword" Grid.Row="0" />
+                    <TextBox Grid.Row="1" Margin="0,0,0,10"/>
+                    <Label Content="Sub Urls" Grid.Row="2" />
+                    <ListView Grid.Row="3" ItemsSource="{Binding Found}" SelectedValue="{Binding CurrentContentUri}" SelectionChanged ="ContentUri_Selected"/>
+                </Grid>
+                <Grid Grid.Row="0" Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Label Content="Content" Grid.Row="0"/>
+                    <ScrollViewer Padding="0"  Grid.Row="1">
+                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentContent, Mode=OneWay}"/>
+                    </ScrollViewer>
+                </Grid>
+                <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Padding="0">
+                    <ScrollViewer Name="LogScrollViewer" Padding="0"  MaxHeight="100">
+                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log, Mode=OneWay}" SizeChanged="TextBlock_SizeChanged"/>
+                    </ScrollViewer>
+                </Expander>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Search">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding SearchString, UpdateSourceTrigger=PropertyChanged}" KeyDown="SearchText_Changed"/>
+                <Button Content="Search" Padding="10,0,10,0" Grid.Row="0" Grid.Column="1" Click="SearchButton_Click"/>
+                <Grid Margin="0,5,0,0" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <ListView ItemsSource="{Binding Found}" SelectedValue="{Binding CurrentContentUri}" SelectionChanged ="ContentUri_Selected"/>
+                    <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                    <ScrollViewer Padding="0" Grid.Column="2" >
+                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentContent, Mode=OneWay}"/>
+                    </ScrollViewer>
+                </Grid>
 
-        <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Padding="0">
-            <ScrollViewer Name="LogScrollViewer" Padding="0"  MaxHeight="100">
-                <TextBlock Padding="5,0,5,0" TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log}" SizeChanged="TextBlock_SizeChanged"/>
-            </ScrollViewer>
-        </Expander>
-    </Grid>
+
+            </Grid>
+        </TabItem>
+    </TabControl>
+
 </Window>

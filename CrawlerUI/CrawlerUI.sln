@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerUI", "CrawlerUI\CrawlerUI.csproj", "{5425A7B5-1597-4E5B-8169-0095C3752133}"
+	ProjectSection(ProjectDependencies) = postProject
+		{29677CD8-B420-4CD7-B117-0C60C9061AFE} = {29677CD8-B420-4CD7-B117-0C60C9061AFE}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib", "..\CrawlerLib\CrawlerLib\CrawlerLib.csproj", "{29677CD8-B420-4CD7-B117-0C60C9061AFE}"
 EndProject

@@ -5,73 +5,91 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
         mc:Ignorable="d"
-        Title="Crawler" Height="846.207" Width="1559.995" Background="WhiteSmoke">
-    <Grid Margin="0,0,5,-17.5">
+        Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance local:Model}">
+    <Window.Resources>
+        <local:TrueToVisible x:Key="TrueToVisible"/>
+        <local:FalseToVisible x:Key="FalseToVisible"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <local:Model/>
+    </Window.DataContext>
+    <Grid Margin="5">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="13*"/>
-            <ColumnDefinition Width="974*"/>
-            <ColumnDefinition Width="61*"/>
-            <ColumnDefinition Width="340*"/>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="200*"/>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="62*"/>
-            <RowDefinition Height="628*"/>
-            <RowDefinition Height="559*"/>
-        </Grid.RowDefinitions>
-        <TextBox HorizontalAlignment="Left" x:Name="UrlTextBox0" Height="36" Margin="1,0.5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="230" Grid.Row="1" Grid.Column="2" />
-        <Button Content="Crawl !" Name="CrawBtn" Click="StartCrawl" HorizontalAlignment="Left" Margin="97,328.5,0,0" VerticalAlignment="Top" Width="216" Height="38" Grid.Row="1" Grid.Column="2"/>
-        <Label Content="Sub Urls" HorizontalAlignment="Left" Height="26" Margin="437,16,0,0" VerticalAlignment="Top" Width="76" Grid.Column="2" Grid.RowSpan="2"/>
-        <Label Content="Url" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="289" Margin="1.5,15,0,0" RenderTransformOrigin="0.928,1.346" Grid.Column="2"/>
-        <Label Content="Content" HorizontalAlignment="Left" Height="26" Margin="987,16,0,0" VerticalAlignment="Top" Width="76" Grid.Column="2" Grid.RowSpan="2"/>
-        <TextBox Text="1" HorizontalAlignment="Left" x:Name="DepthTextBox" Height="36" Margin="231,0.5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="65" Grid.Row="1" Grid.Column="2"/>
-        <Label Content="Depth" HorizontalAlignment="Left" Height="27" VerticalAlignment="Top" Width="57" Margin="234,14,0,0" Grid.Column="2"/>
-        <TextBox Text="0" HorizontalAlignment="Left" x:Name="HostDepthTextBox" Height="36" Margin="296,0.5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="78" Grid.Row="1" Grid.Column="2"/>
-        <Label Content="Host-Depth" HorizontalAlignment="Left" Width="76" Margin="305,14,0,418" Grid.Column="2" RenderTransformOrigin="0.5,0.5" Grid.RowSpan="2">
-            <Label.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform/>
-                    <SkewTransform AngleX="-3.946"/>
-                    <RotateTransform/>
-                    <TranslateTransform X="-0.931"/>
-                </TransformGroup>
-            </Label.RenderTransform>
-        </Label>
-        <TextBox HorizontalAlignment="Left" x:Name="SearchKeywordTextBox" Height="36" Margin="1.5,42,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="289" Grid.Row="2" Grid.Column="2"/>
-        <Label Content="Search Keyword" HorizontalAlignment="Left" Height="27" VerticalAlignment="Top" Width="104" Margin="12,15,0,0" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"/>
-        <ListView Name="SubUrlListView" Grid.Column="2" HorizontalAlignment="Left" Height="741" Margin="437.5,2,0,0" Grid.Row="1" VerticalAlignment="Top" Width="488" Grid.RowSpan="2">
-            <ListView.ItemTemplate >
-                <DataTemplate DataType="">
-                    <WrapPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding}" />
-                    </WrapPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-        <!--<ListView Name="UrlListView" Grid.Column="2" HorizontalAlignment="Left" Height="194" Margin="1,78.5,0,0" Grid.Row="1" VerticalAlignment="Top" Width="420">-->
-        <DataGrid x:Name="UrlDataGrid" Grid.Column="2" HorizontalAlignment="Left" Height="194" Margin="1,78.5,0,0" Grid.Row="1" VerticalAlignment="Top" Width="420" AutoGenerateColumns="false" CanUserDeleteRows="False" CanUserAddRows="False">
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Url" Grid.Column="0"/>
+                <TextBox Text="{Binding NewUri, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" KeyDown="TextBox_KeyDown"/>
+                <Button Content="Add" Padding="10,0,10,0" Click="AddButton_Click" Grid.Column="2"/>
+            </Grid>
+
+            <Label Grid.Row="3"  Content="List of urls to be crawled"/>
+
+            <DataGrid Grid.Row="4" AutoGenerateColumns="false" CanUserAddRows="False" ItemsSource="{Binding Input}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Url" Width="215" Binding="{Binding Url}"/>
-                    <DataGridTextColumn Header="Depth" Width="60" Binding="{Binding Depth}"/>
-                    <DataGridTextColumn Header="HostDepth" Width="70" Binding="{Binding HostDepth}"/>
-                <DataGridTemplateColumn Header="Remove" Width="70">
+                    <DataGridTextColumn Header="Url" Width="*" Binding="{Binding Url}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Depth" Width="Auto" Binding="{Binding Depth}"/>
+                    <DataGridTextColumn Header="HostDepth" Width="Auto" Binding="{Binding HostDepth}"/>
+                    <DataGridTemplateColumn Header="Remove" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="X" Click="RemoveBtn_Click" Tag="{Binding}" IsEnabled="True"/>
+                                <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="RemoveBtn_Click" Tag="{Binding}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-            <!--<ListView.View>
-                <GridView x:Name="UrlGridView">
-                    <GridViewColumn Header="Url" Width="230" DisplayMemberBinding="{Binding Path=Url}" />
-                    <GridViewColumn Header="Depth" Width="65" DisplayMemberBinding="{Binding Path=Depth}" />
-                    <GridViewColumn Header="HostDepth" Width="75" DisplayMemberBinding="{Binding Path=HostDepth}" />
-                    <GridViewColumn x:Name="RemoveBtnColumn" Width="40" DisplayMemberBinding="{Binding Path=RemoveBtn}"/>
-                </GridView>
-           </ListView.View>-->
-        <Button Content="Add" Grid.Column="2" HorizontalAlignment="Left" Margin="374,0.5,0,0" Grid.Row="1" VerticalAlignment="Top" Width="47" Height="36" Click="Button_Click"/>
-        <Label Content="List of urls to be crawled" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="289" Margin="1.5,47,0,0" RenderTransformOrigin="0.928,1.346" Grid.Column="2" Grid.Row="1"/>
+
+            <Grid Grid.Row="2" Margin="0,0,0,10">
+                <Button Content="Crawl !" Click="StartCrawl" Visibility="{Binding Running, Converter={StaticResource FalseToVisible}}" />
+                <Button Content="STOP!!!" Click="StopCrawl" Visibility="{Binding Running, Converter={StaticResource TrueToVisible}}" />
+            </Grid>
+            <Expander Header="Settings" Grid.Row="1" Margin="0,0,0,10">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Depth"   Grid.Column="0"/>
+                    <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding DefaultDepth}" PreviewTextInput="NumberValidationTextBox"/>
+                    <Label Content="Host-Depth" Grid.Column="0" Grid.Row="1" />
+                    <TextBox  Grid.Column="1" Grid.Row="1" Text="{Binding DefaultHostDepth}" PreviewTextInput="NumberValidationTextBox"/>
+
+                </Grid>
+            </Expander>
+        </Grid>
+        <Grid Grid.Column="1" Margin="10,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Label Content="Search Keyword" Grid.Row="0" />
+            <TextBox Grid.Row="1" Margin="0,0,0,10"/>
+            <Label Content="Sub Urls" Grid.Row="2" />
+            <ListView Grid.Row="3" />
+        </Grid>
+        <Label Content="Content" Grid.Column="2"/>
+
     </Grid>
 </Window>

@@ -97,9 +97,9 @@
         </Grid>
         <Label Content="Content" Grid.Column="2"/>
 
-        <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3">
-            <ScrollViewer Name="LogScrollViewer" MaxHeight="100">
-                <TextBlock TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log}" SizeChanged="TextBlock_SizeChanged"/>
+        <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Padding="0">
+            <ScrollViewer Name="LogScrollViewer" Padding="0"  MaxHeight="100">
+                <TextBlock Padding="5,0,5,0" TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log}" SizeChanged="TextBlock_SizeChanged"/>
             </ScrollViewer>
         </Expander>
     </Grid>

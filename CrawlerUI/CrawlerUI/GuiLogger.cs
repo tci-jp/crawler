@@ -4,7 +4,7 @@ namespace WpfApp2
 
     public class GuiLogger : ILogger
     {
-        private Model model;
+        private readonly Model model;
 
         public GuiLogger(Model model)
         {

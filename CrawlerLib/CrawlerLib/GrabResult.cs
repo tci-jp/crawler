@@ -10,7 +10,7 @@ namespace CrawlerLib
         /// <summary>
         /// Grabbed content
         /// </summary>
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
 
         /// <summary>
         /// Http request status. If it's successful it must be HttpStatusCode.OK (even if real code is 201-299)

@@ -45,7 +45,7 @@ namespace CrawlerLib.Console
                     HostDepth = 1,
                     Depth = 3
                 };
-                var crawler = new Crawler(config);
+                var crawler = new Crawler(new HttpContentGrabber(config), config);
                 var crawledUriNumbder = 0;
                 crawler.UriCrawled += u => { Interlocked.Increment(ref crawledUriNumbder); };
 

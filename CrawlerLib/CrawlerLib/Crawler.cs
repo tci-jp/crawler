@@ -187,7 +187,7 @@ namespace CrawlerLib
                 {
                     try
                     {
-                        byte[] page;
+                        string page;
                         try
                         {
                             await totalRequestsSemaphore.WaitAsync(config.CancellationToken);
@@ -212,7 +212,7 @@ namespace CrawlerLib
                         }
 
                         var html = new HtmlDocument();
-                        html.Load(new MemoryStream(page));
+                        html.LoadHtml(page);
 
                         foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
                                                  .Select(m => m.Attributes["content"].Value) ?? new string[0])
@@ -237,7 +237,7 @@ namespace CrawlerLib
 
                         if (!noindex)
                         {
-                            await storage.DumpPage(state.Uri.ToString(), new MemoryStream(page));
+                            await storage.DumpPage(state.Uri.ToString(), new MemoryStream(Encoding.UTF8.GetBytes(page)));
                         }
                         else
                         {

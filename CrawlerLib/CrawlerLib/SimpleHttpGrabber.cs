@@ -45,7 +45,7 @@ namespace CrawlerLib
                        };
             }
 
-            var page = await result.Content.ReadAsByteArrayAsync();
+            var page = await result.Content.ReadAsStringAsync();
             return new GrabResult
                    {
                        Status = HttpStatusCode.OK,

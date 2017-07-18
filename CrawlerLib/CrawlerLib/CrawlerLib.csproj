@@ -95,12 +95,15 @@
     <Compile Include="Data\SessionInfo.cs" />
     <Compile Include="EncodingRedirector.cs" />
     <Compile Include="Data\ICrawlerStorage.cs" />
+    <Compile Include="GrabResult.cs" />
+    <Compile Include="HttpGrabber.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LoggerExtensions.cs" />
     <Compile Include="Logger\LogRecord.cs" />
     <Compile Include="Logger\Severity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueuedTaskRunner.cs" />
+    <Compile Include="SimpleHttpGrabber.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

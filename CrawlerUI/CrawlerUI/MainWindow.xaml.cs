@@ -24,6 +24,7 @@ namespace CrawlerUI
         private static readonly Regex NumberRegex = new Regex("[^0-9]+");
 
         private static readonly DummyStorage storage = new DummyStorage();
+        private HttpGrabber grabber;
 
         public MainWindow()
         {
@@ -103,7 +104,12 @@ namespace CrawlerUI
                     Storage = storage
                 };
 
-                var crawler = new Crawler(config);
+                if (grabber == null)
+                {
+                    grabber = new SimpleHttpGrabber(config);
+                }
+
+                var crawler = new Crawler(grabber, config);
                 crawler.UriCrawled += Crawler_UriCrawled;
                 try
                 {
@@ -199,11 +205,22 @@ namespace CrawlerUI
                 var reader = new StreamReader(contentStream);
                 var content = await reader.ReadToEndAsync();
                 Model.CurrentSearchContent = content;
+                Model.SearchContentSelectionStart =
+                    content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
+                Model.SearchContentSelectionLength = Model.SearchString.Length;
+
+                SearchContent.Focus();
             }
             else
             {
                 Model.CurrentSearchContent = string.Empty;
             }
+        }
+
+        private void ScrollViewer_GotFocus(object sender, RoutedEventArgs e)
+        {
+            SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
+            SearchContent.Focus();
         }
     }
 }

@@ -171,6 +171,9 @@ namespace CrawlerUI
             }
         }
 
+        public int SearchContentSelectionStart { get; set; }
+        public int SearchContentSelectionLength { get; set; }
+
         public void AddLogLine(string line)
         {
             log.AppendLine(line);

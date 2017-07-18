@@ -25,6 +25,7 @@ namespace CrawlerLib
     /// </summary>
     public class Crawler
     {
+        private readonly HttpGrabber grabber;
         private readonly HttpClient client;
 
         private readonly Configuration config;
@@ -43,17 +44,19 @@ namespace CrawlerLib
         /// <summary>
         /// Initializes a new instance of the <see cref="Crawler" /> class.
         /// </summary>
+        /// <param name="grabber">Http pages grabber.</param>
         /// <param name="conf">Configuration for crawler.</param>
-        public Crawler(Configuration conf = null)
+        public Crawler(HttpGrabber grabber, Configuration conf = null)
         {
+            this.grabber = grabber;
             EncodingRedirector.RegisterEncodings();
 
             config = new Configuration(conf) ?? new Configuration();
 
             client = new HttpClient
-                     {
-                         Timeout = config.RequestTimeout
-                     };
+            {
+                Timeout = config.RequestTimeout
+            };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -131,12 +134,12 @@ namespace CrawlerLib
             }
 
             var newstate = new State
-                           {
-                               Uri = uri,
-                               Depth = depth,
-                               HostDepth = hostDepth,
-                               Referrer = state?.Uri
-                           };
+            {
+                Uri = uri,
+                Depth = depth,
+                HostDepth = hostDepth,
+                Referrer = state?.Uri
+            };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
             if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
@@ -193,26 +196,15 @@ namespace CrawlerLib
                                 break;
                             }
 
-                            var request = new HttpRequestMessage(HttpMethod.Get, state.Uri);
-                            if (state.Referrer != null)
-                            {
-                                request.Headers.Referrer = state.Referrer;
-                            }
+                            var result = await grabber.Grab(state.Uri, state.Referrer);
 
-                            var result = await client.SendAsync(request, config.CancellationToken);
-                            if (!result.IsSuccessStatusCode)
+                            lastCode = result.Status;
+                            if (lastCode != HttpStatusCode.OK)
                             {
-                                lastCode = result.StatusCode;
-                                config.Logger.Error(
-                                    $"{state.Uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
-                                await Task.Delay(config.RequestErrorRetryDelay);
-
-                                // TODO process error;
                                 continue;
                             }
 
-                            lastCode = HttpStatusCode.OK;
-                            page = await result.Content.ReadAsByteArrayAsync();
+                            page = result.Content;
                         }
                         finally
                         {

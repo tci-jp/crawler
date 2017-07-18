@@ -105,7 +105,7 @@
                         <RowDefinition />
                     </Grid.RowDefinitions>
                     <Label Content="Content" Grid.Row="0" />
-                    <ScrollViewer Padding="0" Grid.Row="1" FocusManager.IsFocusScope="True">
+                    <ScrollViewer Padding="0" Grid.Row="1">
                         <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
                                  Text="{Binding CurrentCrawlerContent, Mode=OneWay}" />
                     </ScrollViewer>
@@ -142,9 +142,9 @@
                     <ListView ItemsSource="{Binding SearchResult}" SelectedValue="{Binding CurrentSearchUri}"
                               SelectionChanged="SearchUri_Selected" />
                     <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
-                    <ScrollViewer Padding="0" Grid.Column="2" FocusManager.IsFocusScope="True" GotFocus="ScrollViewer_GotFocus">
+                    <ScrollViewer Padding="0" Grid.Column="2">
                         <TextBox Name="SearchContent" IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" 
-                                 Text="{Binding CurrentSearchContent, Mode=OneWay}"/>
+                                 Text="{Binding CurrentSearchContent, Mode=OneWay}" LostFocus="SearchContent_LostFocus"/>
                     </ScrollViewer>
                 </Grid>
 

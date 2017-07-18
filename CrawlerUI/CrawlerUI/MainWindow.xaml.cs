@@ -209,7 +209,8 @@ namespace CrawlerUI
                     content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
                 Model.SearchContentSelectionLength = Model.SearchString.Length;
 
-                SearchContent.Focus();
+                FocusManager.SetFocusedElement(this, SearchContent);
+                SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
             }
             else
             {
@@ -217,10 +218,9 @@ namespace CrawlerUI
             }
         }
 
-        private void ScrollViewer_GotFocus(object sender, RoutedEventArgs e)
+        private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
         {
-            SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
-            SearchContent.Focus();
+            e.Handled = true;
         }
     }
 }

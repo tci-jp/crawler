@@ -1,4 +1,4 @@
-namespace CrawlerLib
+namespace CrawlerLib.Grabbers
 {
     using System.Net;
 

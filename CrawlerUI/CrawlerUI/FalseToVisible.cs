@@ -11,11 +11,13 @@ namespace CrawlerUI
 
     public class FalseToVisible : IValueConverter
     {
+        /// <inheritdoc/>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return (value as bool? ?? false) ? Visibility.Collapsed : Visibility.Visible;
         }
 
+        /// <inheritdoc/>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();

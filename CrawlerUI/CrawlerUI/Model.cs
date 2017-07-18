@@ -24,6 +24,7 @@ namespace CrawlerUI
         private bool running;
         private string searchString;
 
+        /// <inheritdoc/>
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string NewUri

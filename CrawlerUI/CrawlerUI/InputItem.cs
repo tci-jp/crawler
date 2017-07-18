@@ -66,6 +66,7 @@ namespace CrawlerUI
             HostDepth = hostDepth;
         }
 
+        /// <inheritdoc/>
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]

@@ -15,6 +15,7 @@ namespace CrawlerLib
     using System.Threading;
     using System.Threading.Tasks;
     using Data;
+    using Grabbers;
     using HtmlAgilityPack;
     using Logger;
     using Nito.AsyncEx;
@@ -23,7 +24,7 @@ namespace CrawlerLib
     /// <summary>
     /// Crawls, parses and indexing web pages.
     /// </summary>
-    public class Crawler
+    public class Crawler:IDisposable
     {
         private readonly HttpGrabber grabber;
         private readonly HttpClient client;
@@ -388,6 +389,12 @@ namespace CrawlerLib
             public int HostDepth { get; set; }
 
             public Uri Referrer { get; set; }
+        }
+
+        public void Dispose()
+        {
+            grabber?.Dispose();
+            client?.Dispose();
         }
     }
 }

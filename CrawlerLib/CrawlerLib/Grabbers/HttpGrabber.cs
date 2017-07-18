@@ -1,4 +1,4 @@
-﻿namespace CrawlerLib
+﻿namespace CrawlerLib.Grabbers
 {
     using System;
     using System.Threading.Tasks;
@@ -6,10 +6,13 @@
     /// <summary>
     /// Grabs content by URI
     /// </summary>
-    public abstract class HttpGrabber: IDisposable
+    public abstract class HttpGrabber : IDisposable
     {
-        protected HttpGrabber(Configuration config)
+        protected Configuration Config { get; }
+
+        public HttpGrabber(Configuration config)
         {
+            Config = config;
         }
 
         /// <summary>
@@ -21,7 +24,7 @@
         public abstract Task<GrabResult> Grab(Uri uri, Uri referer);
 
         /// <inheritdoc />
-        public void Dispose()
+        public virtual void Dispose()
         {
         }
     }

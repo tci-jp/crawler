@@ -15,6 +15,7 @@ namespace CrawlerUI
     using System.Windows.Input;
     using CrawlerLib;
     using CrawlerLib.Data;
+    using CrawlerLib.Grabbers;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -106,7 +107,7 @@ namespace CrawlerUI
 
                 if (grabber == null)
                 {
-                    grabber = new SimpleHttpGrabber(config);
+                    grabber = new HttpContentGrabber(config);
                 }
 
                 var crawler = new Crawler(grabber, config);

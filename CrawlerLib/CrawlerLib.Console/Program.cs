@@ -7,6 +7,7 @@ namespace CrawlerLib.Console
     using System;
     using System.Threading;
     using Data;
+    using Grabbers;
     using Logger;
 
     public class ConsoleLogger : ILogger

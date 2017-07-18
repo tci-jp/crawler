@@ -1,9 +1,9 @@
-﻿<Window x:Class="WpfApp2.MainWindow"
+﻿<Window x:Class="CrawlerUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfApp2"
+        xmlns:local="clr-namespace:CrawlerUI"
         mc:Ignorable="d"
         Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance local:Model}">
     <Window.Resources>
@@ -87,15 +87,11 @@
                 </Grid>
                 <Grid Grid.Column="1" Margin="10,0,10,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition />
                     </Grid.RowDefinitions>
-                    <Label Content="Search Keyword" Grid.Row="0" />
-                    <TextBox Grid.Row="1" Margin="0,0,0,10"/>
-                    <Label Content="Sub Urls" Grid.Row="2" />
-                    <ListView Grid.Row="3" ItemsSource="{Binding Found}" SelectedValue="{Binding CurrentContentUri}" SelectionChanged ="ContentUri_Selected"/>
+                    <Label Content="Sub Urls" Grid.Row="0" />
+                    <ListView Grid.Row="1" ItemsSource="{Binding CrawlerResult}" SelectedValue="{Binding CurrentCrawlerUri}" SelectionChanged ="CrawlerUri_Selected"/>
                 </Grid>
                 <Grid Grid.Row="0" Grid.Column="2">
                     <Grid.RowDefinitions>
@@ -104,10 +100,10 @@
                     </Grid.RowDefinitions>
                     <Label Content="Content" Grid.Row="0"/>
                     <ScrollViewer Padding="0"  Grid.Row="1">
-                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentContent, Mode=OneWay}"/>
+                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentCrawlerContent, Mode=OneWay}"/>
                     </ScrollViewer>
                 </Grid>
-                <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Padding="0">
+                <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0" Padding="0">
                     <ScrollViewer Name="LogScrollViewer" Padding="0"  MaxHeight="100">
                         <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Background="Black" Foreground="White" Text="{Binding Log, Mode=OneWay}" SizeChanged="TextBlock_SizeChanged"/>
                     </ScrollViewer>
@@ -132,10 +128,10 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <ListView ItemsSource="{Binding Found}" SelectedValue="{Binding CurrentContentUri}" SelectionChanged ="ContentUri_Selected"/>
+                    <ListView ItemsSource="{Binding SearchResult}" SelectedValue="{Binding CurrentSearchUri}" SelectionChanged ="SearchUri_Selected"/>
                     <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
                     <ScrollViewer Padding="0" Grid.Column="2" >
-                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentContent, Mode=OneWay}"/>
+                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" Text="{Binding CurrentSearchContent, Mode=OneWay}"/>
                     </ScrollViewer>
                 </Grid>
 

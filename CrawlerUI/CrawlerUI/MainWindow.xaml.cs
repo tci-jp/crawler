@@ -1,4 +1,8 @@
-﻿namespace WpfApp2
+﻿// <copyright file="MainWindow.xaml.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+namespace CrawlerUI
 {
     using System;
     using System.IO;
@@ -7,6 +11,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
+    using System.Windows.Controls;
     using System.Windows.Input;
     using CrawlerLib;
     using CrawlerLib.Data;
@@ -38,7 +43,7 @@
             if (Uri.TryCreate(modelNewUri, UriKind.Absolute, out _))
             {
                 Model.Input.Add(new InputItem(modelNewUri, Model.DefaultDepth, Model.DefaultHostDepth));
-                Model.NewUri = "";
+                Model.NewUri = string.Empty;
             }
             else
             {
@@ -46,24 +51,24 @@
             }
         }
 
-        private async void ContentUri_Selected(object sender, RoutedEventArgs e)
+        private async void CrawlerUri_Selected(object sender, RoutedEventArgs e)
         {
-            if (Model.CurrentContentUri != null)
+            if (Model.CurrentCrawlerUri != null)
             {
-                var contentStream = await storage.GetUriContet(Model.CurrentContentUri);
+                var contentStream = await storage.GetUriContet(Model.CurrentCrawlerUri);
                 var reader = new StreamReader(contentStream);
                 var content = await reader.ReadToEndAsync();
-                Model.CurrentContent = content;
+                Model.CurrentCrawlerContent = content;
             }
             else
             {
-                Model.CurrentContent = "";
+                Model.CurrentCrawlerContent = string.Empty;
             }
         }
 
         private void Crawler_UriCrawled(string uri)
         {
-            Dispatcher.Invoke(() => { Model.Found.Add(uri); });
+            Dispatcher.Invoke(() => { Model.CrawlerResult.Add(uri); });
         }
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
@@ -88,7 +93,7 @@
             try
             {
                 Model.Cancellation = new CancellationTokenSource();
-                Model.Found.Clear();
+                Model.CrawlerResult.Clear();
                 var config = new Configuration
                 {
                     CancellationToken = Model.Cancellation.Token,
@@ -149,31 +154,33 @@
             Model.Cancellation?.Cancel();
             Model.Cancellation?.Dispose();
             Model.Cancellation = new CancellationTokenSource();
-            Model.Found.Clear();
+            Model.SearchResult.Clear();
             var cancellation = Model.Cancellation.Token;
-            string searchString = Model.SearchString;
-            var task = Task.Run(async () =>
-              {
-                  try
+            var searchString = Model.SearchString;
+            var task = Task.Run(
+                async () =>
                   {
-                      var en = await storage.SearchText(searchString);
-                      foreach (var uri in en)
+                      try
                       {
-                          if (cancellation.IsCancellationRequested)
+                          var en = await storage.SearchText(searchString);
+                          foreach (var uri in en)
                           {
-                              break;
+                              if (cancellation.IsCancellationRequested)
+                              {
+                                  break;
+                              }
+                              Dispatcher.Invoke(() =>
+                              {
+                                  Model.SearchResult.Add(uri);
+                              });
                           }
-                          Dispatcher.Invoke(() =>
-                          {
-                              Model.Found.Add(uri);
-                          });
                       }
-                  }
-                  catch (Exception ex)
-                  {
-                      Model.AddLogLine(ex.ToString());
-                  }
-              });
+                      catch (Exception ex)
+                      {
+                          Model.AddLogLine(ex.ToString());
+                      }
+                  },
+                cancellation);
         }
 
         private void SearchText_Changed(object sender, KeyEventArgs e)
@@ -181,6 +188,21 @@
             if (e.Key == Key.Enter)
             {
                 Search();
+            }
+        }
+
+        private async void SearchUri_Selected(object sender, SelectionChangedEventArgs e)
+        {
+            if (Model.CurrentSearchUri != null)
+            {
+                var contentStream = await storage.GetUriContet(Model.CurrentSearchUri);
+                var reader = new StreamReader(contentStream);
+                var content = await reader.ReadToEndAsync();
+                Model.CurrentSearchContent = content;
+            }
+            else
+            {
+                Model.CurrentSearchContent = string.Empty;
             }
         }
     }

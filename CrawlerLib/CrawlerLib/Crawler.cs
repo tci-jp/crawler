@@ -51,9 +51,9 @@ namespace CrawlerLib
             config = new Configuration(conf) ?? new Configuration();
 
             client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
+                     {
+                         Timeout = config.RequestTimeout
+                     };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -86,13 +86,6 @@ namespace CrawlerLib
 
             await WaitForTheEnd();
             return sessionid;
-        }
-
-        private async Task WaitForTheEnd()
-        {
-            await lastEvent.WaitAsync(config.CancellationToken);
-            await Task.WhenAll(tasks);
-            config.CancellationToken.ThrowIfCancellationRequested();
         }
 
         /// <summary>
@@ -138,12 +131,12 @@ namespace CrawlerLib
             }
 
             var newstate = new State
-            {
-                Uri = uri,
-                Depth = depth,
-                HostDepth = hostDepth,
-                Referrer = state?.Uri
-            };
+                           {
+                               Uri = uri,
+                               Depth = depth,
+                               HostDepth = hostDepth,
+                               Referrer = state?.Uri
+                           };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
             if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
@@ -370,6 +363,13 @@ namespace CrawlerLib
                     }
                 }
             }
+        }
+
+        private async Task WaitForTheEnd()
+        {
+            await lastEvent.WaitAsync(config.CancellationToken);
+            await Task.WhenAll(tasks);
+            config.CancellationToken.ThrowIfCancellationRequested();
         }
 
         private class State

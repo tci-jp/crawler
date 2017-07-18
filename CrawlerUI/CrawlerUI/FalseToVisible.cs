@@ -1,4 +1,8 @@
-namespace WpfApp2
+// <copyright file="FalseToVisible.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+namespace CrawlerUI
 {
     using System;
     using System.Globalization;

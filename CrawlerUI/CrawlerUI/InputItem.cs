@@ -1,6 +1,8 @@
-﻿using System.Windows;
+﻿// <copyright file="InputItem.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
 
-namespace WpfApp2
+namespace CrawlerUI
 {
     using System.ComponentModel;
     using System.Runtime.CompilerServices;
@@ -17,7 +19,11 @@ namespace WpfApp2
             get => url;
             set
             {
-                if (value == url) return;
+                if (value == url)
+                {
+                    return;
+                }
+
                 url = value;
                 OnPropertyChanged();
             }
@@ -28,7 +34,11 @@ namespace WpfApp2
             get => depth;
             set
             {
-                if (value == depth) return;
+                if (value == depth)
+                {
+                    return;
+                }
+
                 depth = value;
                 OnPropertyChanged();
             }
@@ -39,7 +49,11 @@ namespace WpfApp2
             get => hostDepth;
             set
             {
-                if (value == hostDepth) return;
+                if (value == hostDepth)
+                {
+                    return;
+                }
+
                 hostDepth = value;
                 OnPropertyChanged();
             }

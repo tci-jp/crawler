@@ -1,4 +1,8 @@
-namespace WpfApp2
+// <copyright file="Model.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+namespace CrawlerUI
 {
     using System.Collections.ObjectModel;
     using System.ComponentModel;
@@ -9,15 +13,18 @@ namespace WpfApp2
 
     public class Model : INotifyPropertyChanged
     {
+        private readonly StringBuilder log = new StringBuilder("Test\r\nTest");
+        private string currentCrawlerContent = string.Empty;
+        private string currentCrawlerUri;
+        private string currentSearchContent;
+        private string currentSearchUri;
         private int defaultDepth = 3;
         private int defaultHostDepth;
-
-        private readonly StringBuilder log = new StringBuilder("Test\r\nTest");
         private string newUri;
         private bool running;
-        private string currentContentUri;
-        private string currentContent="";
         private string searchString;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public string NewUri
         {
@@ -28,13 +35,17 @@ namespace WpfApp2
                 {
                     return;
                 }
+
                 newUri = value;
                 OnPropertyChanged();
             }
         }
 
         public ObservableCollection<InputItem> Input { get; } = new ObservableCollection<InputItem>();
-        public ObservableCollection<string> Found { get; } = new ObservableCollection<string>();
+
+        public ObservableCollection<string> CrawlerResult { get; } = new ObservableCollection<string>();
+
+        public ObservableCollection<string> SearchResult { get; } = new ObservableCollection<string>();
 
         public int DefaultHostDepth
         {
@@ -45,6 +56,7 @@ namespace WpfApp2
                 {
                     return;
                 }
+
                 defaultHostDepth = value;
                 OnPropertyChanged();
             }
@@ -59,6 +71,7 @@ namespace WpfApp2
                 {
                     return;
                 }
+
                 defaultDepth = value;
                 OnPropertyChanged();
             }
@@ -73,6 +86,7 @@ namespace WpfApp2
                 {
                     return;
                 }
+
                 running = value;
                 OnPropertyChanged();
             }
@@ -82,23 +96,62 @@ namespace WpfApp2
 
         public string Log => log.ToString();
 
-        public string CurrentContentUri
+        public string CurrentCrawlerUri
         {
-            get => currentContentUri; set
+            get => currentCrawlerUri;
+            set
             {
-                if (value == currentContentUri) return;
-                currentContentUri = value;
+                if (value == currentCrawlerUri)
+                {
+                    return;
+                }
+
+                currentCrawlerUri = value;
                 OnPropertyChanged();
             }
         }
 
-        public string CurrentContent
+        public string CurrentSearchUri
         {
-            get => currentContent;
+            get => currentSearchUri;
             set
             {
-                if (value == currentContent) return;
-                currentContent = value;
+                if (value == currentSearchUri)
+                {
+                    return;
+                }
+
+                currentSearchUri = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string CurrentSearchContent
+        {
+            get => currentSearchContent;
+            set
+            {
+                if (value == currentSearchContent)
+                {
+                    return;
+                }
+
+                currentSearchContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string CurrentCrawlerContent
+        {
+            get => currentCrawlerContent;
+            set
+            {
+                if (value == currentCrawlerContent)
+                {
+                    return;
+                }
+
+                currentCrawlerContent = value;
                 OnPropertyChanged();
             }
         }
@@ -108,13 +161,15 @@ namespace WpfApp2
             get => searchString;
             set
             {
-                if (value == searchString) return;
+                if (value == searchString)
+                {
+                    return;
+                }
+
                 searchString = value;
                 OnPropertyChanged();
             }
         }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public void AddLogLine(string line)
         {
@@ -122,15 +177,15 @@ namespace WpfApp2
             OnPropertyChanged(nameof(Log));
         }
 
+        public void ResetLog()
+        {
+            log.Clear();
+        }
+
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void ResetLog()
-        {
-            log.Clear();
         }
     }
 }

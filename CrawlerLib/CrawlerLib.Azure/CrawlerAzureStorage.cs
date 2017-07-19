@@ -2,7 +2,9 @@ namespace CrawlerLib.Azure
 {
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data;
     using global::Azure.Storage;
@@ -28,50 +30,59 @@ namespace CrawlerLib.Azure
 
             await storage.InsertOrReplaceAsync(new CrawlRecord(uri)
             {
-                Status = "OK"
+                Status = HttpStatusCode.OK.ToString()
             });
         }
 
-        public Task<string> CreateSession(IEnumerable<string> rootUris)
+        public async Task<string> CreateSession(IEnumerable<string> rootUris)
         {
-            throw new System.NotImplementedException();
+            var session = new SessionInfo(rootUris);
+            await storage.InsertOrReplaceAsync(session);
+            return session.Id;
         }
 
-        public Task<IEnumerable<SessionInfo>> GetAllSessions()
+        public Task<IEnumerable<ISessionInfo>> GetAllSessions()
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(storage.Query<SessionInfo>().AsEnumerable().Cast<ISessionInfo>());
         }
 
-        public Task AddPageReferer(string sessionId, string uri, string referer)
+        public async Task AddPageReferer(string sessionId, string uri, string referer)
         {
-            throw new System.NotImplementedException();
+            await storage.InsertOrReplaceAsync(new UriReferer(sessionId, uri, referer));
+            await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri));
         }
 
-        public Task StorePageError(string sessionId, string uri, HttpStatusCode code)
+        public async Task StorePageError(string sessionId, string uri, HttpStatusCode code)
         {
-            throw new System.NotImplementedException();
+            await storage.InsertOrReplaceAsync(new CrawlRecord(uri)
+            {
+                Status = code.ToString()
+            });
         }
 
         public Task<IEnumerable<string>> GetSessionUris(string sessionId)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(storage.Query<SessionUri>().AsEnumerable().Select(u => u.Uri));
         }
 
-        public Task<Stream> GetUriContet(string uri)
+        public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
         {
-            throw new System.NotImplementedException();
+            var container = await storage.GetBlobContainer("pages");
+            var blob = container.GetBlockBlobReference(uri);
+            await blob.DownloadToStreamAsync(destination, cancellation);
         }
 
         public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(storage.Query(new UriReferer(sessionId, uri, null)).AsEnumerable().Select(e => e.Referer));
         }
 
         public Task<IEnumerable<string>> SearchText(string text)
         {
-            throw new System.NotImplementedException();
+
         }
 
+        [UsedImplicitly]
         public async Task StorePageError(string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(uri)

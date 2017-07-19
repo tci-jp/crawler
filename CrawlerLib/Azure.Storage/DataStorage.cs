@@ -17,7 +17,7 @@ namespace Azure.Storage
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Helper class for Azure Storage.
+    /// Helper class for Azure Storage Blobs and Tables.
     /// </summary>
     [UsedImplicitly]
     public class DataStorage
@@ -125,6 +125,44 @@ namespace Azure.Storage
             return query;
         }
 
+        /// <summary>
+        /// Starts query for specific Table type.
+        /// </summary>
+        /// <typeparam name="TEntity">Type of Table.</typeparam>
+        /// <param name="entity">Entity with not null PartitionKey or RowKey for query</param>
+        /// <returns>Queryable for further quering.</returns>
+        [UsedImplicitly]
+        public IQueryable<TEntity> Query<TEntity>([NotNull] TEntity entity)
+            where TEntity : TableEntity, new()
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            var table = GetTable<TEntity>();
+            var attr = GetEntityAttribute<TEntity>();
+
+            var query = table.CreateQuery<TEntity>();
+            if (attr.PartitionKey != null && attr.RowKey == null && entity.RowKey != null)
+            {
+                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == entity.RowKey);
+            }
+
+            if (attr.PartitionKey == null && attr.RowKey != null && entity.PartitionKey != null)
+            {
+                return query.Where(i => i.RowKey == attr.RowKey && i.PartitionKey == entity.PartitionKey);
+            }
+
+            return Query<TEntity>();
+        }
+
+        /// <summary>
+        /// Query Azure Table by expression
+        /// </summary>
+        /// <param name="func">Query expression.</param>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <returns>Queryable with result.</returns>
         [UsedImplicitly]
         public IQueryable<TEntity> Query<TEntity>(Expression<Func<TEntity, bool>> func)
             where TEntity : TableEntity, new()
@@ -136,6 +174,12 @@ namespace Azure.Storage
             return result;
         }
 
+        /// <summary>
+        /// Replace only if entity already exists.
+        /// </summary>
+        /// <param name="entity">Entity to replace.</param>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public async Task ReplaceAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
@@ -191,17 +235,17 @@ namespace Azure.Storage
         private TableAttribute GetEntityAttribute<T>()
         {
             return typeToAttribute.GetOrAdd(typeof(T), t =>
-                                                       {
-                                                           var attr =
-                                                               t.GetCustomAttributes(typeof(TableAttribute), true)
-                                                                .SingleOrDefault() as TableAttribute;
-                                                           if (attr == null)
-                                                           {
-                                                               throw new ArgumentException(
-                                                                   $"Type {typeof(T)} does not have Table attribute");
-                                                           }
-                                                           return attr;
-                                                       });
+            {
+                var attr =
+                    t.GetCustomAttributes(typeof(TableAttribute), true)
+                     .SingleOrDefault() as TableAttribute;
+                if (attr == null)
+                {
+                    throw new ArgumentException(
+                        $"Type {typeof(T)} does not have Table attribute");
+                }
+                return attr;
+            });
         }
 
         private string GetEntityKey_<T>()
@@ -319,14 +363,16 @@ namespace Azure.Storage
 
                 if (node.Member.GetCustomAttribute(typeof(RowKeyAttribute)) != null)
                 {
-                    return Expression.MakeMemberAccess(node.Expression,
-                                                       typeof(TableEntity).GetMember("RowKey").Single());
+                    return Expression.MakeMemberAccess(
+                        node.Expression,
+                        typeof(TableEntity).GetMember("RowKey").Single());
                 }
 
                 if (node.Member.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null)
                 {
-                    return Expression.MakeMemberAccess(node.Expression,
-                                                       typeof(TableEntity).GetMember("PartitionKey").Single());
+                    return Expression.MakeMemberAccess(
+                        node.Expression,
+                        typeof(TableEntity).GetMember("PartitionKey").Single());
                 }
 
                 return null;

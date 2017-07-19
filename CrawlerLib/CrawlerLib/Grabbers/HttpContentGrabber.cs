@@ -1,4 +1,8 @@
-﻿namespace CrawlerLib.Grabbers
+﻿// <copyright file="HttpContentGrabber.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+namespace CrawlerLib.Grabbers
 {
     using System;
     using System.Collections.Concurrent;

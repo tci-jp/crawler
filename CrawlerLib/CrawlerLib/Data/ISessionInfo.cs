@@ -7,12 +7,12 @@ namespace CrawlerLib.Data
     using System;
     using System.Collections.Generic;
 
-    public class SessionInfo
+    public interface ISessionInfo
     {
-        public string Id { get; set; }
+        string Id { get; }
 
-        public DateTime Timestamp { get; set; }
+        DateTime Timestamp { get; }
 
-        public IList<string> RootUris { get; set; }
+        IList<string> RootUris { get; }
     }
 }

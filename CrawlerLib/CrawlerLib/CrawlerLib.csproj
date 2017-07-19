@@ -99,7 +99,7 @@
     <Compile Include="Configuration.cs" />
     <Compile Include="Crawler.cs" />
     <Compile Include="Data\DummyStorage.cs" />
-    <Compile Include="Data\SessionInfo.cs" />
+    <Compile Include="Data\ISessionInfo.cs" />
     <Compile Include="EncodingRedirector.cs" />
     <Compile Include="Data\ICrawlerStorage.cs" />
     <Compile Include="Grabbers\GrabResult.cs" />

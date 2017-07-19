@@ -7,6 +7,7 @@ namespace CrawlerLib
     using System;
     using System.Threading;
     using Data;
+    using Grabbers;
     using Logger;
 
     public class Configuration
@@ -47,5 +48,7 @@ namespace CrawlerLib
         public TimeSpan HostRequestsDelay { get; set; } = TimeSpan.FromSeconds(1);
 
         public int NumberOfSimulataneousRequests { get; set; } = 8;
+
+        public HttpGrabber HttpGrabber { get; set; }
     }
 }

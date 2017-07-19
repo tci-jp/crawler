@@ -5,6 +5,7 @@
 namespace CrawlerLib.Data
 {
     using System;
+    using System.Collections.Async;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
@@ -84,7 +85,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> SearchText(string text)
+        public Task<IAsyncEnumerable<string>> SearchText(string text)
         {
             IEnumerable<string> GetEnumerable()
             {
@@ -98,7 +99,7 @@ namespace CrawlerLib.Data
                 }
             }
 
-            return Task.FromResult(GetEnumerable());
+            return Task.FromResult(GetEnumerable().ToAsyncEnumerable());
         }
 
         private class SessionInfo : ISessionInfo

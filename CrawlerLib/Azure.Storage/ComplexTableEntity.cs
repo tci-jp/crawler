@@ -6,6 +6,7 @@ namespace Azure.Storage
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage;
@@ -44,7 +45,7 @@ namespace Azure.Storage
             OperationContext operationContext)
         {
             foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.SetField))
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
             {
                 if (properties.TryGetValue(prop.Name, out var entity))
                 {
@@ -87,7 +88,7 @@ namespace Azure.Storage
         {
             var result = new Dictionary<string, EntityProperty>();
             foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.SetField))
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
             {
                 var name = prop.Name;
                 var val = prop.GetValue(this);

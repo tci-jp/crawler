@@ -10,6 +10,7 @@ namespace Azure.Storage
     using System.Linq.Expressions;
     using System.Net;
     using System.Reflection;
+    using System.Text;
     using System.Threading.Tasks;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage;
@@ -48,6 +49,16 @@ namespace Azure.Storage
         private CloudTableClient TableClient { get; }
 
         /// <summary>
+        /// Decodes string from Base64.
+        /// </summary>
+        /// <param name="code">Base64 string.</param>
+        /// <returns>Decoded string.</returns>
+        public static string DecodeString(string code)
+        {
+            return Encoding.UTF8.GetString(Convert.FromBase64String(code));
+        }
+
+        /// <summary>
         /// Deletes Table entity with specific PartitionKey and RowKey.
         /// </summary>
         /// <param name="entity">Entity to delete.</param>
@@ -60,6 +71,16 @@ namespace Azure.Storage
             var retrieveOperation = TableOperation.Delete(entity);
             var retrievedResult = await GetTable<TEntity>().ExecuteAsync(retrieveOperation);
             return retrievedResult.HttpStatusCode == 200;
+        }
+
+        /// <summary>
+        /// Encodes string into Base64.
+        /// </summary>
+        /// <param name="str">String to encode.</param>
+        /// <returns>Encoded string.</returns>
+        public static string EncodeString(string str)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
         }
 
         [UsedImplicitly]
@@ -82,7 +103,8 @@ namespace Azure.Storage
             where TEntity : TableEntity
         {
             PrepareEntity(entity);
-            ProcessResult(await (await GetOrCreateTableAsync<TEntity>()).ExecuteAsync(TableOperation.Insert(entity)));
+            var cloudTable = await GetOrCreateTableAsync<TEntity>();
+            ProcessResult(await cloudTable.ExecuteAsync(TableOperation.Insert(entity)));
         }
 
         [UsedImplicitly]
@@ -90,8 +112,8 @@ namespace Azure.Storage
             where TEntity : TableEntity
         {
             PrepareEntity(entity);
-            ProcessResult(
-                await (await GetOrCreateTableAsync<TEntity>()).ExecuteAsync(TableOperation.InsertOrReplace(entity)));
+            var cloudTable = await GetOrCreateTableAsync<TEntity>();
+            ProcessResult(await cloudTable.ExecuteAsync(TableOperation.InsertOrReplace(entity)));
         }
 
         /// <summary>

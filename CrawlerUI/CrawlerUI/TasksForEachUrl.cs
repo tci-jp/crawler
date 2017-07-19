@@ -2,14 +2,14 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace CrawlerUI
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
     public class TasksForEachUrl
     {
         public Task CrawTask { get; set; }

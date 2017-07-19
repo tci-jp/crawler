@@ -5,6 +5,7 @@
 namespace CrawlerUI
 {
     using System;
+    using System.Collections.Async;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -13,7 +14,9 @@ namespace CrawlerUI
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Input;
+    using Azure.Storage;
     using CrawlerLib;
+    using CrawlerLib.Azure;
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
 
@@ -22,10 +25,11 @@ namespace CrawlerUI
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly DataStorage azure = new DataStorage("UseDevelopmentStorage=true");
         private static readonly Regex NumberRegex = new Regex("[^0-9]+");
 
-        private static readonly DummyStorage storage = new DummyStorage();
-        private HttpGrabber grabber;
+        private static readonly ICrawlerStorage Storage =
+            new CrawlerAzureStorage(azure, new SimpleBlobSearcher(azure, "pages"));
 
         public MainWindow()
         {
@@ -53,12 +57,19 @@ namespace CrawlerUI
             }
         }
 
+        private void Crawler_UriCrawled(string uri)
+        {
+            Dispatcher.Invoke(() => { Model.CrawlerResult.Add(uri); });
+        }
+
         private async void CrawlerUri_Selected(object sender, RoutedEventArgs e)
         {
             if (Model.CurrentCrawlerUri != null)
             {
-                var contentStream = await storage.GetUriContet(Model.CurrentCrawlerUri);
-                var reader = new StreamReader(contentStream);
+                var mem = new MemoryStream();
+                await Storage.GetUriContet(Model.CurrentCrawlerUri, mem, CancellationToken.None);
+                mem.Position = 0;
+                var reader = new StreamReader(mem);
                 var content = await reader.ReadToEndAsync();
                 Model.CurrentCrawlerContent = content;
             }
@@ -66,11 +77,6 @@ namespace CrawlerUI
             {
                 Model.CurrentCrawlerContent = string.Empty;
             }
-        }
-
-        private void Crawler_UriCrawled(string uri)
-        {
-            Dispatcher.Invoke(() => { Model.CrawlerResult.Add(uri); });
         }
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
@@ -82,6 +88,77 @@ namespace CrawlerUI
         {
             var urlItem = ((FrameworkElement)sender).DataContext as InputItem;
             Model.Input.Remove(urlItem);
+        }
+
+        private void Search()
+        {
+            Model.Cancellation?.Cancel();
+            Model.Cancellation?.Dispose();
+            Model.Cancellation = new CancellationTokenSource();
+            Model.SearchResult.Clear();
+            var cancellation = Model.Cancellation.Token;
+            var searchString = Model.SearchString;
+            var task = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        var en = await Storage.SearchText(searchString);
+                        await en.ForEachAsync(
+                            uri =>
+                            {
+                                cancellation.ThrowIfCancellationRequested();
+                                Dispatcher.InvokeAsync(() => { Model.SearchResult.Add(uri); });
+                            },
+                            cancellation);
+                    }
+                    catch (Exception ex)
+                    {
+                        Model.AddLogLine(ex.ToString());
+                    }
+                },
+                cancellation);
+        }
+
+        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            Search();
+        }
+
+        private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void SearchText_Changed(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                Search();
+            }
+        }
+
+        private async void SearchUri_Selected(object sender, SelectionChangedEventArgs e)
+        {
+            if (Model.CurrentSearchUri != null)
+            {
+                var mem = new MemoryStream();
+                await Storage.GetUriContet(Model.CurrentSearchUri, mem, CancellationToken.None);
+                mem.Position = 0;
+                var reader = new StreamReader(mem);
+                var content = await reader.ReadToEndAsync();
+                Model.CurrentSearchContent = content;
+                Model.SearchContentSelectionStart =
+                    content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
+                Model.SearchContentSelectionLength = Model.SearchString.Length;
+
+                FocusManager.SetFocusedElement(this, SearchContent);
+                SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
+            }
+            else
+            {
+                Model.CurrentSearchContent = string.Empty;
+            }
         }
 
         private async void StartCrawl(object sender, RoutedEventArgs e)
@@ -97,20 +174,17 @@ namespace CrawlerUI
                 Model.Cancellation = new CancellationTokenSource();
                 Model.CrawlerResult.Clear();
                 var config = new Configuration
-                {
-                    CancellationToken = Model.Cancellation.Token,
-                    Depth = Model.DefaultDepth,
-                    HostDepth = Model.DefaultHostDepth,
-                    Logger = new GuiLogger(Model),
-                    Storage = storage
-                };
+                             {
+                                 CancellationToken = Model.Cancellation.Token,
+                                 Depth = Model.DefaultDepth,
+                                 HostDepth = Model.DefaultHostDepth,
+                                 Logger = new GuiLogger(Model),
+                                 Storage = Storage
+                             };
 
-                if (grabber == null)
-                {
-                    grabber = new HttpContentGrabber(config);
-                }
+                config.HttpGrabber = new HttpContentGrabber(config);
 
-                var crawler = new Crawler(grabber, config);
+                var crawler = new Crawler(config);
                 crawler.UriCrawled += Crawler_UriCrawled;
                 try
                 {
@@ -149,79 +223,6 @@ namespace CrawlerUI
             {
                 AddUrl();
             }
-        }
-
-        private void SearchButton_Click(object sender, RoutedEventArgs e)
-        {
-            Search();
-        }
-
-        private void Search()
-        {
-            Model.Cancellation?.Cancel();
-            Model.Cancellation?.Dispose();
-            Model.Cancellation = new CancellationTokenSource();
-            Model.SearchResult.Clear();
-            var cancellation = Model.Cancellation.Token;
-            var searchString = Model.SearchString;
-            var task = Task.Run(
-                async () =>
-                  {
-                      try
-                      {
-                          var en = await storage.SearchText(searchString);
-                          foreach (var uri in en)
-                          {
-                              if (cancellation.IsCancellationRequested)
-                              {
-                                  break;
-                              }
-                              Dispatcher.Invoke(() =>
-                              {
-                                  Model.SearchResult.Add(uri);
-                              });
-                          }
-                      }
-                      catch (Exception ex)
-                      {
-                          Model.AddLogLine(ex.ToString());
-                      }
-                  },
-                cancellation);
-        }
-
-        private void SearchText_Changed(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                Search();
-            }
-        }
-
-        private async void SearchUri_Selected(object sender, SelectionChangedEventArgs e)
-        {
-            if (Model.CurrentSearchUri != null)
-            {
-                var contentStream = await storage.GetUriContet(Model.CurrentSearchUri);
-                var reader = new StreamReader(contentStream);
-                var content = await reader.ReadToEndAsync();
-                Model.CurrentSearchContent = content;
-                Model.SearchContentSelectionStart =
-                    content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
-                Model.SearchContentSelectionLength = Model.SearchString.Length;
-
-                FocusManager.SetFocusedElement(this, SearchContent);
-                SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
-            }
-            else
-            {
-                Model.CurrentSearchContent = string.Empty;
-            }
-        }
-
-        private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
-        {
-            e.Handled = true;
         }
     }
 }

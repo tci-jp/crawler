@@ -11,6 +11,7 @@ namespace CrawlerLib.Grabbers
     using System.Threading.Tasks;
     using Logger;
 
+    /// <inheritdoc />
     /// <summary>
     /// Simple HTTPClient page grabber.
     /// </summary>

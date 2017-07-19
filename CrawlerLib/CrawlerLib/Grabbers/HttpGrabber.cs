@@ -14,7 +14,7 @@ namespace CrawlerLib.Grabbers
     {
         protected Configuration Config { get; }
 
-        public HttpGrabber(Configuration config)
+        protected HttpGrabber(Configuration config)
         {
             Config = config;
         }

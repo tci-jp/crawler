@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Data
 {
+    using System.Collections.Async;
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
@@ -74,7 +75,7 @@ namespace CrawlerLib.Data
         /// </summary>
         /// <param name="text">Text to search.</param>
         /// <returns>Collection of URIs which content has that text.</returns>
-        Task<IEnumerable<string>> SearchText(string text);
+        Task<IAsyncEnumerable<string>> SearchText(string text);
 
         /// <summary>
         /// Store page crawling status code

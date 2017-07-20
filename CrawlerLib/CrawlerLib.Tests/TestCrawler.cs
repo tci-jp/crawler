@@ -47,7 +47,7 @@ namespace CrawlerLib.Tests
 
         private Crawler NewCrawler()
         {
-            crawler = new Crawler(new SimpleHttpGrabber(config), config);
+            crawler = new Crawler(config);
             return crawler;
         }
     }

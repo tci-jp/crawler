@@ -16,9 +16,6 @@ namespace CrawlerLib.Azure
     using Data;
     using global::Azure.Storage;
     using JetBrains.Annotations;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Azure.Search;
-    using Microsoft.Azure.Search.Models;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Auth;
     using Microsoft.WindowsAzure.Storage.Blob;

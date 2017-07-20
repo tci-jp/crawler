@@ -1,4 +1,4 @@
-﻿namespace AzureSearch.SDKHowTo
+﻿namespace CrawlerLib.Azure
 {
     using System;
     using System.Text;
@@ -12,12 +12,12 @@
         {
             var builder = new StringBuilder();
 
-            if (!String.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(BlobUrl))
             {
                 builder.AppendFormat("Url: {0}\t", BlobUrl);
             }
 
-            if (!String.IsNullOrEmpty(Html))
+            if (!string.IsNullOrEmpty(Html))
             {
                 builder.AppendFormat("Html: {0}\t", Html);
             }

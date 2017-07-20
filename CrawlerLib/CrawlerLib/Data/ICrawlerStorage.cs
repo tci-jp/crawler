@@ -4,9 +4,11 @@
 
 namespace CrawlerLib.Data
 {
+    using System.Collections.Async;
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -42,7 +44,7 @@ namespace CrawlerLib.Data
         /// Gets collection of all previous crawling sessions.
         /// </summary>
         /// <returns>Collection of sessions.</returns>
-        Task<IEnumerable<SessionInfo>> GetAllSessions();
+        Task<IEnumerable<ISessionInfo>> GetAllSessions();
 
         /// <summary>
         /// Returns collection of URI referers.
@@ -63,15 +65,17 @@ namespace CrawlerLib.Data
         /// Returns content of crawled URI.
         /// </summary>
         /// <param name="uri">Crawled URI.</param>
+        /// <param name="destination">Content destination stream</param>
+        /// <param name="cancellation">Download cancellation</param>
         /// <returns>Stream with content.</returns>
-        Task<Stream> GetUriContet(string uri);
+        Task GetUriContet(string uri, Stream destination, CancellationToken cancellation);
 
         /// <summary>
         /// Search URLs content by free text
         /// </summary>
         /// <param name="text">Text to search.</param>
         /// <returns>Collection of URIs which content has that text.</returns>
-        Task<IEnumerable<string>> SearchText(string text);
+        Task<IAsyncEnumerable<string>> SearchText(string text);
 
         /// <summary>
         /// Store page crawling status code

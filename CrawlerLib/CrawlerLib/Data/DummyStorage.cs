@@ -5,12 +5,14 @@
 namespace CrawlerLib.Data
 {
     using System;
+    using System.Collections.Async;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -20,7 +22,7 @@ namespace CrawlerLib.Data
     {
         private readonly ConcurrentDictionary<string, byte[]> dumpedPages = new ConcurrentDictionary<string, byte[]>();
 
-        private readonly ConcurrentDictionary<string, Session> sessions = new ConcurrentDictionary<string, Session>();
+        private readonly ConcurrentDictionary<string, SessionInfo> sessions = new ConcurrentDictionary<string, SessionInfo>();
 
         /// <inheritdoc />
         public async Task DumpPage(string uri, Stream stream)
@@ -33,21 +35,21 @@ namespace CrawlerLib.Data
         /// <inheritdoc />
         public Task<string> CreateSession(IEnumerable<string> rootUris)
         {
-            var sess = new Session
-                       {
-                           Id = Guid.NewGuid().ToString(),
-                           RootUris = new List<string>(rootUris),
-                           Timestamp = DateTime.UtcNow
-                       };
+            var sess = new SessionInfo
+            {
+                Id = Guid.NewGuid().ToString(),
+                RootUris = new List<string>(rootUris),
+                Timestamp = DateTime.UtcNow
+            };
 
             sessions.TryAdd(sess.Id, sess);
             return Task.FromResult(sess.Id);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<SessionInfo>> GetAllSessions()
+        public Task<IEnumerable<ISessionInfo>> GetAllSessions()
         {
-            return Task.FromResult(sessions.Cast<SessionInfo>());
+            return Task.FromResult(sessions.Cast<ISessionInfo>());
         }
 
         /// <inheritdoc />
@@ -71,9 +73,9 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<Stream> GetUriContet(string uri)
+        public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
         {
-            return Task.FromResult<Stream>(new MemoryStream(dumpedPages[uri]));
+            await destination.WriteAsync(dumpedPages[uri], 0, dumpedPages[uri].Length, cancellation);
         }
 
         /// <inheritdoc />
@@ -83,7 +85,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> SearchText(string text)
+        public Task<IAsyncEnumerable<string>> SearchText(string text)
         {
             IEnumerable<string> GetEnumerable()
             {
@@ -97,16 +99,22 @@ namespace CrawlerLib.Data
                 }
             }
 
-            return Task.FromResult(GetEnumerable());
+            return Task.FromResult(GetEnumerable().ToAsyncEnumerable());
         }
 
-        private class Session : SessionInfo
+        private class SessionInfo : ISessionInfo
         {
             public ConcurrentDictionary<string, ConcurrentBag<string>> Referers { get; } =
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();
 
             public ConcurrentDictionary<string, string> Codes { get; } =
                 new ConcurrentDictionary<string, string>();
+
+            public string Id { get; set; }
+
+            public DateTime Timestamp { get; set; }
+
+            public IList<string> RootUris { get; set; } = new List<string>();
         }
     }
 }

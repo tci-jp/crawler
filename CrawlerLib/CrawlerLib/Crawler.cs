@@ -21,12 +21,12 @@ namespace CrawlerLib
     using Nito.AsyncEx;
     using RobotsTxt;
 
+    /// <inheritdoc />
     /// <summary>
     /// Crawls, parses and indexing web pages.
     /// </summary>
-    public class Crawler:IDisposable
+    public class Crawler : IDisposable
     {
-        private readonly HttpGrabber grabber;
         private readonly HttpClient client;
 
         private readonly Configuration config;
@@ -45,11 +45,9 @@ namespace CrawlerLib
         /// <summary>
         /// Initializes a new instance of the <see cref="Crawler" /> class.
         /// </summary>
-        /// <param name="grabber">Http pages grabber.</param>
         /// <param name="conf">Configuration for crawler.</param>
-        public Crawler(HttpGrabber grabber, Configuration conf = null)
+        public Crawler(Configuration conf = null)
         {
-            this.grabber = grabber;
             EncodingRedirector.RegisterEncodings();
 
             config = new Configuration(conf) ?? new Configuration();
@@ -197,7 +195,7 @@ namespace CrawlerLib
                                 break;
                             }
 
-                            var result = await grabber.Grab(state.Uri, state.Referrer);
+                            var result = await config.HttpGrabber.Grab(state.Uri, state.Referrer);
 
                             lastCode = result.Status;
                             if (lastCode != HttpStatusCode.OK)
@@ -393,7 +391,6 @@ namespace CrawlerLib
 
         public void Dispose()
         {
-            grabber?.Dispose();
             client?.Dispose();
         }
     }

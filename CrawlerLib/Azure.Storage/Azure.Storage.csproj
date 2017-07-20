@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComplexTableEntity.cs" />
     <Compile Include="DataStorage.cs" />
     <Compile Include="PartitionKeyAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

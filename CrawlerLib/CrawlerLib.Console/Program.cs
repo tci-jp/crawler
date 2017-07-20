@@ -1,5 +1,5 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿// <copyright file="Program.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
 namespace CrawlerLib.Console
@@ -46,7 +46,9 @@ namespace CrawlerLib.Console
                     HostDepth = 1,
                     Depth = 3
                 };
-                var crawler = new Crawler(new HttpContentGrabber(config), config);
+                config.HttpGrabber = new HttpContentGrabber(config);
+
+                var crawler = new Crawler(config);
                 var crawledUriNumbder = 0;
                 crawler.UriCrawled += u => { Interlocked.Increment(ref crawledUriNumbder); };
 

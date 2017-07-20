@@ -1,4 +1,8 @@
-﻿using System.Reflection;
+﻿// <copyright file="AssemblyInfo.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following

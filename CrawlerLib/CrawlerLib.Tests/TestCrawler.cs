@@ -1,5 +1,5 @@
-﻿// <copyright file="TestCrawler.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿// <copyright file="TestCrawler.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
 namespace CrawlerLib.Tests

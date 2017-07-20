@@ -1,8 +1,17 @@
+// <copyright file="CrawlerAzureStorage.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib.Azure
 {
+    using System;
+    using System.Collections.Async;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
+    using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data;
     using global::Azure.Storage;
@@ -22,186 +31,80 @@ namespace CrawlerLib.Azure
     public class CrawlerAzureStorage : ICrawlerStorage
     {
         private readonly DataStorage storage;
-        private ILogger logger;
-        public CrawlerAzureStorage(DataStorage storage)
+        private readonly IBlobSearcher searcher;
+
+        public CrawlerAzureStorage(DataStorage storage, IBlobSearcher searcher)
         {
             this.storage = storage;
+            this.searcher = searcher;
         }
-
-
 
         public async Task DumpPage(string uri, Stream content)
         {
             var container = await storage.GetBlobContainer("pages");
-            var blob = container.GetBlockBlobReference(uri);
+
+            var record = new CrawlRecord(uri)
+            {
+                Status = HttpStatusCode.OK.ToString()
+            };
+
+
+            var blob = container.GetBlockBlobReference(record.BlobName);
             await blob.UploadFromStreamAsync(content);
 
+            await storage.InsertOrReplaceAsync(record);
+        }
+
+        public async Task<string> CreateSession(IEnumerable<string> rootUris)
+        {
+            var session = new SessionInfo(rootUris);
+            await storage.InsertOrReplaceAsync(session);
+            return session.Id;
+        }
+
+        public Task<IEnumerable<ISessionInfo>> GetAllSessions()
+        {
+            return Task.FromResult(storage.Query<SessionInfo>().AsEnumerable().Cast<ISessionInfo>());
+        }
+
+        public async Task AddPageReferer(string sessionId, string uri, string referer)
+        {
+            await storage.InsertOrReplaceAsync(new UriReferer(sessionId, uri, referer));
+            await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri));
+        }
+
+        public async Task StorePageError(string sessionId, string uri, HttpStatusCode code)
+        {
             await storage.InsertOrReplaceAsync(new CrawlRecord(uri)
             {
-                Status = "OK"
+                Status = code.ToString()
             });
-        }
-
-        public Task<string> CreateSession(IEnumerable<string> rootUris)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<IEnumerable<SessionInfo>> GetAllSessions()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task AddPageReferer(string sessionId, string uri, string referer)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task StorePageError(string sessionId, string uri, HttpStatusCode code)
-        {
-            throw new System.NotImplementedException();
         }
 
         public Task<IEnumerable<string>> GetSessionUris(string sessionId)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(storage.Query<SessionUri>().AsEnumerable().Select(u => u.Uri));
         }
 
-        public Task<Stream> GetUriContet(string uri)
+        public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
         {
-            throw new System.NotImplementedException();
+            var container = await storage.GetBlobContainer("pages");
+            var blob = container.GetBlockBlobReference(DataStorage.EncodeString(uri));
+            await blob.DownloadToStreamAsync(destination, cancellation);
         }
 
         public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(storage.Query(new UriReferer(sessionId, uri, null)).AsEnumerable().Select(e => e.Referer));
         }
 
-        public Task<IEnumerable<string>> SearchText(string text)
+        public async Task<IAsyncEnumerable<string>> SearchText(string text)
         {
-            //get index configuration
-            IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("indexconfig.json");
-            IConfigurationRoot configuration = builder.Build();
-
-            //get search service info
-            string searchServiceName = configuration["SearchServiceName"];
-            string adminApiKey = configuration["SearchServiceAdminApiKey"];
-            string queryApiKey = configuration["SearchServiceQueryApiKey"];
-            string indexName = configuration["SearchIndexName"];
-
-            //create search service client
-            SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(adminApiKey));
-
-            //delete index if exists
-            if (serviceClient.Indexes.Exists(indexName))
-            {
-                serviceClient.Indexes.Delete(indexName);
-            }
-
-            //create index 
-            var definition = new Index()
-            {
-                Name = indexName,
-                Fields = FieldBuilder.BuildForType<Blob>()
-            };
-            serviceClient.Indexes.Create(definition);
-
-            ISearchIndexClient indexClient = serviceClient.Indexes.GetClient(indexName);
-
-            //create documents
-            UploadDocumentsFromBlob(indexClient, configuration).Wait();
-
-            ISearchIndexClient indexClientForQueries = new SearchIndexClient(searchServiceName, indexName, new SearchCredentials(queryApiKey));
-
-
-            RunQueries(indexClientForQueries, text);
+            var en = await searcher.SearchByText(text);
+            return en.Select(DataStorage.DecodeString);
         }
 
-        private static async Task UploadDocumentsFromBlob(ISearchIndexClient indexClient, IConfigurationRoot configuration)
-        {
-
-            var accountName = configuration["BlobStorageAccountName"];
-            var accountKey = configuration["BlobStorageAccountKey"];
-            var storageAccount = new CloudStorageAccount(new StorageCredentials(accountName, accountKey), true);
-            var blobClient = storageAccount.CreateCloudBlobClient();
-
-            BlobContinuationToken continuationToken = null;
-            BlobContinuationToken containerContinuationToken = null;
-            List<string> containerNames = new List<string>();
-
-            var fetchContainersTask = Task.Run<ContainerResultSegment>(async () =>
-            {
-                return await blobClient.ListContainersSegmentedAsync("", ContainerListingDetails.All, 100, containerContinuationToken, null, null);
-            });
-            var fetchContainersTaskResult = fetchContainersTask.Result;
-            containerContinuationToken = fetchContainersTaskResult.ContinuationToken;
-            var containers = fetchContainersTaskResult.Results.ToList();
-
-            foreach (var container in containers)
-            {
-                Console.WriteLine("Listing blobs from '" + container.Name + "' container and uploading them in search service.");
-                //long totalBlobsUploaded = 0;
-                continuationToken = null;
-
-                var fetchBlobsTask = Task.Run<BlobResultSegment>(async () =>
-                {
-                    return await container.ListBlobsSegmentedAsync("", true, BlobListingDetails.All, 100, continuationToken, null, null);
-                });
-                var blobListingResult = fetchBlobsTask.Result;
-                continuationToken = blobListingResult.ContinuationToken;
-                var blobsList = blobListingResult.Results.ToList();
-                if (blobsList.Count > 0)
-                {
-                    List<Blob> documentsList = new List<Blob>();
-
-                    var pageHtml = "";
-                    var count = 0;
-                    foreach (var blob in blobsList)
-                    {
-                        var blobName = blob.Uri.AbsoluteUri.Substring(blob.Uri.AbsoluteUri.LastIndexOf('/') + 1);
-                        CloudBlobContainer containerInstance = blobClient.GetContainerReference(container.Name);
-                        CloudBlob blobInstance = containerInstance.GetBlobReference(blobName);
-
-                        using (Stream stream = await blobInstance.OpenReadAsync())
-                        {
-                            using (StreamReader reader = new StreamReader(stream))
-                            {
-                                pageHtml = await reader.ReadToEndAsync();
-                            }
-                        }
-
-                        //adding new document to list
-                        Blob page = new Blob()
-                        {
-                            BlobUrl = "blob" + count,
-                            Html = pageHtml
-                        };
-                        count++;
-                        documentsList.Add(page);
-                    }
-
-                    var batch = IndexBatch.Upload(documentsList);
-
-                    try
-                    {
-                        indexClient.Documents.Index(batch);
-                    }
-                    catch (IndexBatchException e)
-                    {
-                        // Sometimes when your Search service is under load, indexing will fail for some of the documents in
-                        // the batch. Depending on your application, you can take compensating actions like delaying and
-                        // retrying. For this simple demo, we just log the failed document keys and continue.
-                        Console.WriteLine(
-                            "Failed to index some of the documents: {0}",
-                            String.Join(", ", e.IndexingResults.Where(r => !r.Succeeded).Select(r => r.Key)));
-                    }
-
-                    Console.WriteLine("Waiting for documents to be indexed...\n");
-                    //Thread.Sleep(2000);
-                }
-            }
-        }
-
+        [UsedImplicitly]
         public async Task StorePageError(string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(uri)

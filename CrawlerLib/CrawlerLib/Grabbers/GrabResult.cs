@@ -1,3 +1,7 @@
+// <copyright file="GrabResult.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib.Grabbers
 {
     using System.Net;

@@ -1,3 +1,7 @@
+// <copyright file="SimpleHttpGrabber.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib.Grabbers
 {
     using System;
@@ -7,6 +11,7 @@ namespace CrawlerLib.Grabbers
     using System.Threading.Tasks;
     using Logger;
 
+    /// <inheritdoc />
     /// <summary>
     /// Simple HTTPClient page grabber.
     /// </summary>

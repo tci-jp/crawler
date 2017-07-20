@@ -93,7 +93,7 @@ namespace CrawlerUI
             }
         }
 
-        public CancellationTokenSource Cancellation { get; set; }
+        public CancellationTokenSource CrawlerCancellation { get; set; }
 
         public string Log => log.ToString();
 
@@ -174,6 +174,7 @@ namespace CrawlerUI
 
         public int SearchContentSelectionStart { get; set; }
         public int SearchContentSelectionLength { get; set; }
+        public CancellationTokenSource SearchCancellation { get; set; }
 
         public void AddLogLine(string line)
         {

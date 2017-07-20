@@ -20,6 +20,7 @@ namespace CrawlerUI
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
 
+    /// <inheritdoc />
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -92,11 +93,11 @@ namespace CrawlerUI
 
         private void Search()
         {
-            Model.Cancellation?.Cancel();
-            Model.Cancellation?.Dispose();
-            Model.Cancellation = new CancellationTokenSource();
+            Model.SearchCancellation?.Cancel();
+            Model.SearchCancellation?.Dispose();
+            Model.SearchCancellation = new CancellationTokenSource();
             Model.SearchResult.Clear();
-            var cancellation = Model.Cancellation.Token;
+            var cancellation = Model.SearchCancellation.Token;
             var searchString = Model.SearchString;
             var task = Task.Run(
                 async () =>
@@ -171,11 +172,11 @@ namespace CrawlerUI
             Model.Running = true;
             try
             {
-                Model.Cancellation = new CancellationTokenSource();
+                Model.CrawlerCancellation = new CancellationTokenSource();
                 Model.CrawlerResult.Clear();
                 var config = new Configuration
                              {
-                                 CancellationToken = Model.Cancellation.Token,
+                                 CancellationToken = Model.CrawlerCancellation.Token,
                                  Depth = Model.DefaultDepth,
                                  HostDepth = Model.DefaultHostDepth,
                                  Logger = new GuiLogger(Model),
@@ -201,15 +202,15 @@ namespace CrawlerUI
             }
             finally
             {
-                Model.Cancellation.Dispose();
-                Model.Cancellation = null;
+                Model.CrawlerCancellation.Dispose();
+                Model.CrawlerCancellation = null;
                 Model.Running = false;
             }
         }
 
         private void StopCrawl(object sender, RoutedEventArgs e)
         {
-            Model.Cancellation?.Cancel();
+            Model.CrawlerCancellation?.Cancel();
         }
 
         private void TextBlock_SizeChanged(object sender, SizeChangedEventArgs e)

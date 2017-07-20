@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AsyncEnumerable, Version=2.1.0.0, Culture=neutral, PublicKeyToken=0426b068161bd1d1, processorArchitecture=MSIL">
-      <HintPath>..\..\CrawlerUI\packages\AsyncEnumerator.2.1.0\lib\net45\AsyncEnumerable.dll</HintPath>
+      <HintPath>..\packages\AsyncEnumerator.2.1.0\lib\net45\AsyncEnumerable.dll</HintPath>
     </Reference>
     <Reference Include="fm.Extensions.Configuration.Json, Version=1.1.0.0, Culture=neutral, PublicKeyToken=c09338e0a195dd14, processorArchitecture=MSIL">
       <HintPath>..\packages\fm.Extensions.Configuration.Json.1.1.0\lib\netstandard1.3\fm.Extensions.Configuration.Json.dll</HintPath>

@@ -7,6 +7,9 @@ namespace CrawlerLib.Azure
     using System.Collections.Async;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// Blob searching interface.
+    /// </summary>
     public interface IBlobSearcher
     {
         /// <summary>

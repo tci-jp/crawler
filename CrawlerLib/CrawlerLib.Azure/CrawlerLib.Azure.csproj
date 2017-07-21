@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>..\SolutionRules.ruleset</CodeAnalysisRuleSet>
+    <DocumentationFile>bin\Debug\CrawlerLib.Azure.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,6 +31,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\CrawlerLib.Azure.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -45,8 +47,8 @@
   <ItemGroup>
     <Compile Include="Blob.cs" />
     <Compile Include="Blob.Method.cs" />
-    <Compile Include="BlobSearcher.cs" />
-    <Compile Include="CrawlerAzureStorage.cs" />
+    <Compile Include="SimpleBlobSearcher.cs" />
+    <Compile Include="AzureCrawlerStorage.cs" />
     <Compile Include="CrawlRecord.cs" />
     <Compile Include="IBlobSearcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -72,6 +74,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Search">
       <Version>3.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.Build">
+      <Version>1.0.21</Version>
     </PackageReference>
     <PackageReference Include="StyleCop.Analyzers">
       <Version>1.0.2</Version>

@@ -13,7 +13,7 @@ namespace Azure.Storage
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     /// <summary>
     /// Extension of <see cref="T:Microsoft.WindowsAzure.Storage.Table.TableEntity" /> with fields JSON serialization.
     /// </summary>
@@ -21,7 +21,7 @@ namespace Azure.Storage
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="ComplexTableEntity"/> class.
+        /// Initializes a new instance of the <see cref="ComplexTableEntity" /> class.
         /// </summary>
         [UsedImplicitly]
         protected ComplexTableEntity()

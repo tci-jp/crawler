@@ -6,6 +6,10 @@ namespace Azure.Storage
 {
     using System;
 
+    /// <inheritdoc />
+    /// <summary>
+    /// Marks property used for PartitionKey
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class PartitionKeyAttribute : Attribute
     {

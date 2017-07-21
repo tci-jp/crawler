@@ -10,6 +10,9 @@ namespace CrawlerLib
     using System.Threading.Tasks;
     using Nito.AsyncEx;
 
+    /// <summary>
+    /// Runs tasks in queue with delay between.
+    /// </summary>
     public class QueuedTaskRunner
     {
         private readonly TimeSpan delay;
@@ -17,6 +20,12 @@ namespace CrawlerLib
         private readonly AsyncCollection<Task> queue = new AsyncCollection<Task>(new ConcurrentQueue<Task>());
         private readonly CancellationToken token;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="QueuedTaskRunner" /> class.
+        /// Creates ans run queue.
+        /// </summary>
+        /// <param name="delay">Delay between tasks.</param>
+        /// <param name="token">Cancellation Token.</param>
         public QueuedTaskRunner(TimeSpan delay, CancellationToken token)
         {
             this.delay = delay;
@@ -25,6 +34,13 @@ namespace CrawlerLib
             Task.Run(RunQueue);
         }
 
+        /// <summary>
+        /// Adds new not-started task into the queue.
+        /// </summary>
+        /// <param name="task">
+        /// Task to queue.
+        /// Should not be started, Task.TaskStatus should be WaitingToStart.
+        /// </param>
         public void Enqueue(Task task)
         {
             queue.Add(task, token);

@@ -9,15 +9,16 @@ namespace CrawlerLib.Grabbers
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
+    using JetBrains.Annotations;
     using Logger;
 
     /// <inheritdoc />
     /// <summary>
     /// Simple HTTPClient page grabber.
     /// </summary>
+    [UsedImplicitly]
     public class SimpleHttpGrabber : HttpGrabber
     {
-        private readonly Configuration config;
         private readonly HttpClient client;
 
         /// <inheritdoc />
@@ -41,12 +42,12 @@ namespace CrawlerLib.Grabbers
                 request.Headers.Referrer = referer;
             }
 
-            var result = await client.SendAsync(request, config.CancellationToken);
+            var result = await client.SendAsync(request, Config.CancellationToken);
             if (!result.IsSuccessStatusCode)
             {
-                config.Logger.Error(
+                Config.Logger.Error(
                     $"{uri} - HttpError: {result.StatusCode}{(int)result.StatusCode}");
-                await Task.Delay(config.RequestErrorRetryDelay);
+                await Task.Delay(Config.RequestErrorRetryDelay);
 
                 // TODO process error;
                 return new GrabResult
@@ -64,7 +65,7 @@ namespace CrawlerLib.Grabbers
         }
 
         /// <inheritdoc/>
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             client?.Dispose();
         }

@@ -20,18 +20,22 @@ namespace CrawlerUI
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="Window" />
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static readonly DataStorage azure = new DataStorage("UseDevelopmentStorage=true");
+        private static readonly DataStorage Azure = new DataStorage("UseDevelopmentStorage=true");
         private static readonly Regex NumberRegex = new Regex("[^0-9]+");
 
         private static readonly ICrawlerStorage Storage =
-            new CrawlerAzureStorage(azure, new SimpleBlobSearcher(azure, "pages"));
+            new AzureCrawlerStorage(Azure, new SimpleBlobSearcher(Azure, "pages"));
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow" /> class.
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -58,7 +62,7 @@ namespace CrawlerUI
             }
         }
 
-        private void Crawler_UriCrawled(string uri)
+        private void Crawler_UriCrawled(Crawler crawler, string uri)
         {
             Dispatcher.Invoke(() => { Model.CrawlerResult.Add(uri); });
         }
@@ -149,12 +153,11 @@ namespace CrawlerUI
                 var reader = new StreamReader(mem);
                 var content = await reader.ReadToEndAsync();
                 Model.CurrentSearchContent = content;
-                Model.SearchContentSelectionStart =
+                var selStart =
                     content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
-                Model.SearchContentSelectionLength = Model.SearchString.Length;
 
                 FocusManager.SetFocusedElement(this, SearchContent);
-                SearchContent.Select(Model.SearchContentSelectionStart, Model.SearchContentSelectionLength);
+                SearchContent.Select(selStart, Model.SearchString.Length);
             }
             else
             {
@@ -164,12 +167,12 @@ namespace CrawlerUI
 
         private async void StartCrawl(object sender, RoutedEventArgs e)
         {
-            if (Model.Running)
+            if (Model.IsCrawlerRunning)
             {
                 return;
             }
 
-            Model.Running = true;
+            Model.IsCrawlerRunning = true;
             try
             {
                 Model.CrawlerCancellation = new CancellationTokenSource();
@@ -183,13 +186,13 @@ namespace CrawlerUI
                                  Storage = Storage
                              };
 
-                config.HttpGrabber = new HttpContentGrabber(config);
+                config.HttpGrabber = new WebDriverHttpGrabber(config);
 
                 var crawler = new Crawler(config);
                 crawler.UriCrawled += Crawler_UriCrawled;
                 try
                 {
-                    await crawler.Incite(Model.Input.Select(i => new Uri(i.Url)).ToList());
+                    await crawler.Incite(Model.Input.Select(i => new Uri(i.Uri)).ToList());
                 }
                 catch (TaskCanceledException)
                 {
@@ -204,7 +207,7 @@ namespace CrawlerUI
             {
                 Model.CrawlerCancellation.Dispose();
                 Model.CrawlerCancellation = null;
-                Model.Running = false;
+                Model.IsCrawlerRunning = false;
             }
         }
 

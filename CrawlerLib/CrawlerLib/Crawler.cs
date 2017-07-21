@@ -15,8 +15,8 @@ namespace CrawlerLib
     using System.Threading;
     using System.Threading.Tasks;
     using Data;
-    using Grabbers;
     using HtmlAgilityPack;
+    using JetBrains.Annotations;
     using Logger;
     using Nito.AsyncEx;
     using RobotsTxt;
@@ -25,7 +25,7 @@ namespace CrawlerLib
     /// <summary>
     /// Crawls, parses and indexing web pages.
     /// </summary>
-    public class Crawler : IDisposable
+    public sealed class Crawler : IDisposable
     {
         private readonly HttpClient client;
 
@@ -74,27 +74,30 @@ namespace CrawlerLib
         /// <summary>
         /// Called when crawler parsed and dumped new page
         /// </summary>
-        public event Action<string> UriCrawled;
+        public event Action<Crawler, string> UriCrawled;
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            client?.Dispose();
+        }
 
         /// <summary>
         /// Starts crawling by single URI
         /// </summary>
         /// <param name="uri">URI to crawl.</param>
-        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        public async Task<string> Incite(Uri uri)
+        /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
+        [UsedImplicitly]
+        public Task<string> Incite(Uri uri)
         {
-            sessionid = await storage.CreateSession(new[] { uri.ToString() });
-            await AddUrl(null, uri, 0, 0);
-
-            await WaitForTheEnd();
-            return sessionid;
+            return Incite(new[] { uri });
         }
 
         /// <summary>
         /// Starts crawling by collection of URIs
         /// </summary>
         /// <param name="uris">URIs to crawl.</param>
-        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         public async Task<string> Incite(IList<Uri> uris)
         {
             if (uris.Count == 0)
@@ -198,8 +201,9 @@ namespace CrawlerLib
                             var result = await config.HttpGrabber.Grab(state.Uri, state.Referrer);
 
                             lastCode = result.Status;
-                            if (lastCode != HttpStatusCode.OK)
+                            if (config.RetryErrors.Contains(lastCode))
                             {
+                                await Task.Delay(config.RequestErrorRetryDelay);
                                 continue;
                             }
 
@@ -236,7 +240,9 @@ namespace CrawlerLib
 
                         if (!noindex)
                         {
-                            await storage.DumpPage(state.Uri.ToString(), new MemoryStream(Encoding.UTF8.GetBytes(page)));
+                            await storage.DumpPage(
+                                state.Uri.ToString(),
+                                new MemoryStream(Encoding.UTF8.GetBytes(page)));
                         }
                         else
                         {
@@ -261,7 +267,7 @@ namespace CrawlerLib
 
                         lastException = null;
 
-                        UriCrawled?.Invoke(state.Uri.ToString());
+                        UriCrawled?.Invoke(this, state.Uri.ToString());
                         break;
                     }
                     catch (TaskCanceledException ex)
@@ -285,7 +291,7 @@ namespace CrawlerLib
                     throw lastException;
                 }
 
-                await config.Storage.StorePageError(sessionid, state.Uri.ToString(), lastCode);
+                await config.Storage.StorePageError(state.Uri.ToString(), lastCode);
             }
             catch (TaskCanceledException)
             {
@@ -387,11 +393,6 @@ namespace CrawlerLib
             public int HostDepth { get; set; }
 
             public Uri Referrer { get; set; }
-        }
-
-        public void Dispose()
-        {
-            client?.Dispose();
         }
     }
 }

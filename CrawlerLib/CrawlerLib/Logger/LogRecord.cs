@@ -4,29 +4,33 @@
 
 namespace CrawlerLib.Logger
 {
-    using System;
     using System.Text;
 
+    /// <summary>
+    /// General log record.
+    /// </summary>
     public class LogRecord
     {
-        public LogRecord(Severity severity, string message)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogRecord"/> class.
+        /// </summary>
+        /// <param name="severity">Log record severiry.</param>
+        /// <param name="obj">Object to put into log.</param>
+        public LogRecord(Severity severity, object obj)
         {
             Severity = severity;
-            Object = message;
+            Object = obj;
         }
 
-        public LogRecord(Severity severity, string message, Exception exception)
-        {
-            Severity = severity;
-            Object = exception;
-            Message = message;
-        }
-
-        public string Message { get; set; }
-
+        /// <summary>
+        /// Gets or sets log record severity.
+        /// </summary>
         public Severity Severity { get; set; }
 
-        public object Object { get; set; }
+        /// <summary>
+        /// Gets or sets object to log.
+        /// </summary>
+        public dynamic Object { get; set; }
 
         /// <inheritdoc />
         public override string ToString()
@@ -34,14 +38,9 @@ namespace CrawlerLib.Logger
             var str = new StringBuilder();
             str.Append(Severity);
 
-            if (Message != null)
-            {
-                str.Append(" : ").Append(Message);
-            }
-
             if (Object != null)
             {
-                str.Append(Message != null ? "\r\n" : " : ").Append(Object);
+                str.Append(Object);
             }
 
             return str.ToString();

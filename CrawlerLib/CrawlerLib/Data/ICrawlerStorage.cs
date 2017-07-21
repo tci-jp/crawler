@@ -10,6 +10,7 @@ namespace CrawlerLib.Data
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
+    using JetBrains.Annotations;
 
     /// <summary>
     /// Interface for crawler data
@@ -44,6 +45,7 @@ namespace CrawlerLib.Data
         /// Gets collection of all previous crawling sessions.
         /// </summary>
         /// <returns>Collection of sessions.</returns>
+        [UsedImplicitly]
         Task<IEnumerable<ISessionInfo>> GetAllSessions();
 
         /// <summary>
@@ -52,6 +54,7 @@ namespace CrawlerLib.Data
         /// <param name="sessionId">Crawling session.</param>
         /// <param name="uri">URI whose referes to return.</param>
         /// <returns>Collection of referers.</returns>
+        [UsedImplicitly]
         Task<IEnumerable<string>> GetReferers(string sessionId, string uri);
 
         /// <summary>
@@ -59,6 +62,7 @@ namespace CrawlerLib.Data
         /// </summary>
         /// <param name="sessionId">Crawling session.</param>
         /// <returns>Collecion of URI strings.</returns>
+        [UsedImplicitly]
         Task<IEnumerable<string>> GetSessionUris(string sessionId);
 
         /// <summary>
@@ -80,10 +84,9 @@ namespace CrawlerLib.Data
         /// <summary>
         /// Store page crawling status code
         /// </summary>
-        /// <param name="sessionId">Crawling session.</param>
         /// <param name="uri">Page URI.</param>
         /// <param name="code">Page status code.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task StorePageError(string sessionId, string uri, HttpStatusCode code);
+        Task StorePageError(string uri, HttpStatusCode code);
     }
 }

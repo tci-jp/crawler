@@ -9,25 +9,21 @@ namespace CrawlerLib
     using System.Linq;
     using System.Text;
 
+    /// <inheritdoc />
+    /// <summary>
+    /// Provides encodings with alternative names. "UTF-8" as UTF8.
+    /// </summary>
     public class EncodingRedirector : EncodingProvider
     {
-        private static readonly Dictionary<string, Encoding> encodings = new Dictionary<string, Encoding>
-                                                                         {
-                                                                             ["\"UTF-8\""] = Encoding.UTF8
-                                                                         };
+        private static readonly Dictionary<string, Encoding> Encodings =
+            new Dictionary<string, Encoding>
+            {
+                ["\"UTF-8\""] = Encoding.UTF8
+            };
 
-        /// <inheritdoc />
-        public override Encoding GetEncoding(string name)
-        {
-            return encodings.TryGetValue(name, out var res) ? res : null;
-        }
-
-        /// <inheritdoc />
-        public override Encoding GetEncoding(int codepage)
-        {
-            return null;
-        }
-
+        /// <summary>
+        /// Registers encdoing in the system.
+        /// </summary>
         public static void RegisterEncodings()
         {
             if (!Encoding.GetEncodings()
@@ -35,6 +31,19 @@ namespace CrawlerLib
             {
                 Encoding.RegisterProvider(new EncodingRedirector());
             }
+        }
+
+        /// <inheritdoc />
+        public override Encoding GetEncoding(string name)
+        {
+            return Encodings.TryGetValue(name, out var res) ? res : null;
+        }
+
+        /// <inheritdoc />
+        /// Encoding by codepage number is not supported.
+        public override Encoding GetEncoding(int codepage)
+        {
+            return null;
         }
     }
 }

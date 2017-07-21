@@ -58,12 +58,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="FalseToVisible.cs" />
+    <Compile Include="Converters\FalseToVisible.cs" />
     <Compile Include="GuiLogger.cs" />
     <Compile Include="InputItem.cs" />
     <Compile Include="Model.cs" />
-    <Compile Include="TasksForEachUrl.cs" />
-    <Compile Include="TrueToVisible.cs" />
+    <Compile Include="Converters\TrueToVisible.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -126,6 +125,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.Build">
+      <Version>1.0.21</Version>
+    </PackageReference>
     <PackageReference Include="Selenium.PhantomJS.WebDriver">
       <Version>2.1.1</Version>
     </PackageReference>

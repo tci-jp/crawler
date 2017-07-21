@@ -8,27 +8,55 @@ namespace CrawlerUI
     using System.Runtime.CompilerServices;
     using JetBrains.Annotations;
 
-    public class InputItem : INotifyPropertyChanged
+    /// <inheritdoc />
+    /// <summary>
+    /// Initial crawling URI model item.
+    /// </summary>
+    public sealed class InputItem : INotifyPropertyChanged
     {
-        private string url;
         private int depth;
         private int hostDepth;
+        private string uri;
 
-        public string Url
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InputItem" /> class.
+        /// </summary>
+        /// <param name="uri">Crawling URI.</param>
+        /// <param name="depth">Crawling depth.</param>
+        /// <param name="hostDepth">Crawling host depth.</param>
+        public InputItem(string uri, int depth, int hostDepth)
         {
-            get => url;
+            Uri = uri;
+            Depth = depth;
+            HostDepth = hostDepth;
+        }
+
+        /// <summary>
+        /// See <see cref="INotifyPropertyChanged"/>
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Gets or sets initial crawling URI.
+        /// </summary>
+        public string Uri
+        {
+            get => uri;
             set
             {
-                if (value == url)
+                if (value == uri)
                 {
                     return;
                 }
 
-                url = value;
+                uri = value;
                 OnPropertyChanged();
             }
         }
 
+        /// <summary>
+        /// Gets or sets crawling depth for this URI. Currently not used.
+        /// </summary>
         public int Depth
         {
             get => depth;
@@ -44,6 +72,9 @@ namespace CrawlerUI
             }
         }
 
+        /// <summary>
+        /// Gets or sets crawling host depth. Currently not used.
+        /// </summary>
         public int HostDepth
         {
             get => hostDepth;
@@ -59,21 +90,10 @@ namespace CrawlerUI
             }
         }
 
-        public InputItem(string url, int depth, int hostDepth)
-        {
-            Url = url;
-            Depth = depth;
-            HostDepth = hostDepth;
-        }
-
-        /// <inheritdoc/>
-        public event PropertyChangedEventHandler PropertyChanged;
-
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
 }

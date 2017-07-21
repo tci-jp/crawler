@@ -6,10 +6,14 @@ namespace CrawlerUI
 {
     using CrawlerLib.Logger;
 
+    /// <summary>
+    /// Using model as logger for GUI.
+    /// </summary>
     public class GuiLogger : ILogger
     {
         private readonly Model model;
 
+        /// <inheritdoc />
         public GuiLogger(Model model)
         {
             this.model = model;

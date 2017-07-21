@@ -4,11 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CrawlerUI"
+        xmlns:converters="clr-namespace:CrawlerUI.Converters"
         mc:Ignorable="d"
         Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance local:Model}">
     <Window.Resources>
-        <local:TrueToVisible x:Key="TrueToVisible" />
-        <local:FalseToVisible x:Key="FalseToVisible" />
+        <converters:TrueToVisible x:Key="TrueToVisible" />
+        <converters:FalseToVisible x:Key="FalseToVisible" />
     </Window.Resources>
     <Window.DataContext>
         <local:Model />
@@ -50,7 +51,7 @@
                     <DataGrid Grid.Row="4" AutoGenerateColumns="false" CanUserAddRows="False"
                               ItemsSource="{Binding Input}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Url" Width="*" Binding="{Binding Url}" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Url" Width="*" Binding="{Binding Uri}" IsReadOnly="True" />
                             <DataGridTextColumn Header="Depth" Width="Auto" Binding="{Binding Depth}" />
                             <DataGridTextColumn Header="HostDepth" Width="Auto" Binding="{Binding HostDepth}" />
                             <DataGridTemplateColumn Header="Remove" Width="Auto">
@@ -66,9 +67,9 @@
 
                     <Grid Grid.Row="2" Margin="0,0,0,10">
                         <Button Content="Crawl !" Click="StartCrawl"
-                                Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource FalseToVisible}}" />
+                                Visibility="{Binding IsCrawlerRunning, Mode=TwoWay, Converter={StaticResource FalseToVisible}}" />
                         <Button Content="STOP!!!" Click="StopCrawl"
-                                Visibility="{Binding Running, Mode=TwoWay, Converter={StaticResource TrueToVisible}}" />
+                                Visibility="{Binding IsCrawlerRunning, Mode=TwoWay, Converter={StaticResource TrueToVisible}}" />
                     </Grid>
                     <Expander Header="Settings" Grid.Row="1" Margin="0,0,0,10">
                         <Grid Background="#FFE5E5E5">

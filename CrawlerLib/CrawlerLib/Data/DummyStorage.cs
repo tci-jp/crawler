@@ -15,14 +15,41 @@ namespace CrawlerLib.Data
     using System.Threading;
     using System.Threading.Tasks;
 
+    /// <inheritdoc />
     /// <summary>
-    /// In-memory implementation of Crawler Storage
+    /// In-memory implementation for Crawler Storage
     /// </summary>
     public class DummyStorage : ICrawlerStorage
     {
-        private readonly ConcurrentDictionary<string, byte[]> dumpedPages = new ConcurrentDictionary<string, byte[]>();
+        private readonly ConcurrentDictionary<string, byte[]> dumpedPages =
+            new ConcurrentDictionary<string, byte[]>();
 
-        private readonly ConcurrentDictionary<string, SessionInfo> sessions = new ConcurrentDictionary<string, SessionInfo>();
+        private readonly ConcurrentDictionary<string, SessionInfo> sessions =
+            new ConcurrentDictionary<string, SessionInfo>();
+
+        private readonly ConcurrentDictionary<string, string> codes =
+            new ConcurrentDictionary<string, string>();
+
+        /// <inheritdoc />
+        public Task AddPageReferer(string sessionId, string uri, string referer)
+        {
+            sessions[sessionId].Referers.GetOrAdd(uri, key => new ConcurrentBag<string>()).Add(referer);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<string> CreateSession(IEnumerable<string> rootUris)
+        {
+            var sess = new SessionInfo
+                       {
+                           Id = Guid.NewGuid().ToString(),
+                           RootUris = new List<string>(rootUris),
+                           Timestamp = DateTime.UtcNow
+                       };
+
+            sessions.TryAdd(sess.Id, sess);
+            return Task.FromResult(sess.Id);
+        }
 
         /// <inheritdoc />
         public async Task DumpPage(string uri, Stream stream)
@@ -33,55 +60,27 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<string> CreateSession(IEnumerable<string> rootUris)
-        {
-            var sess = new SessionInfo
-            {
-                Id = Guid.NewGuid().ToString(),
-                RootUris = new List<string>(rootUris),
-                Timestamp = DateTime.UtcNow
-            };
-
-            sessions.TryAdd(sess.Id, sess);
-            return Task.FromResult(sess.Id);
-        }
-
-        /// <inheritdoc />
         public Task<IEnumerable<ISessionInfo>> GetAllSessions()
         {
             return Task.FromResult(sessions.Cast<ISessionInfo>());
         }
 
         /// <inheritdoc />
-        public Task AddPageReferer(string sessionId, string uri, string referer)
+        public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
         {
-            sessions[sessionId].Referers.GetOrAdd(uri, key => new ConcurrentBag<string>()).Add(referer);
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc />
-        public Task StorePageError(string sessionId, string uri, HttpStatusCode code)
-        {
-            sessions[sessionId].Codes[uri] = code.ToString();
-            return Task.CompletedTask;
+            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Referers[uri]);
         }
 
         /// <inheritdoc />
         public Task<IEnumerable<string>> GetSessionUris(string sessionId)
         {
-            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Codes.Keys);
+            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Uris);
         }
 
         /// <inheritdoc />
         public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
         {
             await destination.WriteAsync(dumpedPages[uri], 0, dumpedPages[uri].Length, cancellation);
-        }
-
-        /// <inheritdoc />
-        public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
-        {
-            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Referers[uri]);
         }
 
         /// <inheritdoc />
@@ -102,13 +101,19 @@ namespace CrawlerLib.Data
             return Task.FromResult(GetEnumerable().ToAsyncEnumerable());
         }
 
+        /// <inheritdoc />
+        public Task StorePageError(string uri, HttpStatusCode code)
+        {
+            codes[uri] = code.ToString();
+            return Task.CompletedTask;
+        }
+
         private class SessionInfo : ISessionInfo
         {
             public ConcurrentDictionary<string, ConcurrentBag<string>> Referers { get; } =
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();
 
-            public ConcurrentDictionary<string, string> Codes { get; } =
-                new ConcurrentDictionary<string, string>();
+            public ConcurrentBag<string> Uris { get; } = new ConcurrentBag<string>();
 
             public string Id { get; set; }
 

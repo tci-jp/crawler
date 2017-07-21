@@ -6,18 +6,36 @@ namespace Azure.Storage
 {
     using System;
 
+    /// <inheritdoc />
+    /// <summary>
+    /// Defines entity Table name and optional fixed Partition and Row keys.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class TableAttribute : Attribute
     {
-        public string Table { get; }
-
-        public TableAttribute(string table)
+        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TableAttribute" /> class.
+        /// </summary>
+        /// <param name="tableName">Name of Table.</param>
+        public TableAttribute(string tableName)
         {
-            Table = table;
+            Table = tableName;
         }
 
+        /// <summary>
+        /// Gets table name for entities.
+        /// </summary>
+        public string Table { get; }
+
+        /// <summary>
+        /// Gets or sets optional Partition Key
+        /// </summary>
         public string PartitionKey { get; set; } = null;
 
+        /// <summary>
+        /// Gets or sets optional Row Key.
+        /// </summary>
         public string RowKey { get; set; } = null;
     }
 }

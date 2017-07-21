@@ -7,16 +7,28 @@ namespace CrawlerLib.Grabbers
     using System;
     using System.Threading.Tasks;
 
+    /// <inheritdoc />
     /// <summary>
     /// Grabs content by URI
     /// </summary>
     public abstract class HttpGrabber : IDisposable
     {
-        protected Configuration Config { get; }
-
+        /// <inheritdoc />
         protected HttpGrabber(Configuration config)
         {
             Config = config;
+        }
+
+        /// <summary>
+        /// Gets crawler Configuration
+        /// </summary>
+        protected Configuration Config { get; }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -27,8 +39,11 @@ namespace CrawlerLib.Grabbers
         /// <returns>Grabed content</returns>
         public abstract Task<GrabResult> Grab(Uri uri, Uri referer);
 
-        /// <inheritdoc />
-        public virtual void Dispose()
+        /// <summary>
+        /// Disposer.
+        /// </summary>
+        /// <param name="disposing">True if disposing.</param>
+        protected virtual void Dispose(bool disposing)
         {
         }
     }

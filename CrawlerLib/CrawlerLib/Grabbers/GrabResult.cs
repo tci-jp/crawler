@@ -12,12 +12,12 @@ namespace CrawlerLib.Grabbers
     public class GrabResult
     {
         /// <summary>
-        /// Grabbed content
+        /// Gets or sets grabbed content
         /// </summary>
         public string Content { get; set; }
 
         /// <summary>
-        /// Http request status. If it's successful it must be HttpStatusCode.OK (even if real code is 201-299)
+        /// Gets or sets http request status. If it's successful it must be HttpStatusCode.OK (even if real code is 201-299)
         /// </summary>
         public HttpStatusCode Status { get; set; }
     }

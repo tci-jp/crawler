@@ -16,7 +16,7 @@ namespace CrawlerLib.Azure
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="CrawlRecord"/> class.
+        /// Initializes a new instance of the <see cref="CrawlRecord" /> class.
         /// </summary>
         /// <param name="uri">Crawled URI.</param>
         public CrawlRecord(string uri)

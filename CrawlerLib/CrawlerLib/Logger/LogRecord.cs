@@ -12,7 +12,7 @@ namespace CrawlerLib.Logger
     public class LogRecord
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LogRecord"/> class.
+        /// Initializes a new instance of the <see cref="LogRecord" /> class.
         /// </summary>
         /// <param name="severity">Log record severiry.</param>
         /// <param name="obj">Object to put into log.</param>

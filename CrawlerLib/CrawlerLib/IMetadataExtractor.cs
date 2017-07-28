@@ -16,8 +16,10 @@ namespace CrawlerLib
         /// Extracts Schema.org-like metadata
         /// </summary>
         /// <param name="doc">HTML to process.</param>
-        /// <returns>Collections of metadata name and value pairs.
-        /// Can be more than one metadata value for same name.</returns>
+        /// <returns>
+        /// Collections of metadata name and value pairs.
+        /// Can be more than one metadata value for same name.
+        /// </returns>
         IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc);
     }
 }

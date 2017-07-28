@@ -1,4 +1,4 @@
-// <copyright file="ComplexTableEntity.cs" company="DECTech.Tokyo">
+// <copyright file="DictionaryTableEntity.cs" company="DECTech.Tokyo">
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
@@ -6,80 +6,93 @@ namespace Azure.Storage
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
 
     /// <inheritdoc />
     /// <summary>
-    /// Extension of <see cref="T:Microsoft.WindowsAzure.Storage.Table.TableEntity" /> with fields JSON serialization.
+    /// Entity with dinamic number of fields
     /// </summary>
-    public class ComplexTableEntity : TableEntity
+    public class DictionaryTableEntity : TableEntity
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="ComplexTableEntity" /> class.
+        /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
         /// </summary>
         [UsedImplicitly]
-        protected ComplexTableEntity()
+        protected DictionaryTableEntity()
         {
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="ComplexTableEntity" /> class.
+        /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
         /// </summary>
         /// <param name="partitionKey">Partition Key.</param>
         /// <param name="rowKey">Row Key.</param>
-        protected ComplexTableEntity(string partitionKey, string rowKey)
+        protected DictionaryTableEntity(string partitionKey, string rowKey)
             : base(partitionKey, rowKey)
         {
         }
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
+        /// </summary>
+        /// <param name="partitionKey">Partition Key.</param>
+        /// <param name="rowKey">Row Key.</param>
+        /// <param name="fields">Field to pre-initialize.</param>
+        protected DictionaryTableEntity(string partitionKey, string rowKey, Dictionary<string, object> fields)
+            : base(partitionKey, rowKey)
+        {
+            Fields = fields;
+        }
+
+        /// <summary>
+        /// Gets fields dictionary
+        /// </summary>
+        public Dictionary<string, object> Fields { get; } = new Dictionary<string, object>();
 
         /// <inheritdoc />
         public override void ReadEntity(
             IDictionary<string, EntityProperty> properties,
             OperationContext operationContext)
         {
-            foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
+            foreach (var prop in properties)
             {
-                if (properties.TryGetValue(prop.Name, out var entity))
+                object val;
+                switch (prop.Value.PropertyType)
                 {
-                    switch (entity.PropertyType)
-                    {
-                        case EdmType.Binary:
-                            prop.SetValue(this, entity.BinaryValue);
-                            break;
-                        case EdmType.String:
-                            prop.SetValue(this, entity.StringValue);
-                            break;
-                        case EdmType.Boolean:
-                            prop.SetValue(this, entity.BooleanValue);
-                            break;
-                        case EdmType.DateTime:
-                            prop.SetValue(this, entity.DateTime);
-                            break;
-                        case EdmType.Double:
-                            prop.SetValue(this, entity.DoubleValue);
-                            break;
-                        case EdmType.Guid:
-                            prop.SetValue(this, entity.GuidValue);
-                            break;
-                        case EdmType.Int32:
-                            prop.SetValue(this, entity.Int32Value);
-                            break;
-                        case EdmType.Int64:
-                            prop.SetValue(this, entity.Int64Value);
-                            break;
-                        default:
-                            prop.SetValue(this, JsonConvert.DeserializeObject(entity.StringValue, prop.PropertyType));
-                            break;
-                    }
+                    case EdmType.Binary:
+                        val = prop.Value.BinaryValue;
+                        break;
+                    case EdmType.String:
+                        val = prop.Value.StringValue;
+                        break;
+                    case EdmType.Boolean:
+                        val = prop.Value.BooleanValue;
+                        break;
+                    case EdmType.DateTime:
+                        val = prop.Value.DateTime;
+                        break;
+                    case EdmType.Double:
+                        val = prop.Value.DoubleValue;
+                        break;
+                    case EdmType.Guid:
+                        val = prop.Value.GuidValue;
+                        break;
+                    case EdmType.Int32:
+                        val = prop.Value.Int32Value;
+                        break;
+                    case EdmType.Int64:
+                        val = prop.Value.Int64Value;
+                        break;
+                    default:
+                        throw new NotSupportedException("Field is not supported: " + prop.Value.PropertyType);
                 }
+
+                Fields[prop.Key] = val;
             }
         }
 
@@ -87,11 +100,10 @@ namespace Azure.Storage
         public override IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
         {
             var result = new Dictionary<string, EntityProperty>();
-            foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
+            foreach (var prop in Fields)
             {
-                var name = prop.Name;
-                var val = prop.GetValue(this);
+                var name = prop.Key;
+                var val = prop.Value;
                 switch (val)
                 {
                     case string str:
@@ -125,8 +137,7 @@ namespace Azure.Storage
                         result.Add(name, EntityProperty.GeneratePropertyForLong(lg));
                         break;
                     default:
-                        result.Add(name, EntityProperty.GeneratePropertyForString(JsonConvert.SerializeObject(val)));
-                        break;
+                        throw new NotSupportedException("Field is not supported: " + val.GetType());
                 }
             }
 

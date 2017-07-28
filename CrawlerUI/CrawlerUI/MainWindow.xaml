@@ -5,11 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CrawlerUI"
         xmlns:converters="clr-namespace:CrawlerUI.Converters"
-        mc:Ignorable="d"
+        mc:Ignorable="d" Loaded="Window_Loaded"
         Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance local:Model}">
     <Window.Resources>
         <converters:TrueToVisible x:Key="TrueToVisible" />
         <converters:FalseToVisible x:Key="FalseToVisible" />
+        <local:SearchOperators x:Key="Operators" />
+        <local:NullToFalse x:Key="NullToFalse" />
     </Window.Resources>
     <Window.DataContext>
         <local:Model />
@@ -124,6 +126,8 @@
             <Grid Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
@@ -132,10 +136,33 @@
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Row="0" Grid.Column="0"
                          Text="{Binding SearchString, UpdateSourceTrigger=PropertyChanged}"
-                         KeyDown="SearchText_Changed" />
-                <Button Content="Search" Padding="10,0,10,0" Grid.Row="0" Grid.Column="1" Click="SearchButton_Click" Visibility="{Binding IsSearching, Converter={StaticResource FalseToVisible}}" />
-                <Button Content="Stop" Padding="10,0,10,0" Grid.Row="0" Grid.Column="1" Click="StopSearchButton_Click" Visibility="{Binding IsSearching, Converter={StaticResource TrueToVisible}}"/>
-                <Grid Margin="0,5,0,0" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                         KeyDown="SearchText_Changed" IsEnabled="{Binding IsTextSearch}" />
+                <Button Content="Search" Padding="10,0,10,0" Grid.Row="0" Grid.Column="1" Click="SearchButton_Click"
+                        Visibility="{Binding IsSearching, Converter={StaticResource FalseToVisible}}" />
+                <Button Content="Stop" Padding="10,0,10,0" Grid.Row="0" Grid.Column="1" Click="StopSearchButton_Click"
+                        Visibility="{Binding IsSearching, Converter={StaticResource TrueToVisible}}" />
+                <ComboBox Name="MetaComboBox" ItemsSource="{Binding AvailableMetadata}" SelectedItem="{Binding SelectedMetadata}" Margin="0,5,0,0" Grid.Row="1" Grid.Column="0"/>
+                <Button Content="Add" Margin="0,5,0,0" Grid.Row="1" Grid.Column="1" Click="AddMetadata_Click" IsEnabled="{Binding ElementName=MetaComboBox, Path=SelectedItem,Converter={StaticResource NullToFalse}}"/>
+                <ItemsControl Grid.IsSharedSizeScope="True" Margin="0,5,0,0" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding MetaConditions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,5,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="OpColumnSize"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding MetadataName}" Grid.Column="0"/>
+                                <ComboBox Margin="5,0,0,0" SelectedItem="{Binding Op}" ItemsSource="{Binding Items, Source= {StaticResource Operators}}" Grid.Column="1"/>
+                                <TextBox Text="{Binding Value}" Grid.Column="2" Margin="5,0,0,0"/>
+                                <Button Click="DeleteMetaCondition_Click" Content="Delete" Grid.Column="3" Margin="5,0,0,0" Padding="10,0,10,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Margin="0,5,0,0" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto" />
@@ -145,8 +172,8 @@
                               SelectionChanged="SearchUri_Selected" />
                     <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
                     <ScrollViewer Padding="0" Grid.Column="2">
-                        <TextBox Name="SearchContent" IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap" 
-                                 Text="{Binding CurrentSearchContent, Mode=OneWay}" LostFocus="SearchContent_LostFocus"/>
+                        <TextBox Name="SearchContent" IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
+                                 Text="{Binding CurrentSearchContent, Mode=OneWay}" LostFocus="SearchContent_LostFocus" />
                     </ScrollViewer>
                 </Grid>
 

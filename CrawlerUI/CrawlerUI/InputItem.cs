@@ -32,7 +32,7 @@ namespace CrawlerUI
         }
 
         /// <summary>
-        /// See <see cref="INotifyPropertyChanged"/>
+        /// See <see cref="INotifyPropertyChanged" />
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 

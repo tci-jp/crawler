@@ -7,7 +7,6 @@ namespace CrawlerLib.Grabbers
     using System;
     using System.Net;
     using System.Net.Http;
-    using System.Threading;
     using System.Threading.Tasks;
     using JetBrains.Annotations;
     using Logger;
@@ -25,15 +24,19 @@ namespace CrawlerLib.Grabbers
         public SimpleHttpGrabber(Configuration config)
             : base(config)
         {
-            client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
+            var handler = new HttpClientHandler
+                          {
+                              AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                          };
+            client = new HttpClient(handler)
+                     {
+                         Timeout = config.RequestTimeout
+                     };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override async Task<GrabResult> Grab(Uri uri, Uri referer)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -51,20 +54,20 @@ namespace CrawlerLib.Grabbers
 
                 // TODO process error;
                 return new GrabResult
-                {
-                    Status = result.StatusCode
-                };
+                       {
+                           Status = result.StatusCode
+                       };
             }
 
             var page = await result.Content.ReadAsStringAsync();
             return new GrabResult
-            {
-                Status = HttpStatusCode.OK,
-                Content = page
-            };
+                   {
+                       Status = HttpStatusCode.OK,
+                       Content = page
+                   };
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             client?.Dispose();

@@ -8,7 +8,7 @@ namespace CrawlerLib.Logger
     using JetBrains.Annotations;
 
     /// <summary>
-    /// Helper extensions for <see cref="ILogger"/> inteface.
+    /// Helper extensions for <see cref="ILogger" /> inteface.
     /// </summary>
     public static class LoggerExtensions
     {

@@ -1,3 +1,7 @@
+// <copyright file="ConsoleLogger.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
 namespace CrawlerLib.Console
 {
     using System;

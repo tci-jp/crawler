@@ -31,11 +31,14 @@ namespace CrawlerUI
         private static readonly DataStorage Azure =
             new DataStorage(ConfigurationManager.AppSettings["CrawlerStorageConnectionString"]);
 
-        private static readonly Regex NumberRegex = new Regex("[^0-9]+");
         private static readonly AzureIndexedSearch AzureIndexedSearch = new AzureIndexedSearch(
-                            ConfigurationManager.AppSettings["SearchServiceName"],
-                            ConfigurationManager.AppSettings["SearchServiceAdminApiKey"],
-                            ConfigurationManager.AppSettings["SearchIndexName"]);
+            Azure,
+            ConfigurationManager.AppSettings["SearchServiceName"],
+            ConfigurationManager.AppSettings["SearchServiceAdminApiKey"],
+            ConfigurationManager.AppSettings["TextSearchIndexName"],
+            ConfigurationManager.AppSettings["MetaSearchIndexName"]);
+
+        private static readonly Regex NumberRegex = new Regex("[^0-9]+");
 
         private static readonly ICrawlerStorage Storage = new AzureCrawlerStorage(Azure, AzureIndexedSearch);
 
@@ -102,7 +105,7 @@ namespace CrawlerUI
             Model.Input.Remove(urlItem);
         }
 
-        private void Search()
+        private void SearchText()
         {
             Model.SearchCancellation = new CancellationTokenSource();
             Model.SearchResult.Clear();
@@ -114,7 +117,7 @@ namespace CrawlerUI
                     try
                     {
                         Dispatcher.Invoke(() => Model.IsSearching = true);
-                        var en = await Storage.SearchText(searchString, cancellation);
+                        var en = await Storage.SearchByText(searchString, cancellation);
                         await en.ForEachAsync(
                             uri =>
                             {
@@ -135,9 +138,56 @@ namespace CrawlerUI
                 cancellation);
         }
 
+        private void SearchMeta()
+        {
+            var cond = Model.MetaConditions.Select(m => new SearchCondition
+            {
+                Name = m.MetadataName,
+                Op = m.Op,
+                Value = m.Value
+            });
+            Model.SearchCancellation = new CancellationTokenSource();
+            Model.SearchResult.Clear();
+            var cancellation = Model.SearchCancellation.Token;
+            var task = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        Dispatcher.Invoke(() => Model.IsSearching = true);
+                        var en = await Storage.SearchByMeta(cond, cancellation);
+                        await en.ForEachAsync(
+                            uri =>
+                            {
+                                cancellation.ThrowIfCancellationRequested();
+                                Dispatcher.InvokeAsync(() => { Model.SearchResult.Add(uri); });
+                            },
+                            cancellation);
+                    }
+                    catch (Exception ex)
+                    {
+                        Model.AddLogLine(ex.ToString());
+                    }
+                    finally
+                    {
+                        Dispatcher.Invoke(() => Model.IsSearching = false);
+                    }
+                },
+                cancellation);
+        }
+
+
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
-            Search();
+            if (Model.IsTextSearch)
+            {
+                SearchText();
+            }
+            else
+            {
+                SearchMeta();
+
+            }
         }
 
         private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
@@ -149,7 +199,7 @@ namespace CrawlerUI
         {
             if (e.Key == Key.Enter)
             {
-                Search();
+                SearchText();
             }
         }
 
@@ -162,14 +212,18 @@ namespace CrawlerUI
                 mem.Position = 0;
                 var reader = new StreamReader(mem);
                 var content = await reader.ReadToEndAsync();
-                Model.CurrentSearchContent = content;
-                var selStart =
-                    content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
 
-                FocusManager.SetFocusedElement(this, SearchContent);
-                if (selStart != -1)
+                if (Model.SearchString != null)
                 {
-                    SearchContent.Select(selStart, Model.SearchString.Length);
+                    Model.CurrentSearchContent = content;
+                    var selStart =
+                        content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
+
+                    FocusManager.SetFocusedElement(this, SearchContent);
+                    if (selStart != -1)
+                    {
+                        SearchContent.Select(selStart, Model.SearchString.Length);
+                    }
                 }
             }
             else
@@ -199,7 +253,7 @@ namespace CrawlerUI
                     Storage = Storage
                 };
 
-                config.HttpGrabber = new WebDriverHttpGrabber(config);
+                config.HttpGrabber = new SimpleHttpGrabber(config);
 
                 var crawler = new Crawler(config);
                 crawler.UriCrawled += Crawler_UriCrawled;
@@ -247,6 +301,32 @@ namespace CrawlerUI
             Model.SearchCancellation?.Cancel();
             Model.SearchCancellation?.Dispose();
             Model.SearchCancellation = null;
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            var enumerable = await Storage.GetAvailableMetadata();
+            Dispatcher.Invoke(() =>
+            {
+                foreach (var meta in enumerable)
+                {
+                    Model.AvailableMetadata.Add(meta);
+                }
+            });
+
+        }
+
+        private void AddMetadata_Click(object sender, RoutedEventArgs e)
+        {
+            if (Model.SelectedMetadata != null)
+            {
+                Model.MetaConditions.Add(new OperatorModel(Model.SelectedMetadata));
+            }
+        }
+
+        private void DeleteMetaCondition_Click(object sender, RoutedEventArgs e)
+        {
+            Model.MetaConditions.Remove((OperatorModel)((Button)sender).DataContext);
         }
     }
 }

@@ -1,8 +1,4 @@
-// <copyright file="TrueToVisible.cs" company="DECTech.Tokyo">
-// Copyright (c) DECTech.Tokyo. All rights reserved.
-// </copyright>
-
-namespace CrawlerUI.Converters
+namespace CrawlerUI
 {
     using System;
     using System.Globalization;
@@ -10,15 +6,12 @@ namespace CrawlerUI.Converters
     using System.Windows.Data;
 
     /// <inheritdoc />
-    /// <summary>
-    /// Converts True value to Visible and False as Collapsed.
-    /// </summary>
-    public class TrueToVisible : IValueConverter
+    public class NullToFalse : IValueConverter
     {
         /// <inheritdoc />
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (value as bool? ?? false) ? Visibility.Visible : Visibility.Collapsed;
+            return value != null;
         }
 
         /// <inheritdoc />

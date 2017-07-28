@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="ComplexTableEntity.cs" />
     <Compile Include="DataStorage.cs" />
+    <Compile Include="DictionaryTableEntity.cs" />
     <Compile Include="PartitionKeyAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RowKeyAttribute.cs" />

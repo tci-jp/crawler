@@ -1,4 +1,8 @@
-﻿namespace CrawlerLib.Tests
+﻿// <copyright file="SearchTest.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
+
+namespace CrawlerLib.Tests
 {
     using System.Collections.Async;
     using System.Configuration;
@@ -14,9 +18,10 @@
         {
             var searchServiceName = ConfigurationManager.AppSettings["SearchServiceName"];
             var adminApiKey = ConfigurationManager.AppSettings["SearchServiceAdminApiKey"];
-            var indexName = ConfigurationManager.AppSettings["SearchIndexName"];
+            var textIndexName = ConfigurationManager.AppSettings["TextSearchIndexName"];
+            var metaIndexName = ConfigurationManager.AppSettings["MetaSearchIndexName"];
             this.output = output;
-            blobSearcher = new AzureIndexedSearch(searchServiceName, adminApiKey, indexName);
+            blobSearcher = new AzureIndexedSearch(searchServiceName, adminApiKey, textIndexName, metaIndexName);
         }
 
         private readonly ITestOutputHelper output;

@@ -86,7 +86,7 @@ namespace Azure.Storage
         /// Gets Blob Container for this Azure Storage.
         /// </summary>
         /// <param name="name">Blob Container name.</param>
-        /// <returns>Blob Container object. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>Blob Container object. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public async Task<CloudBlobContainer> GetBlobContainer(string name)
         {
@@ -237,7 +237,7 @@ namespace Azure.Storage
         /// <param name="partitionKey">Entity Partition Key</param>
         /// <param name="rowKey">Entity Row Key.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>Entity, or null if not found. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>Entity, or null if not found. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public async Task<TEntity> RetreiveAsync<TEntity>(string partitionKey, string rowKey)
             where TEntity : TableEntity
@@ -252,7 +252,7 @@ namespace Azure.Storage
         /// </summary>
         /// <param name="entity">Entity with partition and row key to use as pattern.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>Entity, or null if not found. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>Entity, or null if not found. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public Task<TEntity> RetreiveAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
@@ -268,7 +268,7 @@ namespace Azure.Storage
         /// </summary>
         /// <param name="rowKey">Entity Row Key.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>Entity, or null if not found. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>Entity, or null if not found. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public Task<TEntity> RetreiveAsync<TEntity>(string rowKey)
             where TEntity : TableEntity
@@ -280,7 +280,7 @@ namespace Azure.Storage
         /// Gets singleton entity. Partition and row keys should be fixed in Table attribute.
         /// </summary>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>Entity, or null if not found. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>Entity, or null if not found. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
         public Task<TEntity> RetreiveAsync<TEntity>()
             where TEntity : TableEntity
@@ -295,7 +295,10 @@ namespace Azure.Storage
         /// </summary>
         /// <param name="entity">Entity with partition and row key to use as pattern.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>Entity from Table, or patter entity if not found. A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>
+        /// Entity from Table, or patter entity if not found. A <see cref="Task" /> representing the asynchronous
+        /// operation.
+        /// </returns>
         [UsedImplicitly]
         public async Task<TEntity> RetreiveOrCreateAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
@@ -318,6 +321,7 @@ namespace Azure.Storage
                     throw new ArgumentException(
                         $"Type {typeof(T)} does not have Table attribute");
                 }
+
                 return attr;
             });
         }

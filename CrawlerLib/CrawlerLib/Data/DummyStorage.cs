@@ -21,14 +21,14 @@ namespace CrawlerLib.Data
     /// </summary>
     public class DummyStorage : ICrawlerStorage
     {
+        private readonly ConcurrentDictionary<string, string> codes =
+            new ConcurrentDictionary<string, string>();
+
         private readonly ConcurrentDictionary<string, byte[]> dumpedPages =
             new ConcurrentDictionary<string, byte[]>();
 
         private readonly ConcurrentDictionary<string, SessionInfo> sessions =
             new ConcurrentDictionary<string, SessionInfo>();
-
-        private readonly ConcurrentDictionary<string, string> codes =
-            new ConcurrentDictionary<string, string>();
 
         /// <inheritdoc />
         public Task AddPageReferer(string sessionId, string uri, string referer)
@@ -52,7 +52,11 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public async Task DumpPage(string uri, Stream stream)
+        public async Task DumpPage(
+            string uri,
+            Stream stream,
+            CancellationToken cancellation,
+            IEnumerable<KeyValuePair<string, string>> meta)
         {
             var mem = new MemoryStream();
             await stream.CopyToAsync(mem);
@@ -63,6 +67,12 @@ namespace CrawlerLib.Data
         public Task<IEnumerable<ISessionInfo>> GetAllSessions()
         {
             return Task.FromResult(sessions.Cast<ISessionInfo>());
+        }
+
+        /// <inheritdoc />
+        public Task<IEnumerable<string>> GetAvailableMetadata()
+        {
+            return Task.FromResult(Enumerable.Empty<string>());
         }
 
         /// <inheritdoc />
@@ -84,7 +94,15 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchText(string text, CancellationToken cancellation)
+        public Task<IAsyncEnumerable<string>> SearchByMeta(
+            IEnumerable<SearchCondition> query,
+            CancellationToken cancellation)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
         {
             IEnumerable<string> GetEnumerable()
             {

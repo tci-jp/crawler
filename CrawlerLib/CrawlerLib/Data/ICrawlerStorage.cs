@@ -41,7 +41,11 @@ namespace CrawlerLib.Data
         /// <param name="cancellation">Operation cancellation.</param>
         /// <param name="metadata">Metadata name and value pairs.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task DumpPage(string uri, Stream content, CancellationToken cancellation, IEnumerable<KeyValuePair<string, string>> metadata = null);
+        Task DumpPage(
+            string uri,
+            Stream content,
+            CancellationToken cancellation,
+            IEnumerable<KeyValuePair<string, string>> metadata = null);
 
         /// <summary>
         /// Gets collection of all previous crawling sessions.
@@ -82,7 +86,15 @@ namespace CrawlerLib.Data
         /// <param name="text">Text to search.</param>
         /// <param name="cancellation">Search cancellation.</param>
         /// <returns>Collection of URIs which content has that text.</returns>
-        Task<IAsyncEnumerable<string>> SearchText(string text, CancellationToken cancellation);
+        Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation);
+
+        /// <summary>
+        /// Search blobs by metadata
+        /// </summary>
+        /// <param name="query">Collection of operators combined together as AND.</param>
+        /// <param name="cancellation">Search cancellation.</param>
+        /// <returns>Collection of URIs which metadata has that values.</returns>
+        Task<IAsyncEnumerable<string>> SearchByMeta(IEnumerable<SearchCondition> query, CancellationToken cancellation);
 
         /// <summary>
         /// Store page crawling status code
@@ -91,5 +103,11 @@ namespace CrawlerLib.Data
         /// <param name="code">Page status code.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task StorePageError(string uri, HttpStatusCode code);
+
+        /// <summary>
+        /// Gets collection of metadata names used in indexed documents.
+        /// </summary>
+        /// <returns>Collection of metadata names.</returns>
+        Task<IEnumerable<string>> GetAvailableMetadata();
     }
 }

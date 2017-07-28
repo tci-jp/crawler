@@ -47,7 +47,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AzureCrawlerStorage.cs" />
-    <Compile Include="Blob.cs" />
+    <Compile Include="BlobContentIndexItem.cs" />
+    <Compile Include="BlobMetadataDictionary.cs" />
+    <Compile Include="MetadataIndexItem.cs" />
+    <Compile Include="MetadataItem.cs" />
     <Compile Include="SimpleBlobSearcher.cs" />
     <Compile Include="AzureIndexedSearch.cs" />
     <Compile Include="CrawlRecord.cs" />
@@ -55,6 +58,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionInfo.cs" />
     <Compile Include="SessionUri.cs" />
+    <Compile Include="MetadataString.cs" />
     <Compile Include="UriReferer.cs" />
   </ItemGroup>
   <ItemGroup>

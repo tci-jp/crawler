@@ -6,16 +6,20 @@ namespace CrawlerLib.Azure
 {
     using System;
     using System.Collections.Async;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Data;
     using global::Azure.Storage;
+    using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage.Blob;
 
     /// <inheritdoc />
     /// <summary>
     /// Simple search listing all blobs and download them to search.
     /// </summary>
+    [UsedImplicitly]
     public class SimpleBlobSearcher : IBlobSearcher
     {
         private readonly DataStorage azure;
@@ -31,6 +35,14 @@ namespace CrawlerLib.Azure
         {
             this.azure = azure;
             this.containerName = containerName;
+        }
+
+        /// <inheritdoc />
+        public Task<IAsyncEnumerable<string>> SearchByMeta(
+            IEnumerable<SearchCondition> query,
+            CancellationToken cancellation)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />

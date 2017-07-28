@@ -229,7 +229,7 @@ namespace CrawlerLib
                             var result = await config.HttpGrabber.Grab(state.Uri, state.Referrer);
 
                             lastCode = result.Status;
-                            if (config.RetryErrors.Contains(lastCode))
+                            if (config.RetryErrors.Contains(lastCode) || result.Content == null)
                             {
                                 await Task.Delay(config.RequestErrorRetryDelay);
                                 continue;
@@ -262,6 +262,8 @@ namespace CrawlerLib
                             trace.Append(" NOFOLLOW is in force: Skip Indexing.");
                         }
 
+                        UriCrawled?.Invoke(this, state.Uri.ToString());
+
                         if (!nofollow)
                         {
                             await ParseLinks(state, html);
@@ -280,11 +282,11 @@ namespace CrawlerLib
 
                         lastException = null;
 
-                        UriCrawled?.Invoke(this, state.Uri.ToString());
                         break;
                     }
                     catch (TaskCanceledException ex)
                     {
+                        config.Logger.Error($"{state.Uri} - Retry {trycount} - Timeout");
                         if (config.CancellationToken.IsCancellationRequested)
                         {
                             return;
@@ -294,6 +296,7 @@ namespace CrawlerLib
                     }
                     catch (Exception ex)
                     {
+                        config.Logger.Error($"{state.Uri} - Retry {trycount} - Failed : ", ex);
                         lastException = ex;
                         await Task.Delay(config.RequestErrorRetryDelay);
                     }

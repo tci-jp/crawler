@@ -21,7 +21,7 @@ namespace CrawlerLib.Azure
 
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="SessionUri"/> class.
+        /// Initializes a new instance of the <see cref="SessionUri" /> class.
         /// </summary>
         /// <param name="sessionId">Crawler session Id.</param>
         /// <param name="uri">Found URI.</param>

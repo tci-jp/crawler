@@ -20,7 +20,7 @@ namespace CrawlerUI
             model.ResetLog();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Log(LogRecord log)
         {
             model.AddLogLine(log.ToString());

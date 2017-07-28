@@ -6,6 +6,7 @@ namespace CrawlerUI
 {
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
@@ -66,6 +67,11 @@ namespace CrawlerUI
         /// Gets uRIs found by searching.
         /// </summary>
         public ObservableCollection<string> SearchResult { get; } = new ObservableCollection<string>();
+
+        public Model()
+        {
+            MetaConditions.CollectionChanged += (o, args) => OnPropertyChanged(nameof(IsTextSearch));
+        }
 
         /// <summary>
         /// Gets or sets crawling Host Depth.
@@ -226,6 +232,9 @@ namespace CrawlerUI
         /// </summary>
         public CancellationTokenSource SearchCancellation { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether search is in process.
+        /// </summary>
         public bool IsSearching
         {
             get => isSearching;
@@ -240,6 +249,21 @@ namespace CrawlerUI
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Gets metadata available to search.
+        /// </summary>
+        public ObservableCollection<string> AvailableMetadata { get; } = new ObservableCollection<string>();
+
+        /// <summary>
+        /// Gets current metadata search conditions.
+        /// </summary>
+        public ObservableCollection<OperatorModel> MetaConditions { get; } =
+            new ObservableCollection<OperatorModel>();
+
+        public string SelectedMetadata { get; set; }
+
+        public bool IsTextSearch => !MetaConditions.Any();
 
         /// <summary>
         /// Add line into log.
@@ -264,7 +288,7 @@ namespace CrawlerUI
         /// </summary>
         /// <param name="propertyName">Name of property to notify.</param>
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

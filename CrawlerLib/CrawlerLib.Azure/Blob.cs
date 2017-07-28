@@ -7,12 +7,10 @@
     using Newtonsoft.Json;
 
     [SerializePropertyNamesAsCamelCase]
-    public partial class Blob
+    public class Blob
     {
         [System.ComponentModel.DataAnnotations.Key]
-        public string BlobUrl { get; set; }
-
-        [IsSearchable]
-        public string Html { get; set; }
+        [JsonProperty("metadata_storage_name")]
+        public string MetadataStorageName { get; set; }
     }
 }

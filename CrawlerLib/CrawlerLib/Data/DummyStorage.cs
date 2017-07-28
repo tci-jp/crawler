@@ -84,7 +84,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchText(string text)
+        public Task<IAsyncEnumerable<string>> SearchText(string text, CancellationToken cancellation)
         {
             IEnumerable<string> GetEnumerable()
             {

@@ -7,6 +7,7 @@ namespace CrawlerLib.Azure
     using System;
     using System.Collections.Async;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
@@ -33,7 +34,7 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchByText(string text)
+        public async Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
         {
             if (container == null)
             {
@@ -46,6 +47,7 @@ namespace CrawlerLib.Azure
             {
                 foreach (var blob in blobs)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     yield.CancellationToken.ThrowIfCancellationRequested();
                     var str = await blob.DownloadTextAsync(yield.CancellationToken);
                     if (str.IndexOf(text, StringComparison.InvariantCultureIgnoreCase) >= 0)

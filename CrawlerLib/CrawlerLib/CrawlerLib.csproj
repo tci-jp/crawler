@@ -45,10 +45,14 @@
     <Compile Include="Grabbers\GrabResult.cs" />
     <Compile Include="Grabbers\HttpGrabber.cs" />
     <Compile Include="Grabbers\WebDriverHttpGrabber.cs" />
+    <Compile Include="ILinkParser.cs" />
+    <Compile Include="IMetadataExtractor.cs" />
+    <Compile Include="LinkParser.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\LoggerExtensions.cs" />
     <Compile Include="Logger\LogRecord.cs" />
     <Compile Include="Logger\Severity.cs" />
+    <Compile Include="MetadataExtractor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueuedTaskRunner.cs" />
     <Compile Include="Grabbers\SimpleHttpGrabber.cs" />

@@ -52,17 +52,27 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task DumpPage(string uri, Stream content)
+        public async Task DumpPage(string uri, Stream content, CancellationToken cancellation, IEnumerable<KeyValuePair<string, string>> metadata = null)
         {
             var container = await storage.GetBlobContainer("pages");
 
             var record = new CrawlRecord(uri)
-                         {
-                             Status = HttpStatusCode.OK.ToString()
-                         };
+            {
+                Status = HttpStatusCode.OK.ToString()
+            };
 
             var blob = container.GetBlockBlobReference(record.BlobName);
-            await blob.UploadFromStreamAsync(content);
+            await blob.UploadFromStreamAsync(content, cancellation);
+            blob.Metadata.Clear();
+            if (metadata != null)
+            {
+                foreach (var pair in metadata)
+                {
+                    blob.Metadata.Add(pair);
+                }
+            }
+
+            await blob.SetMetadataAsync(cancellation);
 
             await storage.InsertOrReplaceAsync(record);
         }
@@ -95,9 +105,9 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchText(string text)
+        public async Task<IAsyncEnumerable<string>> SearchText(string text, CancellationToken cancellation)
         {
-            var en = await searcher.SearchByText(text);
+            var en = await searcher.SearchByText(text, cancellation);
             return en.Select(DataStorage.DecodeString);
         }
 
@@ -106,9 +116,9 @@ namespace CrawlerLib.Azure
         public async Task StorePageError(string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(uri)
-                                               {
-                                                   Status = code.ToString()
-                                               });
+            {
+                Status = code.ToString()
+            });
         }
     }
 }

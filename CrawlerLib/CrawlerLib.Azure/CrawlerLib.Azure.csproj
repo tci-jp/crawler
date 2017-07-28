@@ -36,6 +36,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -45,10 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Blob.cs" />
-    <Compile Include="Blob.Method.cs" />
-    <Compile Include="SimpleBlobSearcher.cs" />
     <Compile Include="AzureCrawlerStorage.cs" />
+    <Compile Include="Blob.cs" />
+    <Compile Include="SimpleBlobSearcher.cs" />
+    <Compile Include="AzureIndexedSearch.cs" />
     <Compile Include="CrawlRecord.cs" />
     <Compile Include="IBlobSearcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

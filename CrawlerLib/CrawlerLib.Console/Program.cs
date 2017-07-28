@@ -6,23 +6,16 @@ namespace CrawlerLib.Console
 {
     using System;
     using System.Threading;
-    using Data;
     using Grabbers;
+    using JetBrains.Annotations;
     using Logger;
 
-    public class ConsoleLogger : ILogger
-    {
-        public void Log(Logger.LogRecord log)
-        {
-            Console.WriteLine(log.ToString());
-        }
-    }
-
-    class Program
+    [UsedImplicitly]
+    public class Program
     {
         private static CancellationTokenSource cancellation;
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             var logger = new ConsoleLogger();
 
@@ -40,17 +33,17 @@ namespace CrawlerLib.Console
                 cancellation = new CancellationTokenSource();
 
                 var config = new Configuration
-                {
-                    Logger = logger,
-                    CancellationToken = cancellation.Token,
-                    HostDepth = 1,
-                    Depth = 3
-                };
-                config.HttpGrabber = new HttpContentGrabber(config);
+                             {
+                                 Logger = logger,
+                                 CancellationToken = cancellation.Token,
+                                 HostDepth = 1,
+                                 Depth = 3
+                             };
+                config.HttpGrabber = new WebDriverHttpGrabber(config);
 
                 var crawler = new Crawler(config);
                 var crawledUriNumbder = 0;
-                crawler.UriCrawled += u => { Interlocked.Increment(ref crawledUriNumbder); };
+                crawler.UriCrawled += (sender, u) => { Interlocked.Increment(ref crawledUriNumbder); };
 
                 try
                 {
@@ -63,7 +56,6 @@ namespace CrawlerLib.Console
                     logger.Error(ex);
                     Console.WriteLine();
                 }
-
             }
 
             Console.WriteLine("\r\nExit");

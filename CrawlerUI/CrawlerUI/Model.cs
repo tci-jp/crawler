@@ -25,6 +25,7 @@ namespace CrawlerUI
         private int defaultDepth = 3;
         private int defaultHostDepth;
         private bool isCrawlerRunning;
+        private bool isSearching;
         private string newUri;
         private string searchString;
 
@@ -224,6 +225,21 @@ namespace CrawlerUI
         /// Gets or sets cancellation Token Source to stop search.
         /// </summary>
         public CancellationTokenSource SearchCancellation { get; set; }
+
+        public bool IsSearching
+        {
+            get => isSearching;
+            set
+            {
+                if (value == isSearching)
+                {
+                    return;
+                }
+
+                isSearching = value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Add line into log.

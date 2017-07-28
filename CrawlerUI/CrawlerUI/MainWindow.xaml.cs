@@ -6,6 +6,7 @@ namespace CrawlerUI
 {
     using System;
     using System.Collections.Async;
+    using System.Configuration;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -19,6 +20,7 @@ namespace CrawlerUI
     using CrawlerLib.Azure;
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
+    using Configuration = CrawlerLib.Configuration;
 
     /// <inheritdoc cref="Window" />
     /// <summary>
@@ -26,11 +28,16 @@ namespace CrawlerUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static readonly DataStorage Azure = new DataStorage("UseDevelopmentStorage=true");
-        private static readonly Regex NumberRegex = new Regex("[^0-9]+");
+        private static readonly DataStorage Azure =
+            new DataStorage(ConfigurationManager.AppSettings["CrawlerStorageConnectionString"]);
 
-        private static readonly ICrawlerStorage Storage =
-            new AzureCrawlerStorage(Azure, new SimpleBlobSearcher(Azure, "pages"));
+        private static readonly Regex NumberRegex = new Regex("[^0-9]+");
+        private static readonly AzureIndexedSearch AzureIndexedSearch = new AzureIndexedSearch(
+                            ConfigurationManager.AppSettings["SearchServiceName"],
+                            ConfigurationManager.AppSettings["SearchServiceAdminApiKey"],
+                            ConfigurationManager.AppSettings["SearchIndexName"]);
+
+        private static readonly ICrawlerStorage Storage = new AzureCrawlerStorage(Azure, AzureIndexedSearch);
 
         /// <inheritdoc />
         /// <summary>
@@ -97,8 +104,6 @@ namespace CrawlerUI
 
         private void Search()
         {
-            Model.SearchCancellation?.Cancel();
-            Model.SearchCancellation?.Dispose();
             Model.SearchCancellation = new CancellationTokenSource();
             Model.SearchResult.Clear();
             var cancellation = Model.SearchCancellation.Token;
@@ -108,7 +113,8 @@ namespace CrawlerUI
                 {
                     try
                     {
-                        var en = await Storage.SearchText(searchString);
+                        Dispatcher.Invoke(() => Model.IsSearching = true);
+                        var en = await Storage.SearchText(searchString, cancellation);
                         await en.ForEachAsync(
                             uri =>
                             {
@@ -120,6 +126,10 @@ namespace CrawlerUI
                     catch (Exception ex)
                     {
                         Model.AddLogLine(ex.ToString());
+                    }
+                    finally
+                    {
+                        Dispatcher.Invoke(() => Model.IsSearching = false);
                     }
                 },
                 cancellation);
@@ -157,7 +167,10 @@ namespace CrawlerUI
                     content.IndexOf(Model.SearchString, 0, StringComparison.InvariantCultureIgnoreCase);
 
                 FocusManager.SetFocusedElement(this, SearchContent);
-                SearchContent.Select(selStart, Model.SearchString.Length);
+                if (selStart != -1)
+                {
+                    SearchContent.Select(selStart, Model.SearchString.Length);
+                }
             }
             else
             {
@@ -178,13 +191,13 @@ namespace CrawlerUI
                 Model.CrawlerCancellation = new CancellationTokenSource();
                 Model.CrawlerResult.Clear();
                 var config = new Configuration
-                             {
-                                 CancellationToken = Model.CrawlerCancellation.Token,
-                                 Depth = Model.DefaultDepth,
-                                 HostDepth = Model.DefaultHostDepth,
-                                 Logger = new GuiLogger(Model),
-                                 Storage = Storage
-                             };
+                {
+                    CancellationToken = Model.CrawlerCancellation.Token,
+                    Depth = Model.DefaultDepth,
+                    HostDepth = Model.DefaultHostDepth,
+                    Logger = new GuiLogger(Model),
+                    Storage = Storage
+                };
 
                 config.HttpGrabber = new WebDriverHttpGrabber(config);
 
@@ -227,6 +240,13 @@ namespace CrawlerUI
             {
                 AddUrl();
             }
+        }
+
+        private void StopSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.SearchCancellation?.Cancel();
+            Model.SearchCancellation?.Dispose();
+            Model.SearchCancellation = null;
         }
     }
 }

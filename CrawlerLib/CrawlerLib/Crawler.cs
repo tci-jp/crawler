@@ -31,6 +31,10 @@ namespace CrawlerLib
 
         private readonly Configuration config;
         private readonly AsyncAutoResetEvent lastEvent;
+
+        private readonly ILinkParser linkParser = new LinkParser();
+
+        private readonly IMetadataExtractor metadataExtractor = new MetadataExtractor();
         private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
         private readonly ICrawlerStorage storage;
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
@@ -53,9 +57,9 @@ namespace CrawlerLib
             config = new Configuration(conf) ?? new Configuration();
 
             client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
+                     {
+                         Timeout = config.RequestTimeout
+                     };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -115,6 +119,32 @@ namespace CrawlerLib
             return sessionid;
         }
 
+        private static (bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
+        {
+            var nofollow = false;
+            var noindex = false;
+            foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
+                                     .Select(m => m.Attributes["content"].Value) ?? new string[0])
+            {
+                if (meta.IndexOf("NOFOLLOW", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                {
+                    nofollow = true;
+                }
+
+                if (meta.IndexOf("NOINDEX", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                {
+                    noindex = true;
+                }
+
+                if (nofollow && noindex)
+                {
+                    break;
+                }
+            }
+
+            return (nofollow, noindex);
+        }
+
         private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
         {
             if (depth > config.Depth || hostDepth > config.HostDepth)
@@ -136,12 +166,12 @@ namespace CrawlerLib
             }
 
             var newstate = new State
-            {
-                Uri = uri,
-                Depth = depth,
-                HostDepth = hostDepth,
-                Referrer = state?.Uri
-            };
+                           {
+                               Uri = uri,
+                               Depth = depth,
+                               HostDepth = hostDepth,
+                               Referrer = state?.Uri
+                           };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
             if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
@@ -182,8 +212,6 @@ namespace CrawlerLib
             {
                 Exception lastException = null;
                 var lastCode = HttpStatusCode.OK;
-                var nofollow = false;
-                var noindex = false;
 
                 for (var trycount = 0; trycount < config.RetriesNumber; trycount++)
                 {
@@ -217,24 +245,7 @@ namespace CrawlerLib
                         var html = new HtmlDocument();
                         html.LoadHtml(page);
 
-                        foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
-                                                 .Select(m => m.Attributes["content"].Value) ?? new string[0])
-                        {
-                            if (meta.IndexOf("NOFOLLOW", StringComparison.InvariantCultureIgnoreCase) >= 0)
-                            {
-                                nofollow = true;
-                            }
-
-                            if (meta.IndexOf("NOINDEX", StringComparison.InvariantCultureIgnoreCase) >= 0)
-                            {
-                                noindex = true;
-                            }
-
-                            if (nofollow && noindex)
-                            {
-                                break;
-                            }
-                        }
+                        (var nofollow, var noindex) = CheckNofollowNoindex(html);
 
                         var trace = new StringBuilder(state.Uri.ToString()).Append(" -");
 
@@ -242,7 +253,9 @@ namespace CrawlerLib
                         {
                             await storage.DumpPage(
                                 state.Uri.ToString(),
-                                new MemoryStream(Encoding.UTF8.GetBytes(page)));
+                                new MemoryStream(Encoding.UTF8.GetBytes(page)),
+                                config.CancellationToken,
+                                metadataExtractor.ExtractMetadata(html));
                         }
                         else
                         {
@@ -312,12 +325,7 @@ namespace CrawlerLib
 
         private async Task ParseLinks(State state, HtmlDocument html)
         {
-            var links = html.DocumentNode.SelectNodes("//a")
-                            ?.Select(l => l.Attributes["href"]).Where(l => l != null)
-                            .Select(l => l.Value).Where(l => !string.IsNullOrWhiteSpace(l))
-                            .ToList() ?? new List<string>();
-
-            foreach (var link in links)
+            foreach (var link in linkParser.ParseLinks(html))
             {
                 if (config.CancellationToken.IsCancellationRequested)
                 {

@@ -20,6 +20,7 @@ namespace CrawlerUI
     using CrawlerLib.Azure;
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
+    using Models;
     using Configuration = CrawlerLib.Configuration;
 
     /// <inheritdoc cref="Window" />
@@ -141,11 +142,11 @@ namespace CrawlerUI
         private void SearchMeta()
         {
             var cond = Model.MetaConditions.Select(m => new SearchCondition
-            {
-                Name = m.MetadataName,
-                Op = m.Op,
-                Value = m.Value
-            });
+                                                        {
+                                                            Name = m.MetadataName,
+                                                            Op = m.Op,
+                                                            Value = m.Value
+                                                        });
             Model.SearchCancellation = new CancellationTokenSource();
             Model.SearchResult.Clear();
             var cancellation = Model.SearchCancellation.Token;
@@ -176,7 +177,6 @@ namespace CrawlerUI
                 cancellation);
         }
 
-
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             if (Model.IsTextSearch)
@@ -186,7 +186,6 @@ namespace CrawlerUI
             else
             {
                 SearchMeta();
-
             }
         }
 
@@ -245,13 +244,13 @@ namespace CrawlerUI
                 Model.CrawlerCancellation = new CancellationTokenSource();
                 Model.CrawlerResult.Clear();
                 var config = new Configuration
-                {
-                    CancellationToken = Model.CrawlerCancellation.Token,
-                    Depth = Model.DefaultDepth,
-                    HostDepth = Model.DefaultHostDepth,
-                    Logger = new GuiLogger(Model),
-                    Storage = Storage
-                };
+                             {
+                                 CancellationToken = Model.CrawlerCancellation.Token,
+                                 Depth = Model.DefaultDepth,
+                                 HostDepth = Model.DefaultHostDepth,
+                                 Logger = new GuiLogger(Model),
+                                 Storage = Storage
+                             };
 
                 config.HttpGrabber = new SimpleHttpGrabber(config);
 
@@ -313,7 +312,6 @@ namespace CrawlerUI
                     Model.AvailableMetadata.Add(meta);
                 }
             });
-
         }
 
         private void AddMetadata_Click(object sender, RoutedEventArgs e)

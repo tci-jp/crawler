@@ -4,18 +4,23 @@
 
 namespace CrawlerLib.Azure
 {
+    using System;
     using System.Collections.Async;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Data;
     using global::Azure.Storage;
     using Microsoft.Azure.Search;
     using Microsoft.Azure.Search.Models;
     using Microsoft.WindowsAzure.Storage.Table;
 
-    /// <inheritdoc />
-    public class AzureIndexedSearch : IBlobSearcher
+    /// <inheritdoc cref="IBlobSearcher" />
+    /// <summary>
+    /// Azure Search implementation for blob searching
+    /// </summary>
+    public class AzureIndexedSearch : IBlobSearcher, IDisposable
     {
         private static readonly Dictionary<SearchCondition.Operator, string> OpMapping =
             new Dictionary<SearchCondition.Operator, string>
@@ -34,7 +39,7 @@ namespace CrawlerLib.Azure
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureIndexedSearch" /> class.
         /// </summary>
-        /// <param name="storage"></param>
+        /// <param name="storage">Azure Storage Helper class.</param>
         /// <param name="searchServiceName">Name of search service in Azure.</param>
         /// <param name="apiKey">Search service access key.</param>
         /// <param name="textIndexName">Name of index for full text search.</param>
@@ -52,6 +57,14 @@ namespace CrawlerLib.Azure
             serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
             textIndexClient = serviceClient.Indexes.GetClient(textIndexName);
             metaIndexClient = serviceClient.Indexes.GetClient(metaIndexName);
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            metaIndexClient?.Dispose();
+            serviceClient?.Dispose();
+            textIndexClient?.Dispose();
         }
 
         /// <inheritdoc />

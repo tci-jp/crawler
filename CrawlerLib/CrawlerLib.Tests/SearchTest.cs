@@ -9,24 +9,27 @@ namespace CrawlerLib.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using Azure;
+    using global::Azure.Storage;
     using Xunit;
     using Xunit.Abstractions;
 
     public class SearchTest
     {
+        private readonly AzureIndexedSearch blobSearcher;
+
+        private readonly ITestOutputHelper output;
+
         public SearchTest(ITestOutputHelper output)
         {
             var searchServiceName = ConfigurationManager.AppSettings["SearchServiceName"];
             var adminApiKey = ConfigurationManager.AppSettings["SearchServiceAdminApiKey"];
             var textIndexName = ConfigurationManager.AppSettings["TextSearchIndexName"];
             var metaIndexName = ConfigurationManager.AppSettings["MetaSearchIndexName"];
+            var azure = new DataStorage(ConfigurationManager.AppSettings["CrawlerStorageConnectionString"]);
+
             this.output = output;
-            blobSearcher = new AzureIndexedSearch(searchServiceName, adminApiKey, textIndexName, metaIndexName);
+            blobSearcher = new AzureIndexedSearch(azure, searchServiceName, adminApiKey, textIndexName, metaIndexName);
         }
-
-        private readonly ITestOutputHelper output;
-
-        private readonly AzureIndexedSearch blobSearcher;
 
         [Fact]
         public async Task Main()

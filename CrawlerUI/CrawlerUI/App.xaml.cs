@@ -6,6 +6,7 @@ namespace CrawlerUI
 {
     using System.Windows;
 
+    /// <inheritdoc />
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>

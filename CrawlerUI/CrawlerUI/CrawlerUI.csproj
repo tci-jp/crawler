@@ -62,10 +62,10 @@
     <Compile Include="Converters\FalseToVisible.cs" />
     <Compile Include="GuiLogger.cs" />
     <Compile Include="InputItem.cs" />
-    <Compile Include="Model.cs" />
+    <Compile Include="Models\Model.cs" />
     <Compile Include="Converters\TrueToVisible.cs" />
     <Compile Include="Converters\NullToFalse.cs" />
-    <Compile Include="SearchOperators.cs" />
+    <Compile Include="Models\SearchOperatorsModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -80,7 +80,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OperatorModel.cs" />
+    <Compile Include="Models\OperatorModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

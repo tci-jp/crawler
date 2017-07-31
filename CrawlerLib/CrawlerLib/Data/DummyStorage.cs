@@ -84,7 +84,7 @@ namespace CrawlerLib.Data
         /// <inheritdoc />
         public Task<IEnumerable<string>> GetSessionUris(string sessionId)
         {
-            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Uris);
+            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Referers.Keys);
         }
 
         /// <inheritdoc />
@@ -130,8 +130,6 @@ namespace CrawlerLib.Data
         {
             public ConcurrentDictionary<string, ConcurrentBag<string>> Referers { get; } =
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();
-
-            public ConcurrentBag<string> Uris { get; } = new ConcurrentBag<string>();
 
             public string Id { get; set; }
 

@@ -23,14 +23,14 @@ namespace CrawlerLib.Logger
         }
 
         /// <summary>
-        /// Gets or sets log record severity.
+        /// Gets log record severity.
         /// </summary>
-        public Severity Severity { get; set; }
+        public Severity Severity { get; }
 
         /// <summary>
-        /// Gets or sets object to log.
+        /// Gets object to log.
         /// </summary>
-        public dynamic Object { get; set; }
+        public dynamic Object { get; }
 
         /// <inheritdoc />
         public override string ToString()

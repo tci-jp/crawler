@@ -5,7 +5,9 @@
 namespace CrawlerUI
 {
     using CrawlerLib.Logger;
+    using Models;
 
+    /// <inheritdoc />
     /// <summary>
     /// Using model as logger for GUI.
     /// </summary>

@@ -54,12 +54,12 @@ namespace CrawlerLib
         {
             EncodingRedirector.RegisterEncodings();
 
-            config = new Configuration(conf) ?? new Configuration();
+            config = new Configuration(conf);
 
             client = new HttpClient
-                     {
-                         Timeout = config.RequestTimeout
-                     };
+            {
+                Timeout = config.RequestTimeout
+            };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -119,7 +119,7 @@ namespace CrawlerLib
             return sessionid;
         }
 
-        private static (bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
+        private static(bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
         {
             var nofollow = false;
             var noindex = false;
@@ -166,12 +166,12 @@ namespace CrawlerLib
             }
 
             var newstate = new State
-                           {
-                               Uri = uri,
-                               Depth = depth,
-                               HostDepth = hostDepth,
-                               Referrer = state?.Uri
-                           };
+            {
+                Uri = uri,
+                Depth = depth,
+                HostDepth = hostDepth,
+                Referrer = state?.Uri
+            };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
             if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
@@ -395,7 +395,12 @@ namespace CrawlerLib
                 }
             }
 
-            public string UriHostAndPort { get; private set; }
+            public string UriHostAndPort
+            {
+                [UsedImplicitly]
+                get;
+                private set;
+            }
 
             public Uri Host { get; private set; }
 

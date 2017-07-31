@@ -32,9 +32,12 @@ namespace CrawlerLib
         /// <param name="config">Configuration to clone.</param>
         public Configuration(Configuration config)
         {
-            foreach (var prop in typeof(Configuration).GetProperties())
+            if (config != null)
             {
-                prop.SetMethod.Invoke(this, new[] { prop.GetMethod.Invoke(config, new object[0]) });
+                foreach (var prop in typeof(Configuration).GetProperties())
+                {
+                    prop.SetMethod.Invoke(this, new[] { prop.GetMethod.Invoke(config, new object[0]) });
+                }
             }
         }
 

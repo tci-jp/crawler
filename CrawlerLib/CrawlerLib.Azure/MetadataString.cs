@@ -6,6 +6,7 @@ namespace CrawlerLib.Azure
 {
     using System;
     using global::Azure.Storage;
+    using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <inheritdoc />
@@ -24,16 +25,31 @@ namespace CrawlerLib.Azure
         /// <summary>
         /// Gets or sets name of Blob containing this metadata.
         /// </summary>
-        public string BlobName { get; set; }
+        public string BlobName
+        {
+            [UsedImplicitly]
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets name of metadata field.
         /// </summary>
-        public string Name { get; set; }
+        public string Name
+        {
+            [UsedImplicitly]
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets metadata value.
         /// </summary>
-        public string Value { get; set; }
+        public string Value
+        {
+            [UsedImplicitly]
+            get;
+            set;
+        }
     }
 }

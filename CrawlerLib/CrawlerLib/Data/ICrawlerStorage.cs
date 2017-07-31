@@ -55,6 +55,12 @@ namespace CrawlerLib.Data
         Task<IEnumerable<ISessionInfo>> GetAllSessions();
 
         /// <summary>
+        /// Gets collection of metadata names used in indexed documents.
+        /// </summary>
+        /// <returns>Collection of metadata names.</returns>
+        Task<IEnumerable<string>> GetAvailableMetadata();
+
+        /// <summary>
         /// Returns collection of URI referers.
         /// </summary>
         /// <param name="sessionId">Crawling session.</param>
@@ -81,14 +87,6 @@ namespace CrawlerLib.Data
         Task GetUriContet(string uri, Stream destination, CancellationToken cancellation);
 
         /// <summary>
-        /// Search URLs content by free text
-        /// </summary>
-        /// <param name="text">Text to search.</param>
-        /// <param name="cancellation">Search cancellation.</param>
-        /// <returns>Collection of URIs which content has that text.</returns>
-        Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation);
-
-        /// <summary>
         /// Search blobs by metadata
         /// </summary>
         /// <param name="query">Collection of operators combined together as AND.</param>
@@ -97,17 +95,19 @@ namespace CrawlerLib.Data
         Task<IAsyncEnumerable<string>> SearchByMeta(IEnumerable<SearchCondition> query, CancellationToken cancellation);
 
         /// <summary>
+        /// Search URLs content by free text
+        /// </summary>
+        /// <param name="text">Text to search.</param>
+        /// <param name="cancellation">Search cancellation.</param>
+        /// <returns>Collection of URIs which content has that text.</returns>
+        Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation);
+
+        /// <summary>
         /// Store page crawling status code
         /// </summary>
         /// <param name="uri">Page URI.</param>
         /// <param name="code">Page status code.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task StorePageError(string uri, HttpStatusCode code);
-
-        /// <summary>
-        /// Gets collection of metadata names used in indexed documents.
-        /// </summary>
-        /// <returns>Collection of metadata names.</returns>
-        Task<IEnumerable<string>> GetAvailableMetadata();
     }
 }

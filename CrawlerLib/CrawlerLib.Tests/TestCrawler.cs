@@ -17,8 +17,6 @@ namespace CrawlerLib.Tests
 
         private Crawler crawler;
 
-        private string sessionId;
-
         public TestCrawler(ITestOutputHelper output)
         {
             this.output = output;

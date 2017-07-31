@@ -10,11 +10,18 @@ namespace CrawlerLib.Console
     using JetBrains.Annotations;
     using Logger;
 
+    /// <summary>
+    /// Main class
+    /// </summary>
     [UsedImplicitly]
     public class Program
     {
         private static CancellationTokenSource cancellation;
 
+        /// <summary>
+        /// Start method
+        /// </summary>
+        /// <param name="args">Console app arguments.</param>
         public static void Main(string[] args)
         {
             var logger = new ConsoleLogger();

@@ -2,10 +2,8 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace CrawlerLib.Data
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Search condition operator
     /// </summary>

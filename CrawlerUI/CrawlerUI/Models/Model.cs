@@ -2,7 +2,7 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerUI
+namespace CrawlerUI.Models
 {
     using System.Collections.ObjectModel;
     using System.ComponentModel;
@@ -29,6 +29,14 @@ namespace CrawlerUI
         private bool isSearching;
         private string newUri;
         private string searchString;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Model" /> class.
+        /// </summary>
+        public Model()
+        {
+            MetaConditions.CollectionChanged += (o, args) => OnPropertyChanged(nameof(IsTextSearch));
+        }
 
         /// <summary>
         /// See <see cref="INotifyPropertyChanged" />
@@ -67,11 +75,6 @@ namespace CrawlerUI
         /// Gets uRIs found by searching.
         /// </summary>
         public ObservableCollection<string> SearchResult { get; } = new ObservableCollection<string>();
-
-        public Model()
-        {
-            MetaConditions.CollectionChanged += (o, args) => OnPropertyChanged(nameof(IsTextSearch));
-        }
 
         /// <summary>
         /// Gets or sets crawling Host Depth.
@@ -261,8 +264,14 @@ namespace CrawlerUI
         public ObservableCollection<OperatorModel> MetaConditions { get; } =
             new ObservableCollection<OperatorModel>();
 
+        /// <summary>
+        /// Gets or sets gets name of metadata selected for adding into query
+        /// </summary>
         public string SelectedMetadata { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether search is full text (true) or metadata query (false)
+        /// </summary>
         public bool IsTextSearch => !MetaConditions.Any();
 
         /// <summary>

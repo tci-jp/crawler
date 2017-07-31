@@ -10,7 +10,7 @@ namespace CrawlerLib.Azure
     using Data;
     using global::Azure.Storage;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="ComplexTableEntity"/>
     [Table("common", PartitionKey = "session")]
     public class SessionInfo : ComplexTableEntity, ISessionInfo
     {

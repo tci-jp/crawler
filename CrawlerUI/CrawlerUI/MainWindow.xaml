@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:CrawlerUI.Converters"
         xmlns:models="clr-namespace:CrawlerUI.Models"
         mc:Ignorable="d" Loaded="Window_Loaded"
-        Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance models:Model}">
+        Title="Crawler" Background="WhiteSmoke" d:DataContext="{d:DesignInstance models:Model}" Width="1281">
     <Window.Resources>
         <converters:TrueToVisible x:Key="TrueToVisible" />
         <converters:FalseToVisible x:Key="FalseToVisible" />
@@ -109,10 +109,17 @@
                         <RowDefinition />
                     </Grid.RowDefinitions>
                     <Label Content="Content" Grid.Row="0" />
-                    <ScrollViewer Padding="0" Grid.Row="1">
-                        <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
+                    <TabControl Grid.Row="1" >
+                        <TabItem Header="Web">
+                            <WebBrowser local:WebBrowserUtility.BindableSource="{Binding CurrentCrawlerContent, Mode=OneWay}"/>
+                        </TabItem>
+                        <TabItem Header="Source">
+                            <ScrollViewer Padding="0" >
+                                <TextBox IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
                                  Text="{Binding CurrentCrawlerContent, Mode=OneWay}" />
-                    </ScrollViewer>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
                 </Grid>
                 <Expander Header="Log" Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0" Padding="0">
                     <ScrollViewer Name="LogScrollViewer" Padding="0" MaxHeight="100">
@@ -178,15 +185,19 @@
                     <ListView ItemsSource="{Binding SearchResult}" SelectedValue="{Binding CurrentSearchUri}"
                               SelectionChanged="SearchUri_Selected" />
                     <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
-                    <ScrollViewer Padding="0" Grid.Column="2">
-                        <TextBox Name="SearchContent" IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
-                                 Text="{Binding CurrentSearchContent, Mode=OneWay}" LostFocus="SearchContent_LostFocus" />
-                    </ScrollViewer>
+                    <TabControl Padding="0" Grid.Column="2">
+                        <TabItem Header="Web">
+                            <WebBrowser local:WebBrowserUtility.BindableSource="{Binding CurrentSearchContent, Mode=OneWay}"/>
+                        </TabItem>
+                        <TabItem Header="Source">
+                            <ScrollViewer Padding="0" >
+                                <TextBox Name="SearchContent"  IsReadOnly="true" Padding="5,0,5,0" TextWrapping="Wrap"
+                                         Text="{Binding CurrentSearchContent, Mode=OneWay}" LostFocus="SearchContent_LostFocus"/>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
                 </Grid>
-
-
             </Grid>
         </TabItem>
     </TabControl>
-
 </Window>

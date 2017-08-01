@@ -12,6 +12,7 @@ namespace CrawlerLib
     using Grabbers;
     using JetBrains.Annotations;
     using Logger;
+    using Metadata;
 
     /// <summary>
     /// Crawler configuration.
@@ -42,21 +43,9 @@ namespace CrawlerLib
         }
 
         /// <summary>
-        /// Gets or sets user-Agent used by crawler.
+        /// Gets or sets crawler cancellation token.
         /// </summary>
-        public string UserAgent { get; set; } =
-            "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19";
-
-        /// <summary>
-        /// Gets or sets storage used by crawler for dumping pages and keeping state.
-        /// </summary>
-        public ICrawlerStorage Storage { get; set; } = new DummyStorage();
-
-        /// <summary>
-        /// Gets or sets a value indicating whether tells crawler to try to keep HTTP Referer while crawling.
-        /// </summary>
-        [UsedImplicitly]
-        public bool KeepReferer { get; set; } = true;
+        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
         /// <summary>
         /// Gets or sets how deep crawler show fallow links from the initial URIs.
@@ -69,6 +58,46 @@ namespace CrawlerLib
         /// 0 means it will crawl only hosts in initial URIs.
         /// </summary>
         public int HostDepth { get; set; } = 2;
+
+        /// <summary>
+        /// Gets or sets delay between crawling the same host. Other hosts can be crawled without delay.
+        /// </summary>
+        public TimeSpan HostRequestsDelay { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Gets or sets grabber to dump page content.
+        /// </summary>
+        public HttpGrabber HttpGrabber { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether tells crawler to try to keep HTTP Referer while crawling.
+        /// </summary>
+        [UsedImplicitly]
+        public bool KeepReferer { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets logger to use by crawler.
+        /// </summary>
+        public ILogger Logger { get; set; }
+
+        /// <summary>
+        /// Gets or sets collection of metadata extractors.
+        /// </summary>
+        public IList<IMetadataExtractor> MetadataExtractors { get; set; } = new IMetadataExtractor[]
+                                                                            {
+                                                                                new MicrodataMetadataExtractor(),
+                                                                                new RdfaMetadataExtractor()
+                                                                            };
+
+        /// <summary>
+        /// Gets or sets number of request to do same time.
+        /// </summary>
+        public int NumberOfSimulataneousRequests { get; set; } = 8;
+
+        /// <summary>
+        /// Gets or sets delay before retrying error.
+        /// </summary>
+        public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Gets or sets timeout for page grabber.
@@ -92,33 +121,14 @@ namespace CrawlerLib
             };
 
         /// <summary>
-        /// Gets or sets delay before retrying error.
+        /// Gets or sets storage used by crawler for dumping pages and keeping state.
         /// </summary>
-        public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
+        public ICrawlerStorage Storage { get; set; } = new DummyStorage();
 
         /// <summary>
-        /// Gets or sets logger to use by crawler.
+        /// Gets or sets user-Agent used by crawler.
         /// </summary>
-        public ILogger Logger { get; set; }
-
-        /// <summary>
-        /// Gets or sets crawler cancellation token.
-        /// </summary>
-        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
-
-        /// <summary>
-        /// Gets or sets delay between crawling the same host. Other hosts can be crawled without delay.
-        /// </summary>
-        public TimeSpan HostRequestsDelay { get; set; } = TimeSpan.FromSeconds(1);
-
-        /// <summary>
-        /// Gets or sets number of request to do same time.
-        /// </summary>
-        public int NumberOfSimulataneousRequests { get; set; } = 8;
-
-        /// <summary>
-        /// Gets or sets grabber to dump page content.
-        /// </summary>
-        public HttpGrabber HttpGrabber { get; set; }
+        public string UserAgent { get; set; } =
+            "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19";
     }
 }

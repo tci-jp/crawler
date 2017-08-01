@@ -6,18 +6,28 @@ namespace CrawlerLib.Tests
 {
     using System.Linq;
     using HtmlAgilityPack;
+    using Metadata;
     using Xunit;
 
     public class MetadataExtractorTests
     {
         [Theory]
         [InlineData("metadata-1.html")]
-        [InlineData("metadata-2.html")]
-        public void TestStability(string filename)
+        public void TestMicrodataStability(string filename)
         {
             var html = new HtmlDocument();
             html.Load(filename);
-            var extractor = new MetadataExtractor();
+            var extractor = new MicrodataMetadataExtractor();
+            var data = extractor.ExtractMetadata(html).ToList();
+        }
+
+        [Theory]
+        [InlineData("metadata-2.html")]
+        public void TestRdfaStability(string filename)
+        {
+            var html = new HtmlDocument();
+            html.Load(filename);
+            var extractor = new RdfaMetadataExtractor();
             var data = extractor.ExtractMetadata(html).ToList();
         }
     }

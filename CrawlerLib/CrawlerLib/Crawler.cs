@@ -18,6 +18,7 @@ namespace CrawlerLib
     using HtmlAgilityPack;
     using JetBrains.Annotations;
     using Logger;
+    using Metadata;
     using Nito.AsyncEx;
     using RobotsTxt;
 
@@ -34,7 +35,6 @@ namespace CrawlerLib
 
         private readonly ILinkParser linkParser = new LinkParser();
 
-        private readonly IMetadataExtractor metadataExtractor = new MetadataExtractor();
         private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
         private readonly ICrawlerStorage storage;
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
@@ -251,11 +251,12 @@ namespace CrawlerLib
 
                         if (!noindex)
                         {
+                            var metadata = ExtractMetadata(html);
                             await storage.DumpPage(
                                 state.Uri.ToString(),
                                 new MemoryStream(Encoding.UTF8.GetBytes(page)),
                                 config.CancellationToken,
-                                metadataExtractor.ExtractMetadata(html));
+                                metadata);
                         }
                         else
                         {
@@ -324,6 +325,11 @@ namespace CrawlerLib
                     lastEvent.Set();
                 }
             }
+        }
+
+        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html)
+        {
+            return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
         }
 
         private async Task ParseLinks(State state, HtmlDocument html)

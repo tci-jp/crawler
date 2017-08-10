@@ -9,7 +9,6 @@ namespace CrawlerLib.Azure
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
-    using System.Threading.Tasks;
     using Data;
     using global::Azure.Storage;
     using Microsoft.Azure.Search;
@@ -68,7 +67,7 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchByMeta(
+        public IAsyncEnumerable<string> SearchByMeta(
             IEnumerable<SearchCondition> query,
             CancellationToken cancellation)
         {
@@ -76,24 +75,30 @@ namespace CrawlerLib.Azure
 
             var tablequery = new TableQuery<BlobMetadataDictionary>().Where(querystring);
 
-            var result = storage.GetTable<BlobMetadataDictionary>().ExecuteQuery(tablequery);
+            var result = storage.ExecuteQuery<BlobMetadataDictionary>(tablequery);
 
-            return Task.FromResult(result.Select(i => i.BlobName).ToAsyncEnumerable());
+            return result.Select(i => i.BlobName);
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
+        public IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation)
         {
             var searchingParameters = new SearchParameters
             {
                 Select = new[] { "metadata_storage_name" }
             };
-            var results = await textIndexClient.Documents.SearchAsync<BlobContentIndexItem>(
-                                                    text,
-                                                    searchingParameters,
-                                                    cancellationToken: cancellation);
-
-            return results.Results.Select(b => b.Document.MetadataStorageName).ToAsyncEnumerable();
+            return new AsyncEnumerable<string>(async yield =>
+            {
+                var results =
+                    await textIndexClient.Documents.SearchAsync<BlobContentIndexItem>(
+                                              text,
+                                              searchingParameters,
+                                              cancellationToken: cancellation);
+                foreach (var item in results.Results.Select(b => b.Document.MetadataStorageName))
+                {
+                    await yield.ReturnAsync(item);
+                }
+            });
         }
 
         private static string ToStr(SearchCondition s)

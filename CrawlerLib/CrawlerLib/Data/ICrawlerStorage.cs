@@ -52,13 +52,13 @@ namespace CrawlerLib.Data
         /// </summary>
         /// <returns>Collection of sessions.</returns>
         [UsedImplicitly]
-        Task<IEnumerable<ISessionInfo>> GetAllSessions();
+        IAsyncEnumerable<ISessionInfo> GetAllSessions();
 
         /// <summary>
         /// Gets collection of metadata names used in indexed documents.
         /// </summary>
         /// <returns>Collection of metadata names.</returns>
-        Task<IEnumerable<string>> GetAvailableMetadata();
+        IAsyncEnumerable<string> GetAvailableMetadata();
 
         /// <summary>
         /// Returns collection of URI referers.
@@ -67,7 +67,7 @@ namespace CrawlerLib.Data
         /// <param name="uri">URI whose referes to return.</param>
         /// <returns>Collection of referers.</returns>
         [UsedImplicitly]
-        Task<IEnumerable<string>> GetReferers(string sessionId, string uri);
+        IAsyncEnumerable<string> GetReferers(string sessionId, string uri);
 
         /// <summary>
         /// Returns all URIs in crawling session.
@@ -75,7 +75,7 @@ namespace CrawlerLib.Data
         /// <param name="sessionId">Crawling session.</param>
         /// <returns>Collecion of URI strings.</returns>
         [UsedImplicitly]
-        Task<IEnumerable<string>> GetSessionUris(string sessionId);
+        IAsyncEnumerable<string> GetSessionUris(string sessionId);
 
         /// <summary>
         /// Returns content of crawled URI.
@@ -92,7 +92,7 @@ namespace CrawlerLib.Data
         /// <param name="query">Collection of operators combined together as AND.</param>
         /// <param name="cancellation">Search cancellation.</param>
         /// <returns>Collection of URIs which metadata has that values.</returns>
-        Task<IAsyncEnumerable<string>> SearchByMeta(IEnumerable<SearchCondition> query, CancellationToken cancellation);
+        IAsyncEnumerable<string> SearchByMeta(IEnumerable<SearchCondition> query, CancellationToken cancellation);
 
         /// <summary>
         /// Search URLs content by free text
@@ -100,7 +100,7 @@ namespace CrawlerLib.Data
         /// <param name="text">Text to search.</param>
         /// <param name="cancellation">Search cancellation.</param>
         /// <returns>Collection of URIs which content has that text.</returns>
-        Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation);
+        IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation);
 
         /// <summary>
         /// Store page crawling status code

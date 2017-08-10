@@ -16,7 +16,9 @@ namespace CrawlerLib.Azure
     [Table("metadata", PartitionKey = "const")]
     public class MetadataString : TableEntity
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MetadataString"/> class.
+        /// </summary>
         public MetadataString()
             : base(null, Guid.NewGuid().ToString())
         {

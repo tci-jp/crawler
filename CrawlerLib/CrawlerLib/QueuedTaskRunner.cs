@@ -8,7 +8,6 @@ namespace CrawlerLib
     using System.Collections.Concurrent;
     using System.Threading;
     using System.Threading.Tasks;
-    using Nito.AsyncEx;
 
     /// <summary>
     /// Runs tasks in queue with delay between.
@@ -17,7 +16,8 @@ namespace CrawlerLib
     {
         private readonly TimeSpan delay;
 
-        private readonly AsyncCollection<Task> queue = new AsyncCollection<Task>(new ConcurrentQueue<Task>());
+        private readonly ConcurrentQueue<Task> queue = new ConcurrentQueue<Task>();
+        private readonly SemaphoreSlim tasksSemaphore = new SemaphoreSlim(0, int.MaxValue);
         private readonly CancellationToken token;
 
         /// <summary>
@@ -43,14 +43,20 @@ namespace CrawlerLib
         /// </param>
         public void Enqueue(Task task)
         {
-            queue.Add(task, token);
+            queue.Enqueue(task);
+            tasksSemaphore.Release();
         }
 
         private async Task RunQueue()
         {
             while (!token.IsCancellationRequested)
             {
-                var task = await queue.TakeAsync(token);
+                await tasksSemaphore.WaitAsync(token);
+                if (!queue.TryDequeue(out var task))
+                {
+                    throw new InvalidOperationException("Queue should never be empty after semapthore waiting.");
+                }
+
                 task.Start();
                 await Task.Delay(delay, token);
             }

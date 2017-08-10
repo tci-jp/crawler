@@ -19,7 +19,6 @@ namespace Azure.Storage
     /// </summary>
     public class ComplexTableEntity : TableEntity
     {
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="ComplexTableEntity" /> class.
         /// </summary>
@@ -28,7 +27,6 @@ namespace Azure.Storage
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="ComplexTableEntity" /> class.
         /// </summary>
@@ -45,7 +43,7 @@ namespace Azure.Storage
             OperationContext operationContext)
         {
             foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
+                .GetRuntimeProperties().Where(p => p.CanWrite))
             {
                 if (properties.TryGetValue(prop.Name, out var entity))
                 {
@@ -88,7 +86,7 @@ namespace Azure.Storage
         {
             var result = new Dictionary<string, EntityProperty>();
             foreach (var prop in GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
+                .GetRuntimeProperties().Where(p => p.CanWrite))
             {
                 var name = prop.Name;
                 var val = prop.GetValue(this);

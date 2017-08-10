@@ -7,12 +7,12 @@ namespace CrawlerLib.Azure
     using System;
     using System.Collections.Async;
     using System.Collections.Generic;
-    using System.Linq;
+    using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
     using Data;
     using global::Azure.Storage;
     using JetBrains.Annotations;
+    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
 
     /// <inheritdoc />
@@ -38,7 +38,7 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchByMeta(
+        public IAsyncEnumerable<string> SearchByMeta(
             IEnumerable<SearchCondition> query,
             CancellationToken cancellation)
         {
@@ -46,27 +46,37 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
+        public IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation)
         {
-            if (container == null)
-            {
-                container = await azure.GetBlobContainer(containerName);
-            }
-
-            var blobs = container.ListBlobs(null, true, BlobListingDetails.All)
-                                  .OfType<CloudBlockBlob>();
+            var condition = new AccessCondition();
+            var options = new BlobRequestOptions();
+            var context = new OperationContext();
             return new AsyncEnumerable<string>(async yield =>
             {
-                foreach (var blob in blobs)
+                if (container == null)
                 {
-                    cancellation.ThrowIfCancellationRequested();
-                    yield.CancellationToken.ThrowIfCancellationRequested();
-                    var str = await blob.DownloadTextAsync(yield.CancellationToken);
-                    if (str.IndexOf(text, StringComparison.InvariantCultureIgnoreCase) >= 0)
-                    {
-                        await yield.ReturnAsync(blob.Name).ConfigureAwait(false);
-                    }
+                    container = await azure.GetBlobContainerAsync(containerName);
                 }
+
+                var blobs = container.ListBlobsAsync(null, true, BlobListingDetails.All)
+                                      .Where(i => i is CloudBlockBlob).Cast<CloudBlockBlob>();
+                await blobs.ForEachAsync(
+                    async blob =>
+                    {
+                        cancellation.ThrowIfCancellationRequested();
+                        yield.CancellationToken.ThrowIfCancellationRequested();
+                        var str = await blob.DownloadTextAsync(
+                                      Encoding.UTF8,
+                                      condition,
+                                      options,
+                                      context,
+                                      cancellation);
+                        if (str.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            await yield.ReturnAsync(blob.Name);
+                        }
+                    },
+                    cancellation);
             });
         }
     }

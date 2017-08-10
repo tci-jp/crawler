@@ -6,6 +6,7 @@ namespace CrawlerLib.Azure
 {
     using System;
     using global::Azure.Storage;
+    using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <inheritdoc />
@@ -15,12 +16,17 @@ namespace CrawlerLib.Azure
     [Table("common", PartitionKey = "metadata")]
     public class MetadataItem : TableEntity
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MetadataItem"/> class.
+        /// </summary>
         public MetadataItem()
         {
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MetadataItem"/> class.
+        /// </summary>
+        /// <param name="name">Name of metadata field.</param>
         public MetadataItem(string name)
             : base(null, Guid.NewGuid().ToString())
         {
@@ -30,6 +36,11 @@ namespace CrawlerLib.Azure
         /// <summary>
         /// Gets or sets gets metadata field name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name
+        {
+            get;
+            [UsedImplicitly]
+            set;
+        }
     }
 }

@@ -16,7 +16,6 @@ namespace Azure.Storage
     /// </summary>
     public class DictionaryTableEntity : TableEntity
     {
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
         /// </summary>
@@ -25,7 +24,6 @@ namespace Azure.Storage
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
         /// </summary>
@@ -36,7 +34,6 @@ namespace Azure.Storage
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="DictionaryTableEntity" /> class.
         /// </summary>
@@ -52,6 +49,7 @@ namespace Azure.Storage
         /// <summary>
         /// Gets fields dictionary
         /// </summary>
+        [UsedImplicitly]
         public Dictionary<string, object> Fields { get; } = new Dictionary<string, object>();
 
         /// <inheritdoc />

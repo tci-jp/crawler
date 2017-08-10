@@ -64,27 +64,27 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<ISessionInfo>> GetAllSessions()
+        public IAsyncEnumerable<ISessionInfo> GetAllSessions()
         {
-            return Task.FromResult(sessions.Cast<ISessionInfo>());
+            return sessions.Cast<ISessionInfo>().ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetAvailableMetadata()
+        public IAsyncEnumerable<string> GetAvailableMetadata()
         {
-            return Task.FromResult(Enumerable.Empty<string>());
+            return Enumerable.Empty<string>().ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
+        public IAsyncEnumerable<string> GetReferers(string sessionId, string uri)
         {
-            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Referers[uri]);
+            return sessions[sessionId].Referers[uri].ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetSessionUris(string sessionId)
+        public IAsyncEnumerable<string> GetSessionUris(string sessionId)
         {
-            return Task.FromResult<IEnumerable<string>>(sessions[sessionId].Referers.Keys);
+            return sessions[sessionId].Referers.Keys.ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
@@ -94,7 +94,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchByMeta(
+        public IAsyncEnumerable<string> SearchByMeta(
             IEnumerable<SearchCondition> query,
             CancellationToken cancellation)
         {
@@ -102,21 +102,21 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
+        public IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation)
         {
             IEnumerable<string> GetEnumerable()
             {
                 foreach (var page in dumpedPages)
                 {
                     var str = Encoding.UTF8.GetString(page.Value);
-                    if (str.IndexOf(text, StringComparison.InvariantCultureIgnoreCase) >= 0)
+                    if (str.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         yield return page.Key;
                     }
                 }
             }
 
-            return Task.FromResult(GetEnumerable().ToAsyncEnumerable());
+            return GetEnumerable().ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
@@ -128,14 +128,14 @@ namespace CrawlerLib.Data
 
         private class SessionInfo : ISessionInfo
         {
+            public string Id { get; set; }
+
             public ConcurrentDictionary<string, ConcurrentBag<string>> Referers { get; } =
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();
 
-            public string Id { get; set; }
+            public IList<string> RootUris { get; set; } = new List<string>();
 
             public DateTime Timestamp { get; set; }
-
-            public IList<string> RootUris { get; set; } = new List<string>();
         }
     }
 }

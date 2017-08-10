@@ -14,12 +14,13 @@ namespace CrawlerLib.Azure
     [Table("sessionuri")]
     public class SessionUri : TableEntity
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionUri"/> class.
+        /// </summary>
         public SessionUri()
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="SessionUri" /> class.
         /// </summary>

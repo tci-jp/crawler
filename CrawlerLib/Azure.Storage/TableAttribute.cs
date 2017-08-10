@@ -13,7 +13,6 @@ namespace Azure.Storage
     [AttributeUsage(AttributeTargets.Class)]
     public class TableAttribute : Attribute
     {
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="TableAttribute" /> class.
         /// </summary>

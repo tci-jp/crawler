@@ -14,12 +14,18 @@ namespace CrawlerLib.Azure
     [Table("blobmetadata", PartitionKey = "blobmetadata")]
     public class BlobMetadataDictionary : DictionaryTableEntity
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BlobMetadataDictionary"/> class.
+        /// </summary>
         public BlobMetadataDictionary()
         {
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BlobMetadataDictionary"/> class.
+        /// </summary>
+        /// <param name="blobName">Name of blob.</param>
+        /// <param name="blobMeta">Metadata dictionary.</param>
         public BlobMetadataDictionary(string blobName, Dictionary<string, object> blobMeta)
             : base(null, blobName, blobMeta)
         {

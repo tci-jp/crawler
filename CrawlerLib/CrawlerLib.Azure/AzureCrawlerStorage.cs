@@ -16,6 +16,8 @@ namespace CrawlerLib.Azure
     using Data;
     using global::Azure.Storage;
     using JetBrains.Annotations;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Blob;
 
     /// <inheritdoc />
     /// <summary>
@@ -62,7 +64,7 @@ namespace CrawlerLib.Azure
             CancellationToken cancellation,
             IEnumerable<KeyValuePair<string, string>> metadata = null)
         {
-            var container = await storage.GetBlobContainer("pages");
+            var container = await storage.GetBlobContainerAsync("pages");
 
             var record = new CrawlRecord(uri)
                          {
@@ -70,7 +72,12 @@ namespace CrawlerLib.Azure
                          };
 
             var blob = container.GetBlockBlobReference(record.BlobName);
-            await blob.UploadFromStreamAsync(content, cancellation);
+            await blob.UploadFromStreamAsync(
+                content,
+                new AccessCondition(),
+                new BlobRequestOptions(),
+                new OperationContext(),
+                cancellation);
 
             if (metadata != null)
             {
@@ -106,59 +113,62 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<ISessionInfo>> GetAllSessions()
+        public IAsyncEnumerable<ISessionInfo> GetAllSessions()
         {
-            return Task.FromResult(storage.Query<SessionInfo>().AsEnumerable().Cast<ISessionInfo>());
+            return storage.QueryAsync<SessionInfo>().Cast<ISessionInfo>();
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetAvailableMetadata()
+        public IAsyncEnumerable<string> GetAvailableMetadata()
         {
-            return Task.FromResult(storage.Query<MetadataItem>().Select(m => m.Name).AsEnumerable());
+            return storage.QueryAsync<MetadataItem>().Select(m => m.Name);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetReferers(string sessionId, string uri)
+        public IAsyncEnumerable<string> GetReferers(string sessionId, string uri)
         {
-            return Task.FromResult(storage.Query(new UriReferer(sessionId, uri, null)).AsEnumerable()
-                                          .Select(e => e.Referer));
+            return storage.QueryAsync(new UriReferer(sessionId, uri, null))
+                          .Select(e => e.Referer);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetSessionUris(string sessionId)
+        public IAsyncEnumerable<string> GetSessionUris(string sessionId)
         {
-            return Task.FromResult(storage.Query<SessionUri>().AsEnumerable().Select(u => u.Uri));
+            return storage.QueryAsync<SessionUri>().Select(u => u.Uri);
         }
 
         /// <inheritdoc />
         public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
         {
-            var container = await storage.GetBlobContainer("pages");
+            var container = await storage.GetBlobContainerAsync("pages");
             var blob = container.GetBlockBlobReference(DataStorage.EncodeString(uri));
-            await blob.DownloadToStreamAsync(destination, cancellation);
+            await blob.DownloadToStreamAsync(
+                destination,
+                new AccessCondition(),
+                new BlobRequestOptions(),
+                new OperationContext(),
+                cancellation);
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchByMeta(
+        public IAsyncEnumerable<string> SearchByMeta(
             IEnumerable<SearchCondition> query,
             CancellationToken cancellation)
         {
-            var en = await searcher.SearchByMeta(
-                         query.Select(c => new SearchCondition
-                                           {
-                                               Name = EscapeMetadataName(c.Name),
-                                               Op = c.Op,
-                                               Value = c.Value
-                                           }),
-                         cancellation);
-            return en.Select(DataStorage.DecodeString);
+            return searcher.SearchByMeta(
+                query.Select(c => new SearchCondition
+                                  {
+                                      Name = EscapeMetadataName(c.Name),
+                                      Op = c.Op,
+                                      Value = c.Value
+                                  }),
+                cancellation).Select(DataStorage.DecodeString);
         }
 
         /// <inheritdoc />
-        public async Task<IAsyncEnumerable<string>> SearchByText(string text, CancellationToken cancellation)
+        public IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation)
         {
-            var en = await searcher.SearchByText(text, cancellation);
-            return en.Select(DataStorage.DecodeString);
+            return searcher.SearchByText(text, cancellation).Select(DataStorage.DecodeString);
         }
 
         /// <inheritdoc />

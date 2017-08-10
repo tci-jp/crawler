@@ -14,12 +14,13 @@ namespace CrawlerLib.Azure
     [Table("common", PartitionKey = "session")]
     public class SessionInfo : ComplexTableEntity, ISessionInfo
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionInfo"/> class.
+        /// </summary>
         public SessionInfo()
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="SessionInfo" /> class.
         /// Created Session object to store in Storage.
@@ -30,7 +31,11 @@ namespace CrawlerLib.Azure
         {
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionInfo"/> class.
+        /// </summary>
+        /// <param name="id">Session id.</param>
+        /// <param name="rootUris">List if uris crawled in the session.</param>
         private SessionInfo(string id, IEnumerable<string> rootUris)
             : base(null, id)
         {

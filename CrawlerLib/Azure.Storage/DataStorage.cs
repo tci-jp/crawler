@@ -5,12 +5,14 @@
 namespace Azure.Storage
 {
     using System;
+    using System.Collections.Async;
     using System.Collections.Concurrent;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Net;
     using System.Reflection;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage;
@@ -23,7 +25,7 @@ namespace Azure.Storage
     [UsedImplicitly]
     public class DataStorage
     {
-        private readonly ConcurrentDictionary<Type, TableAttribute> typeToAttribute =
+        private static readonly ConcurrentDictionary<Type, TableAttribute> TypeToAttribute =
             new ConcurrentDictionary<Type, TableAttribute>();
 
         /// <summary>
@@ -83,12 +85,46 @@ namespace Azure.Storage
         }
 
         /// <summary>
+        /// Executes asynchronuous query
+        /// </summary>
+        /// <typeparam name="TEntity">Table entity.</typeparam>
+        /// <param name="query">Query to execute.</param>
+        /// <param name="token">Cancellation.</param>
+        /// <returns>Async enumerable with result.</returns>
+        public IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(TableQuery<TEntity> query, CancellationToken token = default(CancellationToken))
+            where TEntity : TableEntity, new()
+        {
+            var table = GetTable<TEntity>();
+            var requestOption = new TableRequestOptions();
+            var context = new OperationContext();
+
+            return new AsyncEnumerable<TEntity>(
+                async yield =>
+                {
+                    TableQuerySegment<TEntity> segment = null;
+                    while ((segment = await table.ExecuteQuerySegmentedAsync(
+                                          query,
+                                          segment?.ContinuationToken,
+                                          requestOption,
+                                          context,
+                                          token).ConfigureAwait(false)) != null)
+                    {
+                        foreach (var item in segment)
+                        {
+                            token.ThrowIfCancellationRequested();
+                            yield?.ReturnAsync(item);
+                        }
+                    }
+                });
+        }
+
+        /// <summary>
         /// Gets Blob Container for this Azure Storage.
         /// </summary>
         /// <param name="name">Blob Container name.</param>
         /// <returns>Blob Container object. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
-        public async Task<CloudBlobContainer> GetBlobContainer(string name)
+        public async Task<CloudBlobContainer> GetBlobContainerAsync(string name)
         {
             var container = BlobClient.GetContainerReference(name);
             await container.CreateIfNotExistsAsync();
@@ -141,41 +177,13 @@ namespace Azure.Storage
         /// Starts query for specific Table type.
         /// </summary>
         /// <typeparam name="TEntity">Type of Table.</typeparam>
-        /// <returns>Queryable for further quering.</returns>
-        [UsedImplicitly]
-        public IQueryable<TEntity> Query<TEntity>()
-            where TEntity : TableEntity, new()
-        {
-            var table = GetTable<TEntity>();
-            var attr = GetEntityAttribute<TEntity>();
-
-            var query = table.CreateQuery<TEntity>();
-            if (attr.PartitionKey != null && attr.RowKey != null)
-            {
-                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == attr.RowKey);
-            }
-
-            if (attr.PartitionKey != null && attr.RowKey == null)
-            {
-                return query.Where(i => i.PartitionKey == attr.PartitionKey);
-            }
-
-            if (attr.PartitionKey == null && attr.RowKey != null)
-            {
-                return query.Where(i => i.RowKey == attr.RowKey);
-            }
-
-            return query;
-        }
-
-        /// <summary>
-        /// Starts query for specific Table type.
-        /// </summary>
-        /// <typeparam name="TEntity">Type of Table.</typeparam>
         /// <param name="entity">Entity with not null PartitionKey or RowKey for query</param>
+        /// <param name="token">Cancellation</param>
         /// <returns>Queryable for further quering.</returns>
         [UsedImplicitly]
-        public IQueryable<TEntity> Query<TEntity>([NotNull] TEntity entity)
+        public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(
+            [NotNull] TEntity entity,
+            CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
             if (entity == null)
@@ -183,21 +191,7 @@ namespace Azure.Storage
                 throw new ArgumentNullException(nameof(entity));
             }
 
-            var table = GetTable<TEntity>();
-            var attr = GetEntityAttribute<TEntity>();
-
-            var query = table.CreateQuery<TEntity>();
-            if (attr.PartitionKey != null && attr.RowKey == null && entity.RowKey != null)
-            {
-                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == entity.RowKey);
-            }
-
-            if (attr.PartitionKey == null && attr.RowKey != null && entity.PartitionKey != null)
-            {
-                return query.Where(i => i.RowKey == attr.RowKey && i.PartitionKey == entity.PartitionKey);
-            }
-
-            return Query<TEntity>();
+            return ExecuteQuery(Query(entity), token);
         }
 
         /// <summary>
@@ -205,16 +199,32 @@ namespace Azure.Storage
         /// </summary>
         /// <param name="func">Query expression.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <param name="token">Cancellation</param>
         /// <returns>Queryable with result.</returns>
         [UsedImplicitly]
-        public IQueryable<TEntity> Query<TEntity>(Expression<Func<TEntity, bool>> func)
+        public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(
+            Expression<Func<TEntity, bool>> func,
+            CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
             var visitor = new PropertyReplacer<TEntity>();
             var newfunc = visitor.VisitAndConvert(func);
 
-            var result = Query<TEntity>().Where(newfunc);
-            return result;
+            var query = Query<TEntity>().Where(newfunc);
+            return ExecuteQuery(query, token);
+        }
+
+        /// <summary>
+        /// Starts query for specific Table type.
+        /// </summary>
+        /// <typeparam name="TEntity">Type of Table.</typeparam>
+        /// <param name="token">Cancellation</param>
+        /// <returns>Queryable for further quering.</returns>
+        [UsedImplicitly]
+        public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(CancellationToken token = default(CancellationToken))
+            where TEntity : TableEntity, new()
+        {
+            return ExecuteQuery(Query<TEntity>(), token);
         }
 
         /// <summary>
@@ -309,13 +319,13 @@ namespace Azure.Storage
             return await RetreiveAsync<TEntity>(partition, key) ?? entity;
         }
 
-        private TableAttribute GetEntityAttribute<T>()
+        private static TableAttribute GetEntityAttribute<T>()
         {
-            return typeToAttribute.GetOrAdd(typeof(T), t =>
+            return TypeToAttribute.GetOrAdd(typeof(T), t =>
             {
-                var attr =
-                    t.GetCustomAttributes(typeof(TableAttribute), true)
-                     .SingleOrDefault() as TableAttribute;
+                var attr = t.GetTypeInfo()
+                            .GetCustomAttributes(typeof(TableAttribute), true)
+                            .SingleOrDefault() as TableAttribute;
                 if (attr == null)
                 {
                     throw new ArgumentException(
@@ -324,6 +334,51 @@ namespace Azure.Storage
 
                 return attr;
             });
+        }
+
+        private static string GetEntityTable<T>()
+        {
+            return GetEntityAttribute<T>().Table;
+        }
+
+        private static TableQuery<TEntity> Query<TEntity>(TEntity entity)
+            where TEntity : TableEntity, new()
+        {
+            var attr = GetEntityAttribute<TEntity>();
+            var query = new TableQuery<TEntity>();
+            if (attr.PartitionKey != null && attr.RowKey == null && entity.RowKey != null)
+            {
+                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == entity.RowKey);
+            }
+
+            if (attr.PartitionKey == null && attr.RowKey != null && entity.PartitionKey != null)
+            {
+                return query.Where(i => i.RowKey == attr.RowKey && i.PartitionKey == entity.PartitionKey);
+            }
+
+            return Query<TEntity>();
+        }
+
+        private static TableQuery<TEntity> Query<TEntity>()
+            where TEntity : TableEntity, new()
+        {
+            var attr = GetEntityAttribute<TEntity>();
+
+            var query = new TableQuery<TEntity>();
+            if (attr.PartitionKey != null && attr.RowKey != null)
+            {
+                query = query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == attr.RowKey);
+            }
+            else if (attr.PartitionKey != null && attr.RowKey == null)
+            {
+                query = query.Where(i => i.PartitionKey == attr.PartitionKey);
+            }
+            else if (attr.PartitionKey == null && attr.RowKey != null)
+            {
+                query = query.Where(i => i.RowKey == attr.RowKey);
+            }
+
+            return query;
         }
 
         private string GetEntityKey_<T>()
@@ -336,11 +391,6 @@ namespace Azure.Storage
         {
             return GetEntityAttribute<T>().PartitionKey ??
                    throw new ArgumentException($"Type {typeof(T)} does not have default Partition");
-        }
-
-        private string GetEntityTable<T>()
-        {
-            return GetEntityAttribute<T>().Table;
         }
 
         private async Task<CloudTable> GetOrCreateTableAsync<T>()
@@ -378,82 +428,6 @@ namespace Azure.Storage
                 case (int)HttpStatusCode.Conflict: throw new ArgumentException("Partition and key already exist");
 
                 default: throw new Exception($"Request failed: {result.HttpStatusCode} - {result.Result}");
-            }
-        }
-
-        private class PropertyReplacer<TEntity> : ExpressionVisitor
-        {
-            public Expression<Func<TEntity, bool>> VisitAndConvert(Expression<Func<TEntity, bool>> root)
-            {
-                return (Expression<Func<TEntity, bool>>)VisitLambda(root);
-            }
-
-            protected override Expression VisitBinary(BinaryExpression node)
-            {
-                if (node.Left is UnaryExpression left && IsEnumConvert(left) && node.Right.Type == typeof(int))
-                {
-                    var newMember = ReplaceMember(left.Operand as MemberExpression);
-                    if (newMember != null)
-                    {
-                        return Expression.MakeBinary(
-                            node.NodeType,
-                            newMember,
-                            GetEnumString(node.Right, left.Operand.Type));
-                    }
-                }
-
-                if (node.Right is UnaryExpression right && IsEnumConvert(right) && node.Left.Type == typeof(int))
-                {
-                    var newMember = ReplaceMember(right.Operand as MemberExpression);
-                    if (newMember != null)
-                    {
-                        return Expression.MakeBinary(
-                            node.NodeType,
-                            GetEnumString(node.Left, right.Operand.Type),
-                            newMember);
-                    }
-                }
-
-                return base.VisitBinary(node);
-            }
-
-            protected override Expression VisitMember(MemberExpression node)
-            {
-                return ReplaceMember(node) ?? base.VisitMember(node);
-            }
-
-            private Expression GetEnumString(Expression node, Type type)
-            {
-                return Expression.Call(Expression.Convert(node, type), "ToString", new Type[0]);
-            }
-
-            private bool IsEnumConvert(UnaryExpression node)
-            {
-                return node?.NodeType == ExpressionType.Convert && node.Operand.Type.IsEnum;
-            }
-
-            private MemberExpression ReplaceMember(MemberExpression node)
-            {
-                if (node == null)
-                {
-                    return null;
-                }
-
-                if (node.Member.GetCustomAttribute(typeof(RowKeyAttribute)) != null)
-                {
-                    return Expression.MakeMemberAccess(
-                        node.Expression,
-                        typeof(TableEntity).GetMember("RowKey").Single());
-                }
-
-                if (node.Member.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null)
-                {
-                    return Expression.MakeMemberAccess(
-                        node.Expression,
-                        typeof(TableEntity).GetMember("PartitionKey").Single());
-                }
-
-                return null;
             }
         }
     }

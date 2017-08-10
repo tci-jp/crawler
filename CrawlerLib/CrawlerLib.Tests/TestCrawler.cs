@@ -5,6 +5,7 @@
 namespace CrawlerLib.Tests
 {
     using System;
+    using System.Collections.Async;
     using System.Linq;
     using System.Threading.Tasks;
     using Xunit;
@@ -33,7 +34,7 @@ namespace CrawlerLib.Tests
 
             var id = await Crawler.Incite(new Uri(url));
 
-            var urls = (await config.Storage.GetSessionUris(id)).ToList();
+            var urls = await config.Storage.GetSessionUris(id).ToListAsync();
             foreach (var line in urls)
             {
                 output.WriteLine(line);

@@ -14,12 +14,13 @@ namespace CrawlerLib.Azure
     [Table("referers")]
     public class UriReferer : TableEntity
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UriReferer"/> class.
+        /// </summary>
         public UriReferer()
         {
         }
 
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="UriReferer" /> class.
         /// Creates new entiry for session, uri and referer.

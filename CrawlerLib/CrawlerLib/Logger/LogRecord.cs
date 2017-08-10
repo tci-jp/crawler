@@ -30,7 +30,7 @@ namespace CrawlerLib.Logger
         /// <summary>
         /// Gets object to log.
         /// </summary>
-        public dynamic Object { get; }
+        public object Object { get; }
 
         /// <inheritdoc />
         public override string ToString()

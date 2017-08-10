@@ -20,7 +20,10 @@ namespace CrawlerLib.Grabbers
     {
         private readonly HttpClient client;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleHttpGrabber"/> class.
+        /// </summary>
+        /// <param name="config">Configuration for grabber.</param>
         public SimpleHttpGrabber(Configuration config)
             : base(config)
         {

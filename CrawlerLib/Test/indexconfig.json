@@ -1,8 +1,0 @@
-﻿{
-  "SearchServiceName": "dec-search",
-  "SearchServiceAdminApiKey": "E3D793EF7ED2C83EF3CCD292268C00B7",
-  "SearchServiceQueryApiKey": "225151832C3BFC0902F79F8FF001953E",
-  "SearchIndexName": "blobs",
-  "BlobStorageAccountName": "indexing",
-  "BlobStorageAccountKey": "566Nz2py6Pir6p+JRcQ5QveAJf6Yv/MwZgHSVpi4vLL4QJyXiC3AujSwU47117b9KRFFlMd/NLhJpNuVjxCCYg=="
-}

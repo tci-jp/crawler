@@ -5,11 +5,12 @@
 namespace CrawlerLib.Tests
 {
     using System.Collections.Async;
-    using System.Configuration;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure;
     using global::Azure.Storage;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Configuration.Json;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -21,11 +22,14 @@ namespace CrawlerLib.Tests
 
         public SearchTest(ITestOutputHelper output)
         {
-            var searchServiceName = ConfigurationManager.AppSettings["SearchServiceName"];
-            var adminApiKey = ConfigurationManager.AppSettings["SearchServiceAdminApiKey"];
-            var textIndexName = ConfigurationManager.AppSettings["TextSearchIndexName"];
-            var metaIndexName = ConfigurationManager.AppSettings["MetaSearchIndexName"];
-            var azure = new DataStorage(ConfigurationManager.AppSettings["CrawlerStorageConnectionString"]);
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("config.json")
+                .Build();
+            var searchServiceName = config["SearchServiceName"];
+            var adminApiKey = config["SearchServiceAdminApiKey"];
+            var textIndexName = config["TextSearchIndexName"];
+            var metaIndexName = config["MetaSearchIndexName"];
+            var azure = new DataStorage(config["CrawlerStorageConnectionString"]);
 
             this.output = output;
             blobSearcher = new AzureIndexedSearch(azure, searchServiceName, adminApiKey, textIndexName, metaIndexName);
@@ -34,7 +38,7 @@ namespace CrawlerLib.Tests
         [Fact]
         public async Task Main()
         {
-            var result = await blobSearcher.SearchByText("f", CancellationToken.None);
+            var result = blobSearcher.SearchByText("f", CancellationToken.None);
             await result.ForEachAsync(item => { output.WriteLine(item); });
         }
     }

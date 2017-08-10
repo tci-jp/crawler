@@ -7,17 +7,19 @@ namespace CrawlerLib.Grabbers
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using OpenQA.Selenium;
-    using OpenQA.Selenium.PhantomJS;
-    using OpenQA.Selenium.Support.UI;
+    using JetBrains.Annotations;
 
     /// <inheritdoc />
     /// <summary>
     /// Execute JavaScript using phantomJS
     /// </summary>
+    [UsedImplicitly]
     public class WebDriverHttpGrabber : HttpGrabber
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebDriverHttpGrabber"/> class.
+        /// </summary>
+        /// <param name="config">Configuration for grabber.</param>
         public WebDriverHttpGrabber(Configuration config)
             : base(config)
         {
@@ -27,29 +29,18 @@ namespace CrawlerLib.Grabbers
         public override Task<GrabResult> Grab(Uri uri, Uri referer)
         {
             return Task.Run(
-                () =>
+                async () =>
                 {
-                    using (var driverService = PhantomJSDriverService.CreateDefaultService())
+                    using (var webDriver = new PhantomJSDriver())
                     {
-                        driverService.HideCommandPromptWindow = true;
-                        using (var webDriver = new PhantomJSDriver(driverService))
+                        var content = await webDriver.Grab(uri, Config.CancellationToken);
+
+                        var pageContent = new GrabResult
                         {
-                            webDriver.Navigate().GoToUrl(uri);
-
-                            IWait<IWebDriver> wait = new WebDriverWait(webDriver, Config.RequestTimeout);
-
-                            wait.Until(driver => ((IJavaScriptExecutor)driver)
-                                                 .ExecuteScript("return document.readyState")
-                                                 .Equals("complete")
-                                                 || Config.CancellationToken.IsCancellationRequested);
-
-                            var pageContent = new GrabResult
-                                              {
-                                                  Content = webDriver.PageSource,
-                                                  Status = HttpStatusCode.OK
-                                              };
-                            return pageContent;
-                        }
+                            Content = content,
+                            Status = HttpStatusCode.OK
+                        };
+                        return pageContent;
                     }
                 },
                 Config.CancellationToken);

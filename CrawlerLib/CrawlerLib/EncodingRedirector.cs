@@ -4,9 +4,7 @@
 
 namespace CrawlerLib
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Text;
 
     /// <inheritdoc />
@@ -26,8 +24,7 @@ namespace CrawlerLib
         /// </summary>
         public static void RegisterEncodings()
         {
-            if (!Encoding.GetEncodings()
-                         .Any(e => e.Name.Equals("\"UTF-8\"", StringComparison.InvariantCultureIgnoreCase)))
+            if (Encoding.GetEncoding("\"UTF-8\"") == null && Encoding.GetEncoding("\"utf-8\"") == null)
             {
                 Encoding.RegisterProvider(new EncodingRedirector());
             }

@@ -7,6 +7,7 @@ namespace CrawlerLib
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Reflection;
     using System.Threading;
     using Data;
     using Grabbers;
@@ -35,7 +36,7 @@ namespace CrawlerLib
         {
             if (config != null)
             {
-                foreach (var prop in typeof(Configuration).GetProperties())
+                foreach (var prop in typeof(Configuration).GetRuntimeProperties())
                 {
                     prop.SetMethod.Invoke(this, new[] { prop.GetMethod.Invoke(config, new object[0]) });
                 }

@@ -18,9 +18,6 @@ namespace CrawlerLib
     using HtmlAgilityPack;
     using JetBrains.Annotations;
     using Logger;
-    using Metadata;
-    using Nito.AsyncEx;
-    using RobotsTxt;
 
     /// <inheritdoc />
     /// <summary>
@@ -31,7 +28,7 @@ namespace CrawlerLib
         private readonly HttpClient client;
 
         private readonly Configuration config;
-        private readonly AsyncAutoResetEvent lastEvent;
+        private readonly SemaphoreSlim lastEvent;
 
         private readonly ILinkParser linkParser = new LinkParser();
 
@@ -40,7 +37,7 @@ namespace CrawlerLib
         private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
         private readonly ConcurrentBag<Task> tasks;
 
-        private readonly AsyncSemaphore totalRequestsSemaphore;
+        private readonly SemaphoreSlim totalRequestsSemaphore;
         private readonly HashSet<string> visited;
         private readonly object visitedLock = new object();
         private int countdown;
@@ -52,8 +49,7 @@ namespace CrawlerLib
         /// <param name="conf">Configuration for crawler.</param>
         public Crawler(Configuration conf = null)
         {
-            EncodingRedirector.RegisterEncodings();
-
+            // EncodingRedirector.RegisterEncodings();
             config = new Configuration(conf);
 
             client = new HttpClient
@@ -68,11 +64,11 @@ namespace CrawlerLib
             robots = new ConcurrentDictionary<Uri, Task<Robots>>();
             taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
             visited = new HashSet<string>();
-            lastEvent = new AsyncAutoResetEvent(false);
+            lastEvent = new SemaphoreSlim(0, 1);
 
-            config.CancellationToken.Register(() => lastEvent.Set());
+            config.CancellationToken.Register(() => lastEvent.Release());
 
-            totalRequestsSemaphore = new AsyncSemaphore(config.NumberOfSimulataneousRequests);
+            totalRequestsSemaphore = new SemaphoreSlim(config.NumberOfSimulataneousRequests);
         }
 
         /// <summary>
@@ -126,12 +122,12 @@ namespace CrawlerLib
             foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
                                      .Select(m => m.Attributes["content"].Value) ?? new string[0])
             {
-                if (meta.IndexOf("NOFOLLOW", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                if (meta.IndexOf("NOFOLLOW", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     nofollow = true;
                 }
 
-                if (meta.IndexOf("NOINDEX", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                if (meta.IndexOf("NOINDEX", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     noindex = true;
                 }
@@ -174,7 +170,7 @@ namespace CrawlerLib
             };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
-            if (robotstxt?.IsPathAllowed(config.UserAgent, uri.PathAndQuery) == false)
+            if (robotstxt?.IsPathAllowed(uri.PathAndQuery) == false)
             {
                 return;
             }
@@ -197,7 +193,7 @@ namespace CrawlerLib
                     try
                     {
                         var robotstxt = await client.GetStringAsync(roburi + "/robots.txt");
-                        return new Robots(robotstxt);
+                        return new Robots(config.UserAgent, robotstxt);
                     }
                     catch (HttpRequestException)
                     {
@@ -322,7 +318,7 @@ namespace CrawlerLib
             {
                 if (Interlocked.Decrement(ref countdown) == 0)
                 {
-                    lastEvent.Set();
+                    lastEvent.Release();
                 }
             }
         }
@@ -382,6 +378,7 @@ namespace CrawlerLib
         private async Task WaitForTheEnd()
         {
             await lastEvent.WaitAsync(config.CancellationToken);
+            lastEvent.Release();
             await Task.WhenAll(tasks);
             config.CancellationToken.ThrowIfCancellationRequested();
         }

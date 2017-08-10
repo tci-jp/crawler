@@ -118,7 +118,7 @@ namespace CrawlerUI
                     try
                     {
                         Dispatcher.Invoke(() => Model.IsSearching = true);
-                        var en = await Storage.SearchByText(searchString, cancellation);
+                        var en = Storage.SearchByText(searchString, cancellation);
                         await en.ForEachAsync(
                             uri =>
                             {
@@ -156,7 +156,7 @@ namespace CrawlerUI
                     try
                     {
                         Dispatcher.Invoke(() => Model.IsSearching = true);
-                        var en = await Storage.SearchByMeta(cond, cancellation);
+                        var en = Storage.SearchByMeta(cond, cancellation);
                         await en.ForEachAsync(
                             uri =>
                             {
@@ -304,7 +304,7 @@ namespace CrawlerUI
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var enumerable = await Storage.GetAvailableMetadata();
+            var enumerable = await Storage.GetAvailableMetadata().ToListAsync();
             Dispatcher.Invoke(() =>
             {
                 foreach (var meta in enumerable)

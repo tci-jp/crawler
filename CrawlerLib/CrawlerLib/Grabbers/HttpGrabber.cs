@@ -6,6 +6,7 @@ namespace CrawlerLib.Grabbers
 {
     using System;
     using System.Threading.Tasks;
+    using JetBrains.Annotations;
 
     /// <inheritdoc />
     /// <summary>
@@ -13,7 +14,10 @@ namespace CrawlerLib.Grabbers
     /// </summary>
     public abstract class HttpGrabber : IDisposable
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpGrabber"/> class.
+        /// </summary>
+        /// <param name="config">Config for grabber.</param>
         protected HttpGrabber(Configuration config)
         {
             Config = config;
@@ -43,7 +47,7 @@ namespace CrawlerLib.Grabbers
         /// Disposer.
         /// </summary>
         /// <param name="disposing">True if disposing.</param>
-        protected virtual void Dispose(bool disposing)
+        protected virtual void Dispose([UsedImplicitly] bool disposing)
         {
         }
     }

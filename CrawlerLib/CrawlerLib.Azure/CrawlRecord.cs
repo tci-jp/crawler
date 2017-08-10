@@ -14,7 +14,6 @@ namespace CrawlerLib.Azure
     [Table("common", PartitionKey = "url")]
     public class CrawlRecord : TableEntity
     {
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="CrawlRecord" /> class.
         /// </summary>

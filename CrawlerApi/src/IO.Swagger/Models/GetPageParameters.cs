@@ -33,34 +33,36 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// 
+    /// crawled page content request parameters.
     /// </summary>
     [DataContract]
-    public partial class SessionUris :  IEquatable<SessionUris>
+    public partial class GetPageParameters :  IEquatable<GetPageParameters>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SessionUris" /> class.
+        /// Initializes a new instance of the <see cref="GetPageParameters" /> class.
         /// </summary>
-        /// <param name="Uri">Uri.</param>
-        /// <param name="State">State.</param>
-        public SessionUris(string Uri = null, string State = null)
+        /// <param name="OwnerId">id used to keep history of requests and blobs collection.</param>
+        /// <param name="Uri">uri to retreive.</param>
+        public GetPageParameters(string OwnerId = null, string Uri = null)
         {
+            this.OwnerId = OwnerId;
             this.Uri = Uri;
-            this.State = State;
             
         }
 
         /// <summary>
-        /// Gets or Sets Uri
+        /// id used to keep history of requests and blobs collection
         /// </summary>
-        [DataMember(Name="uri")]
-        public string Uri { get; set; }
+        /// <value>id used to keep history of requests and blobs collection</value>
+        [DataMember(Name="ownerId")]
+        public string OwnerId { get; }
 
         /// <summary>
-        /// Gets or Sets State
+        /// uri to retreive
         /// </summary>
-        [DataMember(Name="state")]
-        public string State { get; set; }
+        /// <value>uri to retreive</value>
+        [DataMember(Name="uri")]
+        public string Uri { get; }
 
 
         /// <summary>
@@ -70,9 +72,9 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class SessionUris {\n");
+            sb.Append("class GetPageParameters {\n");
+            sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
             sb.Append("  Uri: ").Append(Uri).Append("\n");
-            sb.Append("  State: ").Append(State).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -96,15 +98,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((SessionUris)obj);
+            return Equals((GetPageParameters)obj);
         }
 
         /// <summary>
-        /// Returns true if SessionUris instances are equal
+        /// Returns true if GetPageParameters instances are equal
         /// </summary>
-        /// <param name="other">Instance of SessionUris to be compared</param>
+        /// <param name="other">Instance of GetPageParameters to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(SessionUris other)
+        public bool Equals(GetPageParameters other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -112,14 +114,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.Uri == other.Uri ||
-                    this.Uri != null &&
-                    this.Uri.Equals(other.Uri)
+                    OwnerId == other.OwnerId ||
+                    OwnerId != null &&
+                    OwnerId.Equals(other.OwnerId)
                 ) && 
                 (
-                    this.State == other.State ||
-                    this.State != null &&
-                    this.State.Equals(other.State)
+                    Uri == other.Uri ||
+                    Uri != null &&
+                    Uri.Equals(other.Uri)
                 );
         }
 
@@ -132,24 +134,24 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.Uri != null)
-                    hash = hash * 59 + this.Uri.GetHashCode();
-                if (this.State != null)
-                    hash = hash * 59 + this.State.GetHashCode();
+                if (OwnerId != null)
+                    hash = hash * 59 + OwnerId.GetHashCode();
+                if (Uri != null)
+                    hash = hash * 59 + Uri.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(SessionUris left, SessionUris right)
+        public static bool operator ==(GetPageParameters left, GetPageParameters right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(SessionUris left, SessionUris right)
+        public static bool operator !=(GetPageParameters left, GetPageParameters right)
         {
             return !Equals(left, right);
         }

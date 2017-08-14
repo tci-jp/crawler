@@ -33,36 +33,46 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// 
+    /// parameters to request a collection of crawler session information
     /// </summary>
     [DataContract]
-    public partial class ParsersRequestParameters :  IEquatable<ParsersRequestParameters>
+    public partial class SessionsRequestParameters :  IEquatable<SessionsRequestParameters>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParsersRequestParameters" /> class.
+        /// Initializes a new instance of the <see cref="SessionsRequestParameters" /> class.
         /// </summary>
-        /// <param name="OwnerId">owner id.</param>
-        /// <param name="ParserIds">array of parser ids. If empty or no parameter returns.</param>
-        public ParsersRequestParameters(string OwnerId = null, List<string> ParserIds = null)
+        /// <param name="OwnerId">owner id. Ignored if Page.requestId is used. (required).</param>
+        /// <param name="SessionIds">array of session ids to get information about. if missing or empty list reqest all sessions owned. Ignored if Page.requestId is used..</param>
+        /// <param name="Page">Page.</param>
+        public SessionsRequestParameters(string OwnerId = null, List<string> SessionIds = null, Page Page = null)
         {
-            this.OwnerId = OwnerId;
-            this.ParserIds = ParserIds;
+            // to ensure "OwnerId" is required (not null)
+
+            this.OwnerId = OwnerId ?? throw new InvalidDataException("OwnerId is a required property for SessionsRequestParameters and cannot be null");
+            this.SessionIds = SessionIds;
+            this.Page = Page;
             
         }
 
         /// <summary>
-        /// owner id
+        /// owner id. Ignored if Page.requestId is used.
         /// </summary>
-        /// <value>owner id</value>
+        /// <value>owner id. Ignored if Page.requestId is used.</value>
         [DataMember(Name="ownerId")]
         public string OwnerId { get; set; }
 
         /// <summary>
-        /// array of parser ids. If empty or no parameter returns
+        /// array of session ids to get information about. if missing or empty list reqest all sessions owned. Ignored if Page.requestId is used.
         /// </summary>
-        /// <value>array of parser ids. If empty or no parameter returns</value>
-        [DataMember(Name="parserIds")]
-        public List<string> ParserIds { get; set; }
+        /// <value>array of session ids to get information about. if missing or empty list reqest all sessions owned. Ignored if Page.requestId is used.</value>
+        [DataMember(Name="sessionIds")]
+        public List<string> SessionIds { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Page
+        /// </summary>
+        [DataMember(Name="page")]
+        public Page Page { get; set; }
 
 
         /// <summary>
@@ -72,9 +82,10 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class ParsersRequestParameters {\n");
+            sb.Append("class SessionsRequestParameters {\n");
             sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
-            sb.Append("  ParserIds: ").Append(ParserIds).Append("\n");
+            sb.Append("  SessionIds: ").Append(SessionIds).Append("\n");
+            sb.Append("  Page: ").Append(Page).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -98,15 +109,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((ParsersRequestParameters)obj);
+            return Equals((SessionsRequestParameters)obj);
         }
 
         /// <summary>
-        /// Returns true if ParsersRequestParameters instances are equal
+        /// Returns true if SessionsRequestParameters instances are equal
         /// </summary>
-        /// <param name="other">Instance of ParsersRequestParameters to be compared</param>
+        /// <param name="other">Instance of SessionsRequestParameters to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(ParsersRequestParameters other)
+        public bool Equals(SessionsRequestParameters other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -114,14 +125,19 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.OwnerId == other.OwnerId ||
-                    this.OwnerId != null &&
-                    this.OwnerId.Equals(other.OwnerId)
+                    OwnerId == other.OwnerId ||
+                    OwnerId != null &&
+                    OwnerId.Equals(other.OwnerId)
                 ) && 
                 (
-                    this.ParserIds == other.ParserIds ||
-                    this.ParserIds != null &&
-                    this.ParserIds.SequenceEqual(other.ParserIds)
+                    SessionIds == other.SessionIds ||
+                    SessionIds != null &&
+                    SessionIds.SequenceEqual(other.SessionIds)
+                ) && 
+                (
+                    Page == other.Page ||
+                    Page != null &&
+                    Page.Equals(other.Page)
                 );
         }
 
@@ -134,24 +150,26 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.OwnerId != null)
-                    hash = hash * 59 + this.OwnerId.GetHashCode();
-                if (this.ParserIds != null)
-                    hash = hash * 59 + this.ParserIds.GetHashCode();
+                if (OwnerId != null)
+                    hash = hash * 59 + OwnerId.GetHashCode();
+                if (SessionIds != null)
+                    hash = hash * 59 + SessionIds.GetHashCode();
+                if (Page != null)
+                    hash = hash * 59 + Page.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(ParsersRequestParameters left, ParsersRequestParameters right)
+        public static bool operator ==(SessionsRequestParameters left, SessionsRequestParameters right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(ParsersRequestParameters left, ParsersRequestParameters right)
+        public static bool operator !=(SessionsRequestParameters left, SessionsRequestParameters right)
         {
             return !Equals(left, right);
         }

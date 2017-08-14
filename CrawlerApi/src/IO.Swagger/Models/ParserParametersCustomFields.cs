@@ -46,24 +46,11 @@ namespace IO.Swagger.Models
         public ParserParametersCustomFields(string Name = null, string Xpath = null)
         {
             // to ensure "Name" is required (not null)
-            if (Name == null)
-            {
-                throw new InvalidDataException("Name is a required property for ParserParametersCustomFields and cannot be null");
-            }
-            else
-            {
-                this.Name = Name;
-            }
+
+            this.Name = Name ?? throw new InvalidDataException("Name is a required property for ParserParametersCustomFields and cannot be null");
             // to ensure "Xpath" is required (not null)
-            if (Xpath == null)
-            {
-                throw new InvalidDataException("Xpath is a required property for ParserParametersCustomFields and cannot be null");
-            }
-            else
-            {
-                this.Xpath = Xpath;
-            }
-            
+
+            this.Xpath = Xpath ?? throw new InvalidDataException("Xpath is a required property for ParserParametersCustomFields and cannot be null");
         }
 
         /// <summary>
@@ -130,14 +117,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.Name == other.Name ||
-                    this.Name != null &&
-                    this.Name.Equals(other.Name)
+                    Name == other.Name ||
+                    Name != null &&
+                    Name.Equals(other.Name)
                 ) && 
                 (
-                    this.Xpath == other.Xpath ||
-                    this.Xpath != null &&
-                    this.Xpath.Equals(other.Xpath)
+                    Xpath == other.Xpath ||
+                    Xpath != null &&
+                    Xpath.Equals(other.Xpath)
                 );
         }
 
@@ -150,12 +137,12 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.Name != null)
-                    hash = hash * 59 + this.Name.GetHashCode();
-                if (this.Xpath != null)
-                    hash = hash * 59 + this.Xpath.GetHashCode();
+                if (Name != null)
+                    hash = hash * 59 + Name.GetHashCode();
+                if (Xpath != null)
+                    hash = hash * 59 + Xpath.GetHashCode();
                 return hash;
             }
         }

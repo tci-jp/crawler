@@ -36,39 +36,33 @@ namespace IO.Swagger.Models
     /// 
     /// </summary>
     [DataContract]
-    public partial class CrawlerConfigurationUris :  IEquatable<CrawlerConfigurationUris>
+    public partial class ParsersRequestParameters :  IEquatable<ParsersRequestParameters>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CrawlerConfigurationUris" /> class.
+        /// Initializes a new instance of the <see cref="ParsersRequestParameters" /> class.
         /// </summary>
-        /// <param name="Uri">Uri (required).</param>
-        /// <param name="ParserId">ParserId.</param>
-        public CrawlerConfigurationUris(string Uri = null, string ParserId = null)
+        /// <param name="OwnerId">owner id.</param>
+        /// <param name="ParserIds">array of parser ids. If empty or no parameter returns.</param>
+        public ParsersRequestParameters(string OwnerId = null, List<string> ParserIds = null)
         {
-            // to ensure "Uri" is required (not null)
-            if (Uri == null)
-            {
-                throw new InvalidDataException("Uri is a required property for CrawlerConfigurationUris and cannot be null");
-            }
-            else
-            {
-                this.Uri = Uri;
-            }
-            this.ParserId = ParserId;
+            this.OwnerId = OwnerId;
+            this.ParserIds = ParserIds;
             
         }
 
         /// <summary>
-        /// Gets or Sets Uri
+        /// owner id
         /// </summary>
-        [DataMember(Name="uri")]
-        public string Uri { get; set; }
+        /// <value>owner id</value>
+        [DataMember(Name="ownerId")]
+        public string OwnerId { get; set; }
 
         /// <summary>
-        /// Gets or Sets ParserId
+        /// array of parser ids. If empty or no parameter returns
         /// </summary>
-        [DataMember(Name="parserId")]
-        public string ParserId { get; set; }
+        /// <value>array of parser ids. If empty or no parameter returns</value>
+        [DataMember(Name="parserIds")]
+        public List<string> ParserIds { get; set; }
 
 
         /// <summary>
@@ -78,9 +72,9 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class CrawlerConfigurationUris {\n");
-            sb.Append("  Uri: ").Append(Uri).Append("\n");
-            sb.Append("  ParserId: ").Append(ParserId).Append("\n");
+            sb.Append("class ParsersRequestParameters {\n");
+            sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
+            sb.Append("  ParserIds: ").Append(ParserIds).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -104,15 +98,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((CrawlerConfigurationUris)obj);
+            return Equals((ParsersRequestParameters)obj);
         }
 
         /// <summary>
-        /// Returns true if CrawlerConfigurationUris instances are equal
+        /// Returns true if ParsersRequestParameters instances are equal
         /// </summary>
-        /// <param name="other">Instance of CrawlerConfigurationUris to be compared</param>
+        /// <param name="other">Instance of ParsersRequestParameters to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(CrawlerConfigurationUris other)
+        public bool Equals(ParsersRequestParameters other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -120,14 +114,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.Uri == other.Uri ||
-                    this.Uri != null &&
-                    this.Uri.Equals(other.Uri)
+                    OwnerId == other.OwnerId ||
+                    OwnerId != null &&
+                    OwnerId.Equals(other.OwnerId)
                 ) && 
                 (
-                    this.ParserId == other.ParserId ||
-                    this.ParserId != null &&
-                    this.ParserId.Equals(other.ParserId)
+                    ParserIds == other.ParserIds ||
+                    ParserIds != null &&
+                    ParserIds.SequenceEqual(other.ParserIds)
                 );
         }
 
@@ -140,24 +134,24 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.Uri != null)
-                    hash = hash * 59 + this.Uri.GetHashCode();
-                if (this.ParserId != null)
-                    hash = hash * 59 + this.ParserId.GetHashCode();
+                if (OwnerId != null)
+                    hash = hash * 59 + OwnerId.GetHashCode();
+                if (ParserIds != null)
+                    hash = hash * 59 + ParserIds.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(CrawlerConfigurationUris left, CrawlerConfigurationUris right)
+        public static bool operator ==(ParsersRequestParameters left, ParsersRequestParameters right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(CrawlerConfigurationUris left, CrawlerConfigurationUris right)
+        public static bool operator !=(ParsersRequestParameters left, ParsersRequestParameters right)
         {
             return !Equals(left, right);
         }

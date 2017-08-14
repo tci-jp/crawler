@@ -33,36 +33,39 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// information about crawling session.
+    /// crawling parameters
     /// </summary>
     [DataContract]
-    public partial class Session :  IEquatable<Session>
+    public partial class CrawlerConfiguration :  IEquatable<CrawlerConfiguration>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Session" /> class.
+        /// Initializes a new instance of the <see cref="CrawlerConfiguration" /> class.
         /// </summary>
-        /// <param name="Id">session id.</param>
-        /// <param name="Uris">array of URIs used to start crawling and states of crawling.</param>
-        public Session(string Id = null, List<SessionUris> Uris = null)
+        /// <param name="OwnerId">id used to keep history of requests and blobs collection (required).</param>
+        /// <param name="Uris">array of URIs to crawl (required).</param>
+        public CrawlerConfiguration(string OwnerId = null, List<CrawlerConfigurationUris> Uris = null)
         {
-            this.Id = Id;
-            this.Uris = Uris;
-            
+            // to ensure "OwnerId" is required (not null)
+
+            this.OwnerId = OwnerId ?? throw new InvalidDataException("OwnerId is a required property for CrawlerConfiguration and cannot be null");
+            // to ensure "Uris" is required (not null)
+
+            this.Uris = Uris ?? throw new InvalidDataException("Uris is a required property for CrawlerConfiguration and cannot be null");
         }
 
         /// <summary>
-        /// session id
+        /// id used to keep history of requests and blobs collection
         /// </summary>
-        /// <value>session id</value>
-        [DataMember(Name="id")]
-        public string Id { get; set; }
+        /// <value>id used to keep history of requests and blobs collection</value>
+        [DataMember(Name="ownerId")]
+        public string OwnerId { get; }
 
         /// <summary>
-        /// array of URIs used to start crawling and states of crawling
+        /// array of URIs to crawl
         /// </summary>
-        /// <value>array of URIs used to start crawling and states of crawling</value>
+        /// <value>array of URIs to crawl</value>
         [DataMember(Name="uris")]
-        public List<SessionUris> Uris { get; set; }
+        public List<CrawlerConfigurationUris> Uris { get; }
 
 
         /// <summary>
@@ -72,8 +75,8 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class Session {\n");
-            sb.Append("  Id: ").Append(Id).Append("\n");
+            sb.Append("class CrawlerConfiguration {\n");
+            sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
             sb.Append("  Uris: ").Append(Uris).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
@@ -98,15 +101,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((Session)obj);
+            return Equals((CrawlerConfiguration)obj);
         }
 
         /// <summary>
-        /// Returns true if Session instances are equal
+        /// Returns true if CrawlerConfiguration instances are equal
         /// </summary>
-        /// <param name="other">Instance of Session to be compared</param>
+        /// <param name="other">Instance of CrawlerConfiguration to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Session other)
+        public bool Equals(CrawlerConfiguration other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -114,14 +117,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.Id == other.Id ||
-                    this.Id != null &&
-                    this.Id.Equals(other.Id)
+                    OwnerId == other.OwnerId ||
+                    OwnerId != null &&
+                    OwnerId.Equals(other.OwnerId)
                 ) && 
                 (
-                    this.Uris == other.Uris ||
-                    this.Uris != null &&
-                    this.Uris.SequenceEqual(other.Uris)
+                    Uris == other.Uris ||
+                    Uris != null &&
+                    Uris.SequenceEqual(other.Uris)
                 );
         }
 
@@ -134,29 +137,24 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.Id != null)
-                    hash = hash * 59 + this.Id.GetHashCode();
-                if (this.Uris != null)
-                    hash = hash * 59 + this.Uris.GetHashCode();
+                if (OwnerId != null)
+                    hash = hash * 59 + OwnerId.GetHashCode();
+                if (Uris != null)
+                    hash = hash * 59 + Uris.GetHashCode();
                 return hash;
             }
         }
 
-        #region Operators
-
-        public static bool operator ==(Session left, Session right)
+        public static bool operator ==(CrawlerConfiguration left, CrawlerConfiguration right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Session left, Session right)
+        public static bool operator !=(CrawlerConfiguration left, CrawlerConfiguration right)
         {
             return !Equals(left, right);
         }
-
-        #endregion Operators
-
     }
 }

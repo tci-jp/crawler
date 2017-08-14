@@ -33,45 +33,36 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// paging request parameters
+    /// 
     /// </summary>
     [DataContract]
-    public partial class Page :  IEquatable<Page>
+    public partial class CrawlerConfigurationUris :  IEquatable<CrawlerConfigurationUris>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Page" /> class.
+        /// Initializes a new instance of the <see cref="CrawlerConfigurationUris" /> class.
         /// </summary>
-        /// <param name="PageStart">index of item to start page. if missing starts from 0..</param>
-        /// <param name="PageSize">number of items to return in one request. if missing returns 10 items..</param>
-        /// <param name="RequestId">id of paged request to keep paging between requests. if missing starts new request..</param>
-        public Page(int? PageStart = null, int? PageSize = null, string RequestId = null)
+        /// <param name="Uri">Uri (required).</param>
+        /// <param name="ParserId">ParserId.</param>
+        public CrawlerConfigurationUris(string Uri = null, string ParserId = null)
         {
-            this.PageStart = PageStart;
-            this.PageSize = PageSize;
-            this.RequestId = RequestId;
+            // to ensure "Uri" is required (not null)
+
+            this.Uri = Uri ?? throw new InvalidDataException("Uri is a required property for CrawlerConfigurationUris and cannot be null");
+            this.ParserId = ParserId;
             
         }
 
         /// <summary>
-        /// index of item to start page. if missing starts from 0.
+        /// Gets or Sets Uri
         /// </summary>
-        /// <value>index of item to start page. if missing starts from 0.</value>
-        [DataMember(Name="pageStart")]
-        public int? PageStart { get; set; }
+        [DataMember(Name="uri")]
+        public string Uri { get; }
 
         /// <summary>
-        /// number of items to return in one request. if missing returns 10 items.
+        /// Gets or Sets ParserId
         /// </summary>
-        /// <value>number of items to return in one request. if missing returns 10 items.</value>
-        [DataMember(Name="pageSize")]
-        public int? PageSize { get; set; }
-
-        /// <summary>
-        /// id of paged request to keep paging between requests. if missing starts new request.
-        /// </summary>
-        /// <value>id of paged request to keep paging between requests. if missing starts new request.</value>
-        [DataMember(Name="requestId")]
-        public string RequestId { get; set; }
+        [DataMember(Name="parserId")]
+        public string ParserId { get; }
 
 
         /// <summary>
@@ -81,10 +72,9 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class Page {\n");
-            sb.Append("  PageStart: ").Append(PageStart).Append("\n");
-            sb.Append("  PageSize: ").Append(PageSize).Append("\n");
-            sb.Append("  RequestId: ").Append(RequestId).Append("\n");
+            sb.Append("class CrawlerConfigurationUris {\n");
+            sb.Append("  Uri: ").Append(Uri).Append("\n");
+            sb.Append("  ParserId: ").Append(ParserId).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -108,15 +98,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((Page)obj);
+            return Equals((CrawlerConfigurationUris)obj);
         }
 
         /// <summary>
-        /// Returns true if Page instances are equal
+        /// Returns true if CrawlerConfigurationUris instances are equal
         /// </summary>
-        /// <param name="other">Instance of Page to be compared</param>
+        /// <param name="other">Instance of CrawlerConfigurationUris to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Page other)
+        public bool Equals(CrawlerConfigurationUris other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -124,19 +114,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.PageStart == other.PageStart ||
-                    this.PageStart != null &&
-                    this.PageStart.Equals(other.PageStart)
+                    Uri == other.Uri ||
+                    Uri != null &&
+                    Uri.Equals(other.Uri)
                 ) && 
                 (
-                    this.PageSize == other.PageSize ||
-                    this.PageSize != null &&
-                    this.PageSize.Equals(other.PageSize)
-                ) && 
-                (
-                    this.RequestId == other.RequestId ||
-                    this.RequestId != null &&
-                    this.RequestId.Equals(other.RequestId)
+                    ParserId == other.ParserId ||
+                    ParserId != null &&
+                    ParserId.Equals(other.ParserId)
                 );
         }
 
@@ -149,26 +134,24 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.PageStart != null)
-                    hash = hash * 59 + this.PageStart.GetHashCode();
-                if (this.PageSize != null)
-                    hash = hash * 59 + this.PageSize.GetHashCode();
-                if (this.RequestId != null)
-                    hash = hash * 59 + this.RequestId.GetHashCode();
+                if (Uri != null)
+                    hash = hash * 59 + Uri.GetHashCode();
+                if (ParserId != null)
+                    hash = hash * 59 + ParserId.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(Page left, Page right)
+        public static bool operator ==(CrawlerConfigurationUris left, CrawlerConfigurationUris right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Page left, Page right)
+        public static bool operator !=(CrawlerConfigurationUris left, CrawlerConfigurationUris right)
         {
             return !Equals(left, right);
         }

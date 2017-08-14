@@ -33,36 +33,36 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// crawled page content request parameters.
+    /// information about crawling session.
     /// </summary>
     [DataContract]
-    public partial class GetPageParameters :  IEquatable<GetPageParameters>
+    public partial class Session :  IEquatable<Session>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="GetPageParameters" /> class.
+        /// Initializes a new instance of the <see cref="Session" /> class.
         /// </summary>
-        /// <param name="OwnerId">id used to keep history of requests and blobs collection.</param>
-        /// <param name="Uri">uri to retreive.</param>
-        public GetPageParameters(string OwnerId = null, string Uri = null)
+        /// <param name="Id">session id.</param>
+        /// <param name="Uris">array of URIs used to start crawling and states of crawling.</param>
+        public Session(string Id = null, List<SessionUris> Uris = null)
         {
-            this.OwnerId = OwnerId;
-            this.Uri = Uri;
+            this.Id = Id;
+            this.Uris = Uris;
             
         }
 
         /// <summary>
-        /// id used to keep history of requests and blobs collection
+        /// session id
         /// </summary>
-        /// <value>id used to keep history of requests and blobs collection</value>
-        [DataMember(Name="ownerId")]
-        public string OwnerId { get; set; }
+        /// <value>session id</value>
+        [DataMember(Name="id")]
+        public string Id { get; set; }
 
         /// <summary>
-        /// uri to retreive
+        /// array of URIs used to start crawling and states of crawling
         /// </summary>
-        /// <value>uri to retreive</value>
-        [DataMember(Name="uri")]
-        public string Uri { get; set; }
+        /// <value>array of URIs used to start crawling and states of crawling</value>
+        [DataMember(Name="uris")]
+        public List<SessionUris> Uris { get; set; }
 
 
         /// <summary>
@@ -72,9 +72,9 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class GetPageParameters {\n");
-            sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
-            sb.Append("  Uri: ").Append(Uri).Append("\n");
+            sb.Append("class Session {\n");
+            sb.Append("  Id: ").Append(Id).Append("\n");
+            sb.Append("  Uris: ").Append(Uris).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -98,15 +98,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((GetPageParameters)obj);
+            return Equals((Session)obj);
         }
 
         /// <summary>
-        /// Returns true if GetPageParameters instances are equal
+        /// Returns true if Session instances are equal
         /// </summary>
-        /// <param name="other">Instance of GetPageParameters to be compared</param>
+        /// <param name="other">Instance of Session to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(GetPageParameters other)
+        public bool Equals(Session other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -114,14 +114,14 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.OwnerId == other.OwnerId ||
-                    this.OwnerId != null &&
-                    this.OwnerId.Equals(other.OwnerId)
+                    Id == other.Id ||
+                    Id != null &&
+                    Id.Equals(other.Id)
                 ) && 
                 (
-                    this.Uri == other.Uri ||
-                    this.Uri != null &&
-                    this.Uri.Equals(other.Uri)
+                    Uris == other.Uris ||
+                    Uris != null &&
+                    Uris.SequenceEqual(other.Uris)
                 );
         }
 
@@ -134,24 +134,24 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.OwnerId != null)
-                    hash = hash * 59 + this.OwnerId.GetHashCode();
-                if (this.Uri != null)
-                    hash = hash * 59 + this.Uri.GetHashCode();
+                if (Id != null)
+                    hash = hash * 59 + Id.GetHashCode();
+                if (Uris != null)
+                    hash = hash * 59 + Uris.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(GetPageParameters left, GetPageParameters right)
+        public static bool operator ==(Session left, Session right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(GetPageParameters left, GetPageParameters right)
+        public static bool operator !=(Session left, Session right)
         {
             return !Equals(left, right);
         }

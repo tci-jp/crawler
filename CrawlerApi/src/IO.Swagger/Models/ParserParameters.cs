@@ -49,32 +49,14 @@ namespace IO.Swagger.Models
         public ParserParameters(string OwnerId = null, string ParserId = null, bool? UseRDFa = null, bool? UseMicrodata = null, List<ParserParametersCustomFields> CustomFields = null)
         {
             // to ensure "OwnerId" is required (not null)
-            if (OwnerId == null)
-            {
-                throw new InvalidDataException("OwnerId is a required property for ParserParameters and cannot be null");
-            }
-            else
-            {
-                this.OwnerId = OwnerId;
-            }
+
+            this.OwnerId = OwnerId ?? throw new InvalidDataException("OwnerId is a required property for ParserParameters and cannot be null");
             // to ensure "ParserId" is required (not null)
-            if (ParserId == null)
-            {
-                throw new InvalidDataException("ParserId is a required property for ParserParameters and cannot be null");
-            }
-            else
-            {
-                this.ParserId = ParserId;
-            }
+
+            this.ParserId = ParserId ?? throw new InvalidDataException("ParserId is a required property for ParserParameters and cannot be null");
             // to ensure "CustomFields" is required (not null)
-            if (CustomFields == null)
-            {
-                throw new InvalidDataException("CustomFields is a required property for ParserParameters and cannot be null");
-            }
-            else
-            {
-                this.CustomFields = CustomFields;
-            }
+
+            this.CustomFields = CustomFields ?? throw new InvalidDataException("CustomFields is a required property for ParserParameters and cannot be null");
             // use default value if no "UseRDFa" provided
             if (UseRDFa == null)
             {
@@ -101,34 +83,34 @@ namespace IO.Swagger.Models
         /// </summary>
         /// <value>owner id</value>
         [DataMember(Name="ownerId")]
-        public string OwnerId { get; set; }
+        public string OwnerId { get; }
 
         /// <summary>
         /// parser id in free text unique for specified owner
         /// </summary>
         /// <value>parser id in free text unique for specified owner</value>
         [DataMember(Name="parserId")]
-        public string ParserId { get; set; }
+        public string ParserId { get; }
 
         /// <summary>
         /// use RDFa attributes for parsing metadata.
         /// </summary>
         /// <value>use RDFa attributes for parsing metadata.</value>
         [DataMember(Name="useRDFa")]
-        public bool? UseRDFa { get; set; }
+        public bool? UseRDFa { get; }
 
         /// <summary>
         /// use Microdata attributes for parsing metadata
         /// </summary>
         /// <value>use Microdata attributes for parsing metadata</value>
         [DataMember(Name="useMicrodata")]
-        public bool? UseMicrodata { get; set; }
+        public bool? UseMicrodata { get; }
 
         /// <summary>
         /// Gets or Sets CustomFields
         /// </summary>
         [DataMember(Name="customFields")]
-        public List<ParserParametersCustomFields> CustomFields { get; set; }
+        public List<ParserParametersCustomFields> CustomFields { get; }
 
 
         /// <summary>
@@ -183,29 +165,29 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.OwnerId == other.OwnerId ||
-                    this.OwnerId != null &&
-                    this.OwnerId.Equals(other.OwnerId)
+                    OwnerId == other.OwnerId ||
+                    OwnerId != null &&
+                    OwnerId.Equals(other.OwnerId)
                 ) && 
                 (
-                    this.ParserId == other.ParserId ||
-                    this.ParserId != null &&
-                    this.ParserId.Equals(other.ParserId)
+                    ParserId == other.ParserId ||
+                    ParserId != null &&
+                    ParserId.Equals(other.ParserId)
                 ) && 
                 (
-                    this.UseRDFa == other.UseRDFa ||
-                    this.UseRDFa != null &&
-                    this.UseRDFa.Equals(other.UseRDFa)
+                    UseRDFa == other.UseRDFa ||
+                    UseRDFa != null &&
+                    UseRDFa.Equals(other.UseRDFa)
                 ) && 
                 (
-                    this.UseMicrodata == other.UseMicrodata ||
-                    this.UseMicrodata != null &&
-                    this.UseMicrodata.Equals(other.UseMicrodata)
+                    UseMicrodata == other.UseMicrodata ||
+                    UseMicrodata != null &&
+                    UseMicrodata.Equals(other.UseMicrodata)
                 ) && 
                 (
-                    this.CustomFields == other.CustomFields ||
-                    this.CustomFields != null &&
-                    this.CustomFields.SequenceEqual(other.CustomFields)
+                    CustomFields == other.CustomFields ||
+                    CustomFields != null &&
+                    CustomFields.SequenceEqual(other.CustomFields)
                 );
         }
 
@@ -218,18 +200,18 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.OwnerId != null)
-                    hash = hash * 59 + this.OwnerId.GetHashCode();
-                if (this.ParserId != null)
-                    hash = hash * 59 + this.ParserId.GetHashCode();
-                if (this.UseRDFa != null)
-                    hash = hash * 59 + this.UseRDFa.GetHashCode();
-                if (this.UseMicrodata != null)
-                    hash = hash * 59 + this.UseMicrodata.GetHashCode();
-                if (this.CustomFields != null)
-                    hash = hash * 59 + this.CustomFields.GetHashCode();
+                if (OwnerId != null)
+                    hash = hash * 59 + OwnerId.GetHashCode();
+                if (ParserId != null)
+                    hash = hash * 59 + ParserId.GetHashCode();
+                if (UseRDFa != null)
+                    hash = hash * 59 + UseRDFa.GetHashCode();
+                if (UseMicrodata != null)
+                    hash = hash * 59 + UseMicrodata.GetHashCode();
+                if (CustomFields != null)
+                    hash = hash * 59 + CustomFields.GetHashCode();
                 return hash;
             }
         }

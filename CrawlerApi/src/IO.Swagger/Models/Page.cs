@@ -33,52 +33,45 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
-    /// crawling parameters
+    /// paging request parameters
     /// </summary>
     [DataContract]
-    public partial class CrawlerConfiguration :  IEquatable<CrawlerConfiguration>
+    public partial class Page :  IEquatable<Page>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CrawlerConfiguration" /> class.
+        /// Initializes a new instance of the <see cref="Page" /> class.
         /// </summary>
-        /// <param name="OwnerId">id used to keep history of requests and blobs collection (required).</param>
-        /// <param name="Uris">array of URIs to crawl (required).</param>
-        public CrawlerConfiguration(string OwnerId = null, List<CrawlerConfigurationUris> Uris = null)
+        /// <param name="PageStart">index of item to start page. if missing starts from 0..</param>
+        /// <param name="PageSize">number of items to return in one request. if missing returns 10 items..</param>
+        /// <param name="RequestId">id of paged request to keep paging between requests. if missing starts new request..</param>
+        public Page(int? PageStart = null, int? PageSize = null, string RequestId = null)
         {
-            // to ensure "OwnerId" is required (not null)
-            if (OwnerId == null)
-            {
-                throw new InvalidDataException("OwnerId is a required property for CrawlerConfiguration and cannot be null");
-            }
-            else
-            {
-                this.OwnerId = OwnerId;
-            }
-            // to ensure "Uris" is required (not null)
-            if (Uris == null)
-            {
-                throw new InvalidDataException("Uris is a required property for CrawlerConfiguration and cannot be null");
-            }
-            else
-            {
-                this.Uris = Uris;
-            }
+            this.PageStart = PageStart;
+            this.PageSize = PageSize;
+            this.RequestId = RequestId;
             
         }
 
         /// <summary>
-        /// id used to keep history of requests and blobs collection
+        /// index of item to start page. if missing starts from 0.
         /// </summary>
-        /// <value>id used to keep history of requests and blobs collection</value>
-        [DataMember(Name="ownerId")]
-        public string OwnerId { get; set; }
+        /// <value>index of item to start page. if missing starts from 0.</value>
+        [DataMember(Name="pageStart")]
+        public int? PageStart { get; }
 
         /// <summary>
-        /// array of URIs to crawl
+        /// number of items to return in one request. if missing returns 10 items.
         /// </summary>
-        /// <value>array of URIs to crawl</value>
-        [DataMember(Name="uris")]
-        public List<CrawlerConfigurationUris> Uris { get; set; }
+        /// <value>number of items to return in one request. if missing returns 10 items.</value>
+        [DataMember(Name="pageSize")]
+        public int? PageSize { get; }
+
+        /// <summary>
+        /// id of paged request to keep paging between requests. if missing starts new request.
+        /// </summary>
+        /// <value>id of paged request to keep paging between requests. if missing starts new request.</value>
+        [DataMember(Name="requestId")]
+        public string RequestId { get; }
 
 
         /// <summary>
@@ -88,9 +81,10 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class CrawlerConfiguration {\n");
-            sb.Append("  OwnerId: ").Append(OwnerId).Append("\n");
-            sb.Append("  Uris: ").Append(Uris).Append("\n");
+            sb.Append("class Page {\n");
+            sb.Append("  PageStart: ").Append(PageStart).Append("\n");
+            sb.Append("  PageSize: ").Append(PageSize).Append("\n");
+            sb.Append("  RequestId: ").Append(RequestId).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -114,15 +108,15 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((CrawlerConfiguration)obj);
+            return Equals((Page)obj);
         }
 
         /// <summary>
-        /// Returns true if CrawlerConfiguration instances are equal
+        /// Returns true if Page instances are equal
         /// </summary>
-        /// <param name="other">Instance of CrawlerConfiguration to be compared</param>
+        /// <param name="other">Instance of Page to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(CrawlerConfiguration other)
+        public bool Equals(Page other)
         {
 
             if (ReferenceEquals(null, other)) return false;
@@ -130,14 +124,19 @@ namespace IO.Swagger.Models
 
             return 
                 (
-                    this.OwnerId == other.OwnerId ||
-                    this.OwnerId != null &&
-                    this.OwnerId.Equals(other.OwnerId)
+                    PageStart == other.PageStart ||
+                    PageStart != null &&
+                    PageStart.Equals(other.PageStart)
                 ) && 
                 (
-                    this.Uris == other.Uris ||
-                    this.Uris != null &&
-                    this.Uris.SequenceEqual(other.Uris)
+                    PageSize == other.PageSize ||
+                    PageSize != null &&
+                    PageSize.Equals(other.PageSize)
+                ) && 
+                (
+                    RequestId == other.RequestId ||
+                    RequestId != null &&
+                    RequestId.Equals(other.RequestId)
                 );
         }
 
@@ -150,24 +149,26 @@ namespace IO.Swagger.Models
             // credit: http://stackoverflow.com/a/263416/677735
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 41;
+                var hash = 41;
                 // Suitable nullity checks etc, of course :)
-                if (this.OwnerId != null)
-                    hash = hash * 59 + this.OwnerId.GetHashCode();
-                if (this.Uris != null)
-                    hash = hash * 59 + this.Uris.GetHashCode();
+                if (PageStart != null)
+                    hash = hash * 59 + PageStart.GetHashCode();
+                if (PageSize != null)
+                    hash = hash * 59 + PageSize.GetHashCode();
+                if (RequestId != null)
+                    hash = hash * 59 + RequestId.GetHashCode();
                 return hash;
             }
         }
 
         #region Operators
 
-        public static bool operator ==(CrawlerConfiguration left, CrawlerConfiguration right)
+        public static bool operator ==(Page left, Page right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(CrawlerConfiguration left, CrawlerConfiguration right)
+        public static bool operator !=(Page left, Page right)
         {
             return !Equals(left, right);
         }

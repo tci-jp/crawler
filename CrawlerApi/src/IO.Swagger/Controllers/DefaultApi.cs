@@ -89,14 +89,14 @@ namespace IO.Swagger.Controllers
         [HttpGet]
         [Route("/zakhar_amirov/CrawlerApi/1.0.0/page")]
         [SwaggerOperation("GetPage")]
-        [SwaggerResponse(200, type: typeof(System.IO.Stream))]
+        [SwaggerResponse(200, type: typeof(Stream))]
         public virtual IActionResult GetPage([FromBody]GetPageParameters getPageParameters)
         { 
             string exampleJson = null;
             
             var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<System.IO.Stream>(exampleJson)
-            : default(System.IO.Stream);
+            ? JsonConvert.DeserializeObject<Stream>(exampleJson)
+            : default(Stream);
             return new ObjectResult(example);
         }
 

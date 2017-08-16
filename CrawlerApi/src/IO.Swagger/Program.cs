@@ -13,12 +13,11 @@ namespace IO.Swagger
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()
+                .UseApplicationInsights()
                 .UseKestrel(options =>
                 {
                     // options.ThreadCount = 4;
                     // options.UseHttps("cert.pfx", "certpassword");
-                    options.NoDelay = true;
-                    options.UseConnectionLogging();
                 })
                 .UseUrls("http://+:5000" /*, "https://+:5001" */)
                 .UseContentRoot(Directory.GetCurrentDirectory())

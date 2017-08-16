@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.4</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
@@ -32,10 +32,16 @@
     </PackageReference>
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="XPath2" Version="1.0.5" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Grabbers\script.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\..\..\..\.nuget\packages\system.collections.immutable\1.2.0\lib\netstandard1.0\System.Collections.Immutable.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

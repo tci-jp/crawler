@@ -1,15 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Builder;
+// <copyright file="Program.cs" company="DECTech.Tokyo">
+// Copyright (c) DECTech.Tokyo. All rights reserved.
+// </copyright>
 
-namespace IO.Swagger
+namespace CrawlerApi
 {
+    using System.IO;
+    using Microsoft.AspNetCore.Hosting;
+
+    /// <summary>
+    /// App Main.
+    /// </summary>
     public class Program
     {
+        /// <summary>
+        /// App Main.
+        /// </summary>
+        /// <param name="args">Commnad line args.</param>
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()

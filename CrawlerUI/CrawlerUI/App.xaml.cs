@@ -12,5 +12,9 @@ namespace CrawlerUI
     /// </summary>
     public partial class App : Application
     {
+        /// <summary>
+        /// OwnerId for test app.
+        /// </summary>
+        public const string OwnerId = "ui";
     }
 }

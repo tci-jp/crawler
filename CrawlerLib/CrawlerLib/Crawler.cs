@@ -74,6 +74,7 @@ namespace CrawlerLib
         /// <summary>
         /// Called when crawler parsed and dumped new page
         /// </summary>
+        [UsedImplicitly]
         public event Action<Crawler, string> UriCrawled;
 
         /// <inheritdoc />
@@ -85,34 +86,66 @@ namespace CrawlerLib
         /// <summary>
         /// Starts crawling by single URI
         /// </summary>
+        /// <param name="ownerId">Session onwer Id.</param>
         /// <param name="uri">URI to crawl.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
-        public Task<string> Incite(Uri uri)
+        public Task<string> Incite(string ownerId, Uri uri)
         {
-            return Incite(new[] { uri });
+            return Incite(ownerId, new[] { uri });
         }
 
         /// <summary>
         /// Starts crawling by collection of URIs
         /// </summary>
+        /// <param name="ownerId">Session owner id.</param>
         /// <param name="uris">URIs to crawl.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
-        public async Task<string> Incite(IList<Uri> uris)
+        [UsedImplicitly]
+        public async Task<string> Incite(string ownerId, IEnumerable<Uri> uris)
         {
-            if (uris.Count == 0)
+            var urisList = new List<Uri>(uris);
+            if (urisList.Count == 0)
             {
                 return null;
             }
 
-            sessionid = await storage.CreateSession(uris.Select(u => u.ToString()));
-            foreach (var uri in uris)
+            sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
+            foreach (var uri in urisList)
             {
-                await AddUrl(null, uri, 0, 0);
+                await AddUrl(ownerId, null, uri, 0, 0);
             }
 
             await WaitForTheEnd();
             return sessionid;
+        }
+
+        /// <summary>
+        /// Starts crawling by collection of URIs
+        /// </summary>
+        /// <param name="ownerId">Session owner id.</param>
+        /// <param name="uris">URIs to crawl.</param>
+        /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
+        [UsedImplicitly]
+        public async Task<CrawlerSession> InciteStart(string ownerId, IEnumerable<Uri> uris)
+        {
+            var urisList = new List<Uri>(uris);
+            if (urisList.Count == 0)
+            {
+                return null;
+            }
+
+            sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
+            var task = Task.Run(async () =>
+            {
+                foreach (var uri in urisList)
+                {
+                    await AddUrl(ownerId, null, uri, 0, 0);
+                }
+
+                await WaitForTheEnd();
+            });
+            return new CrawlerSession(sessionid, task);
         }
 
         private static(bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
@@ -141,7 +174,7 @@ namespace CrawlerLib
             return (nofollow, noindex);
         }
 
-        private async Task AddUrl(State state, Uri uri, int depth, int hostDepth)
+        private async Task AddUrl(string ownerId, State state, Uri uri, int depth, int hostDepth)
         {
             if (depth > config.Depth || hostDepth > config.HostDepth)
             {
@@ -163,6 +196,7 @@ namespace CrawlerLib
 
             var newstate = new State
             {
+                OwnerId = ownerId,
                 Uri = uri,
                 Depth = depth,
                 HostDepth = hostDepth,
@@ -248,7 +282,9 @@ namespace CrawlerLib
                         if (!noindex)
                         {
                             var metadata = ExtractMetadata(html);
-                            await storage.DumpPage(
+                            await storage.DumpUriContent(
+                                state.OwnerId,
+                                sessionid,
                                 state.Uri.ToString(),
                                 new MemoryStream(Encoding.UTF8.GetBytes(page)),
                                 config.CancellationToken,
@@ -304,7 +340,7 @@ namespace CrawlerLib
                     throw lastException;
                 }
 
-                await config.Storage.StorePageError(state.Uri.ToString(), lastCode);
+                await config.Storage.StorePageError(state.OwnerId, sessionid, state.Uri.ToString(), lastCode);
             }
             catch (TaskCanceledException)
             {
@@ -354,6 +390,7 @@ namespace CrawlerLib
                                                   UriFormat.UriEscaped)); // remove fragment
 
                             await AddUrl(
+                                state.OwnerId,
                                 state,
                                 linkuri,
                                 state.Depth + 1,
@@ -369,7 +406,7 @@ namespace CrawlerLib
                                               | UriComponents.PathAndQuery,
                                               UriFormat.UriEscaped)); // remove fragment
 
-                        await AddUrl(state, linkuri, state.Depth + 1, state.HostDepth);
+                        await AddUrl(state.OwnerId, state, linkuri, state.Depth + 1, state.HostDepth);
                     }
                 }
             }
@@ -412,6 +449,8 @@ namespace CrawlerLib
             public int HostDepth { get; set; }
 
             public Uri Referrer { get; set; }
+
+            public string OwnerId { get; set; }
         }
     }
 }

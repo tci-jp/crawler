@@ -38,7 +38,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<string> CreateSession(IEnumerable<string> rootUris)
+        public Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
         {
             var sess = new SessionInfo
                        {
@@ -52,21 +52,17 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public async Task DumpPage(
+        public async Task DumpUriContent(
+            string ownerId,
+            string sessionId,
             string uri,
             Stream stream,
             CancellationToken cancellation,
-            IEnumerable<KeyValuePair<string, string>> meta)
+            IEnumerable<KeyValuePair<string, string>> meta = null)
         {
             var mem = new MemoryStream();
             await stream.CopyToAsync(mem);
             dumpedPages.AddOrUpdate(uri, mem.ToArray(), (key, value) => value);
-        }
-
-        /// <inheritdoc />
-        public IAsyncEnumerable<ISessionInfo> GetAllSessions()
-        {
-            return sessions.Cast<ISessionInfo>().ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
@@ -82,15 +78,37 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<string> GetSessionUris(string sessionId)
+        public Task<IPage<ISessionInfo>> GetSessions(
+            string ownerId,
+            IEnumerable<string> sessionIds,
+            int pageSize = 10,
+            string requestId = null,
+            CancellationToken cancellation = default(CancellationToken))
         {
-            return sessions[sessionId].Referers.Keys.ToAsyncEnumerable();
+            var sess = sessionIds?.Select(id => sessions[id]) ?? sessions.Values;
+            return Task.FromResult<IPage<ISessionInfo>>(new Page<ISessionInfo>(sess, null));
         }
 
         /// <inheritdoc />
-        public async Task GetUriContet(string uri, Stream destination, CancellationToken cancellation)
+        public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
+        {
+            return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState { Uri = k, State = 200 })
+                                      .ToAsyncEnumerable();
+        }
+
+        /// <inheritdoc />
+        public async Task GetUriContet(string ownerId, string uri, Stream destination, CancellationToken cancellation)
         {
             await destination.WriteAsync(dumpedPages[uri], 0, dumpedPages[uri].Length, cancellation);
+        }
+
+        /// <inheritdoc />
+        public IAsyncEnumerable<KeyValuePair<string, string>> GetUriMetadata(
+            string ownerId,
+            string uri,
+            CancellationToken calncellation)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -120,15 +138,24 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task StorePageError(string uri, HttpStatusCode code)
+        public Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             codes[uri] = code.ToString();
             return Task.CompletedTask;
         }
 
+        public class UriState : IUriState
+        {
+            public int State { get; set; }
+
+            public string Uri { get; set; }
+        }
+
         private class SessionInfo : ISessionInfo
         {
             public string Id { get; set; }
+
+            public string OwnerId { get; set; }
 
             public ConcurrentDictionary<string, ConcurrentBag<string>> Referers { get; } =
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();

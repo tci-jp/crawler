@@ -23,7 +23,7 @@ namespace Azure.Storage
     /// Helper class for Azure Storage Blobs and Tables.
     /// </summary>
     [UsedImplicitly]
-    public class DataStorage
+    public class DataStorage : IDataStorage
     {
         private static readonly ConcurrentDictionary<Type, TableAttribute> TypeToAttribute =
             new ConcurrentDictionary<Type, TableAttribute>();
@@ -80,7 +80,9 @@ namespace Azure.Storage
             where TEntity : TableEntity
         {
             var retrieveOperation = TableOperation.Delete(entity);
-            var retrievedResult = await GetTable<TEntity>().ExecuteAsync(retrieveOperation);
+            var retrievedResult = await GetTable<TEntity>()
+                                      .ExecuteAsync(retrieveOperation)
+                                      .ConfigureAwait(false);
             return retrievedResult.HttpStatusCode == 200;
         }
 
@@ -91,7 +93,9 @@ namespace Azure.Storage
         /// <param name="query">Query to execute.</param>
         /// <param name="token">Cancellation.</param>
         /// <returns>Async enumerable with result.</returns>
-        public IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(TableQuery<TEntity> query, CancellationToken token = default(CancellationToken))
+        public IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(
+            TableQuery<TEntity> query,
+            CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
             var table = GetTable<TEntity>();
@@ -101,19 +105,36 @@ namespace Azure.Storage
             return new AsyncEnumerable<TEntity>(
                 async yield =>
                 {
-                    TableQuerySegment<TEntity> segment = null;
-                    while ((segment = await table.ExecuteQuerySegmentedAsync(
+                    try
+                    {
+                        TableQuerySegment<TEntity> segment = null;
+                        do
+                        {
+                            segment = await table.ExecuteQuerySegmentedAsync(
                                           query,
                                           segment?.ContinuationToken,
                                           requestOption,
                                           context,
-                                          token).ConfigureAwait(false)) != null)
-                    {
-                        foreach (var item in segment)
-                        {
-                            token.ThrowIfCancellationRequested();
-                            yield?.ReturnAsync(item);
+                                          token).ConfigureAwait(false);
+                            if (segment == null)
+                            {
+                                break;
+                            }
+
+                            foreach (var item in segment)
+                            {
+                                token.ThrowIfCancellationRequested();
+                                await yield.ReturnAsync(item);
+                            }
                         }
+                        while (segment.ContinuationToken != null);
+                    }
+                    catch (StorageException ex)
+                        when (ex.InnerException is WebException webex
+                              && webex.Response is HttpWebResponse resp
+                              && (resp.StatusCode == HttpStatusCode.NotFound))
+                    {
+                        await table.CreateAsync();
                     }
                 });
         }
@@ -170,7 +191,9 @@ namespace Azure.Storage
         {
             PrepareEntity(entity);
             var cloudTable = await GetOrCreateTableAsync<TEntity>();
-            ProcessResult(await cloudTable.ExecuteAsync(TableOperation.InsertOrReplace(entity)));
+            var insertOrReplace = TableOperation.InsertOrReplace(entity);
+            var tableResult = await cloudTable.ExecuteAsync(insertOrReplace);
+            ProcessResult(tableResult);
         }
 
         /// <summary>
@@ -225,6 +248,42 @@ namespace Azure.Storage
             where TEntity : TableEntity, new()
         {
             return ExecuteQuery(Query<TEntity>(), token);
+        }
+
+        /// <summary>
+        /// Query Azure Table by expression
+        /// </summary>
+        /// <param name="func">Query expression.</param>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <param name="segmentSize">Number of items in one segment</param>
+        /// <param name="token">Continuation token.</param>
+        /// <param name="cancellation">Cancellation</param>
+        /// <returns>Queryable with result.</returns>
+        [UsedImplicitly]
+        public async Task<TableQuerySegment<TEntity>> QuerySegmentedAsync<TEntity>(
+            Expression<Func<TEntity, bool>> func,
+            int segmentSize = 10,
+            TableContinuationToken token = null,
+            CancellationToken cancellation = default(CancellationToken))
+            where TEntity : TableEntity, new()
+        {
+            var visitor = new PropertyReplacer<TEntity>();
+            var newfunc = visitor.VisitAndConvert(func);
+
+            var query = Query<TEntity>().Where(newfunc);
+            query.TakeCount = segmentSize;
+
+            var table = GetTable<TEntity>();
+            var requestOption = new TableRequestOptions();
+            var context = new OperationContext();
+
+            return await table.ExecuteQuerySegmentedAsync(
+                                  query,
+                                  token,
+                                  requestOption,
+                                  context,
+                                  cancellation)
+                              .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -283,7 +342,7 @@ namespace Azure.Storage
         public Task<TEntity> RetreiveAsync<TEntity>(string rowKey)
             where TEntity : TableEntity
         {
-            return RetreiveAsync<TEntity>(GetEntityPartiton_<TEntity>(), rowKey);
+            return RetreiveAsync<TEntity>(GetEntityPartiton<TEntity>(), rowKey);
         }
 
         /// <summary>
@@ -336,71 +395,18 @@ namespace Azure.Storage
             });
         }
 
-        private static string GetEntityTable<T>()
-        {
-            return GetEntityAttribute<T>().Table;
-        }
-
-        private static TableQuery<TEntity> Query<TEntity>(TEntity entity)
-            where TEntity : TableEntity, new()
-        {
-            var attr = GetEntityAttribute<TEntity>();
-            var query = new TableQuery<TEntity>();
-            if (attr.PartitionKey != null && attr.RowKey == null && entity.RowKey != null)
-            {
-                return query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == entity.RowKey);
-            }
-
-            if (attr.PartitionKey == null && attr.RowKey != null && entity.PartitionKey != null)
-            {
-                return query.Where(i => i.RowKey == attr.RowKey && i.PartitionKey == entity.PartitionKey);
-            }
-
-            return Query<TEntity>();
-        }
-
-        private static TableQuery<TEntity> Query<TEntity>()
-            where TEntity : TableEntity, new()
-        {
-            var attr = GetEntityAttribute<TEntity>();
-
-            var query = new TableQuery<TEntity>();
-            if (attr.PartitionKey != null && attr.RowKey != null)
-            {
-                query = query.Where(i => i.PartitionKey == attr.PartitionKey && i.RowKey == attr.RowKey);
-            }
-            else if (attr.PartitionKey != null && attr.RowKey == null)
-            {
-                query = query.Where(i => i.PartitionKey == attr.PartitionKey);
-            }
-            else if (attr.PartitionKey == null && attr.RowKey != null)
-            {
-                query = query.Where(i => i.RowKey == attr.RowKey);
-            }
-
-            return query;
-        }
-
-        private string GetEntityKey_<T>()
-        {
-            return GetEntityAttribute<T>().RowKey ??
-                   throw new ArgumentException($"Type {typeof(T)} does not have default Key");
-        }
-
-        private string GetEntityPartiton_<T>()
+        private static string GetEntityPartiton<T>()
         {
             return GetEntityAttribute<T>().PartitionKey ??
                    throw new ArgumentException($"Type {typeof(T)} does not have default Partition");
         }
 
-        private async Task<CloudTable> GetOrCreateTableAsync<T>()
+        private static string GetEntityTable<T>()
         {
-            var result = TableClient.GetTableReference(GetEntityTable<T>());
-            await result.CreateIfNotExistsAsync();
-            return result;
+            return GetEntityAttribute<T>().Table;
         }
 
-        private void PrepareEntity<TEntity>(TEntity entity)
+        private static void PrepareEntity<TEntity>(TEntity entity)
             where TEntity : TableEntity
         {
             var attr = GetEntityAttribute<TEntity>();
@@ -415,7 +421,7 @@ namespace Azure.Storage
             }
         }
 
-        private void ProcessResult(TableResult result)
+        private static void ProcessResult(TableResult result)
         {
             switch (result.HttpStatusCode)
             {
@@ -429,6 +435,53 @@ namespace Azure.Storage
 
                 default: throw new Exception($"Request failed: {result.HttpStatusCode} - {result.Result}");
             }
+        }
+
+        private static TableQuery<TEntity> Query<TEntity>(TEntity entity)
+            where TEntity : TableEntity, new()
+        {
+            var attr = GetEntityAttribute<TEntity>();
+            var query = new TableQuery<TEntity>();
+            if ((attr.PartitionKey != null) && (attr.RowKey == null) && (entity.RowKey != null))
+            {
+                return query.Where(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == entity.RowKey));
+            }
+
+            if ((attr.PartitionKey == null) && (attr.RowKey != null) && (entity.PartitionKey != null))
+            {
+                return query.Where(i => (i.RowKey == attr.RowKey) && (i.PartitionKey == entity.PartitionKey));
+            }
+
+            return Query<TEntity>();
+        }
+
+        private static TableQuery<TEntity> Query<TEntity>()
+            where TEntity : TableEntity, new()
+        {
+            var attr = GetEntityAttribute<TEntity>();
+
+            var query = new TableQuery<TEntity>();
+            if ((attr.PartitionKey != null) && (attr.RowKey != null))
+            {
+                query = query.Where(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == attr.RowKey));
+            }
+            else if ((attr.PartitionKey != null) && (attr.RowKey == null))
+            {
+                query = query.Where(i => i.PartitionKey == attr.PartitionKey);
+            }
+            else if ((attr.PartitionKey == null) && (attr.RowKey != null))
+            {
+                query = query.Where(i => i.RowKey == attr.RowKey);
+            }
+
+            return query;
+        }
+
+        private async Task<CloudTable> GetOrCreateTableAsync<T>()
+        {
+            var result = TableClient.GetTableReference(GetEntityTable<T>());
+            await result.CreateIfNotExistsAsync();
+            return result;
         }
     }
 }

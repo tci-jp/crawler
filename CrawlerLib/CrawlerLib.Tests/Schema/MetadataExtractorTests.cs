@@ -2,7 +2,7 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib.Tests
+namespace CrawlerLib.Tests.Schema
 {
     using System.Linq;
     using HtmlAgilityPack;
@@ -12,7 +12,7 @@ namespace CrawlerLib.Tests
     public class MetadataExtractorTests
     {
         [Theory]
-        [InlineData("metadata-1.html")]
+        [InlineData("Schema/metadata-1.html")]
         public void TestMicrodataStability(string filename)
         {
             var html = new HtmlDocument();
@@ -22,7 +22,7 @@ namespace CrawlerLib.Tests
         }
 
         [Theory]
-        [InlineData("metadata-2.html")]
+        [InlineData("Schema/metadata-2.html")]
         public void TestRdfaStability(string filename)
         {
             var html = new HtmlDocument();

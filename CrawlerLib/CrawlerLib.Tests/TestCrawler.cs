@@ -8,6 +8,7 @@ namespace CrawlerLib.Tests
     using System.Collections.Async;
     using System.Linq;
     using System.Threading.Tasks;
+    using Grabbers;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -26,18 +27,19 @@ namespace CrawlerLib.Tests
         private Crawler Crawler => crawler ?? NewCrawler();
 
         [Theory]
-        [InlineData(1, 0, "http://www.dectech.tokyo")]
+        [InlineData(2, 0, "http://www.dectech.tokyo")]
         public async Task TestInciteStability(int depth, int hostDepth, string url)
         {
             config.HostDepth = hostDepth;
             config.Depth = depth;
+            config.HttpGrabber = new WebDriverHttpGrabber(config);
 
-            var id = await Crawler.Incite(new Uri(url));
+            var id = await Crawler.Incite("test", new Uri(url));
 
             var urls = await config.Storage.GetSessionUris(id).ToListAsync();
             foreach (var line in urls)
             {
-                output.WriteLine(line);
+                output.WriteLine(line.Uri);
             }
 
             output.WriteLine(urls.Count.ToString());

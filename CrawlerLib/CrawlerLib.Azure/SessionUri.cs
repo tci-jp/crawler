@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Azure
 {
+    using Data;
     using global::Azure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
 
@@ -12,7 +13,7 @@ namespace CrawlerLib.Azure
     /// Keeps URIs found during crawling session.
     /// </summary>
     [Table("sessionuri")]
-    public class SessionUri : TableEntity
+    public class SessionUri : TableEntity, IUriState
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SessionUri"/> class.
@@ -26,14 +27,20 @@ namespace CrawlerLib.Azure
         /// </summary>
         /// <param name="sessionId">Crawler session Id.</param>
         /// <param name="uri">Found URI.</param>
-        public SessionUri(string sessionId, string uri)
+        public SessionUri(string sessionId, string uri, int state)
             : base(sessionId, DataStorage.EncodeString(uri))
         {
+            State = state;
         }
 
         /// <summary>
         /// Gets found URI.
         /// </summary>
         public string Uri => DataStorage.DecodeString(RowKey);
+
+        /// <summary>
+        /// Gets or sets crawling HTTP state
+        /// </summary>
+        public int State { get; set; }
     }
 }

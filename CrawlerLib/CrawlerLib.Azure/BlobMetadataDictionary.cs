@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Azure
 {
+    using System;
     using System.Collections.Generic;
     using global::Azure.Storage;
 
@@ -11,7 +12,7 @@ namespace CrawlerLib.Azure
     /// <summary>
     /// Set of metadata from Blob
     /// </summary>
-    [Table("blobmetadata", PartitionKey = "blobmetadata")]
+    [Table("blobmetadata")]
     public class BlobMetadataDictionary : DictionaryTableEntity
     {
         /// <summary>
@@ -24,16 +25,20 @@ namespace CrawlerLib.Azure
         /// <summary>
         /// Initializes a new instance of the <see cref="BlobMetadataDictionary"/> class.
         /// </summary>
+        /// <param name="ownerId">Blob owner Id.</param>
         /// <param name="blobName">Name of blob.</param>
         /// <param name="blobMeta">Metadata dictionary.</param>
-        public BlobMetadataDictionary(string blobName, Dictionary<string, object> blobMeta)
-            : base(null, blobName, blobMeta)
+        public BlobMetadataDictionary(
+            string ownerId,
+            string blobName,
+            Dictionary<string, object> blobMeta = null)
+            : base(ownerId, Uri.EscapeDataString(blobName), blobMeta)
         {
         }
 
         /// <summary>
         /// Gets name of Blob
         /// </summary>
-        public string BlobName => RowKey;
+        public string BlobName => Uri.UnescapeDataString(RowKey);
     }
 }

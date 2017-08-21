@@ -13,15 +13,29 @@ namespace CrawlerLib.Azure
     /// <summary>
     /// Single metadata item with string value
     /// </summary>
-    [Table("metadata", PartitionKey = "const")]
+    [Table("metadata")]
     public class MetadataString : TableEntity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MetadataString"/> class.
         /// </summary>
         public MetadataString()
-            : base(null, Guid.NewGuid().ToString())
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MetadataString"/> class.
+        /// </summary>
+        /// <param name="ownerid">Blob owner Id.</param>
+        /// <param name="blobname">Name of the blob.</param>
+        /// <param name="metaname">Metadata name.</param>
+        /// <param name="metavalue">Metadata value.</param>
+        public MetadataString(string ownerid, string blobname, string metaname, string metavalue)
+            : base(ownerid, DataStorage.EncodeString(blobname + metaname + metavalue))
+        {
+            BlobName = blobname;
+            Name = metaname;
+            Value = metavalue;
         }
 
         /// <summary>
@@ -53,5 +67,11 @@ namespace CrawlerLib.Azure
             get;
             set;
         }
+
+        /// <summary>
+        /// Gets blob owner Id.
+        /// </summary>
+        [PartitionKey]
+        public string OwnerId => PartitionKey;
     }
 }

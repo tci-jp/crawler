@@ -13,29 +13,35 @@ namespace CrawlerLib.Grabbers
     /// <summary>
     /// PahntomJS wrapper
     /// </summary>
-    public class PhantomJSDriver : IDisposable
+    public class PhantomJsDriver : IDisposable
     {
         private readonly string exePath;
         private readonly string scriptPath;
-        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
         private Process process;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PhantomJSDriver" /> class.
+        /// Initializes a new instance of the <see cref="PhantomJsDriver" /> class.
         /// </summary>
         /// <param name="exePath">Path to executable.</param>
         /// <param name="scriptPath">Path to script.</param>
-        public PhantomJSDriver(string exePath = null, string scriptPath = null)
+        public PhantomJsDriver(string exePath = null, string scriptPath = null)
         {
-            this.scriptPath = scriptPath ?? "index.js";
+            this.scriptPath = scriptPath ?? "Grabbers\\script.js";
             this.exePath = exePath ?? "phantomjs.exe";
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            process?.Kill();
-            process?.Dispose();
+            if (process != null)
+            {
+                if (!process.HasExited)
+                {
+                    process?.Kill();
+                }
+
+                process.Dispose();
+            }
         }
 
         /// <summary>
@@ -43,8 +49,10 @@ namespace CrawlerLib.Grabbers
         /// </summary>
         /// <param name="uri">Page URI.</param>
         /// <param name="cancellation">Cancellation.</param>
-        /// <returns>Page content
-        /// A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>
+        /// Page content
+        /// A <see cref="Task" /> representing the asynchronous operation.
+        /// </returns>
         public async Task<string> Grab(Uri uri, CancellationToken cancellation)
         {
             process = new Process
@@ -53,33 +61,19 @@ namespace CrawlerLib.Grabbers
                 {
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     FileName = exePath,
-                    Arguments = $"\"{scriptPath}\" {uri}"
+                    Arguments = $"--load-images=false \"{scriptPath}\" {uri}"
                 },
                 EnableRaisingEvents = true
             };
 
-            process.Exited += Process_Exited;
+            cancellation.Register(() => { process.Kill(); });
+
             process.Start();
-            var readTask = process.StandardOutput.ReadToEndAsync();
-            await Task.WhenAny(readTask, GetTaskCancellation(cancellation));
-            cancellation.ThrowIfCancellationRequested();
-            await semaphore.WaitAsync(cancellation);
-
-            return await readTask;
-        }
-
-        private static Task GetTaskCancellation(CancellationToken token)
-        {
-            var comp = new TaskCompletionSource<bool>();
-            token.Register(() => { comp.SetResult(true); });
-
-            return comp.Task;
-        }
-
-        private void Process_Exited(object sender, EventArgs e)
-        {
-            semaphore.Release();
+            var page = await process.StandardOutput.ReadToEndAsync();
+            var errors = await process.StandardError.ReadToEndAsync();
+            return page;
         }
     }
 }

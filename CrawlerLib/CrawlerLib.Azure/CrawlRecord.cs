@@ -11,15 +11,16 @@ namespace CrawlerLib.Azure
     /// <summary>
     /// Page dumping information.
     /// </summary>
-    [Table("common", PartitionKey = "url")]
+    [Table("crawlrecords")]
     public class CrawlRecord : TableEntity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CrawlRecord" /> class.
         /// </summary>
+        /// <param name="ownerid">Blob owner Id.</param>
         /// <param name="uri">Crawled URI.</param>
-        public CrawlRecord(string uri)
-            : base(null, DataStorage.EncodeString(uri))
+        public CrawlRecord(string ownerid, string uri)
+            : base(ownerid, DataStorage.EncodeString(uri))
         {
         }
 
@@ -36,6 +37,12 @@ namespace CrawlerLib.Azure
         /// <summary>
         /// Gets name of blob with dumped content.
         /// </summary>
-        public string BlobName => RowKey;
+        public string BlobName => PartitionKey + "/" + RowKey;
+
+        /// <summary>
+        /// Gets blob owner id.
+        /// </summary>
+        [PartitionKey]
+        public string OwnerId => PartitionKey;
     }
 }

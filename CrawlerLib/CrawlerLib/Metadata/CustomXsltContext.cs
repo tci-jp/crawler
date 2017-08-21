@@ -1,4 +1,4 @@
-﻿// <copyright file="CustomContext.cs" company="DECTech.Tokyo">
+﻿// <copyright file="CustomXsltContext.cs" company="DECTech.Tokyo">
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace CrawlerLib.Metadata
     using System.Xml.Xsl;
 
     /// <summary>
-    /// Custome XsltContext
+    /// Custom XsltContext with custom fn:replace and fn:match functions
     /// </summary>
     public class CustomXsltContext : XsltContext
     {
@@ -34,7 +34,10 @@ namespace CrawlerLib.Metadata
         public override bool PreserveWhitespace(XPathNavigator node) => true;
 
         /// <inheritdoc/>
-        public override IXsltContextFunction ResolveFunction(string prefix, string name, XPathResultType[] ArgTypes)
+        public override IXsltContextFunction ResolveFunction(
+            string prefix,
+            string name,
+            XPathResultType[] argTypes)
         {
             return functions.TryGetValue(prefix + ":" + name, out var res) ? res : null;
         }

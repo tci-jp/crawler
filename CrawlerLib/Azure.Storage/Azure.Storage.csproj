@@ -6,10 +6,10 @@
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard1.4\Azure.Storage.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netstandard2.0\Azure.Storage.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard1.4\Azure.Storage.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netstandard2.0\Azure.Storage.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="stylecop.json" />

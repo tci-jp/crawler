@@ -20,6 +20,7 @@ namespace CrawlerUI
     using CrawlerLib.Azure;
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
+    using CrawlerLib.Metadata;
     using Models;
     using Configuration = CrawlerLib.Configuration;
 
@@ -59,9 +60,22 @@ namespace CrawlerUI
             AddUrl();
         }
 
+        private void AddMetadata_Click(object sender, RoutedEventArgs e)
+        {
+            if (Model.SelectedMetadata != null)
+            {
+                Model.MetaConditions.Add(new OperatorModel(Model.SelectedMetadata));
+            }
+        }
+
         private void AddUrl()
         {
             var modelNewUri = Model.NewUri.Trim();
+            if (!modelNewUri.StartsWith("http"))
+            {
+                modelNewUri = "http://" + modelNewUri;
+            }
+
             if (Uri.TryCreate(modelNewUri, UriKind.Absolute, out _))
             {
                 Model.Input.Add(new InputItem(modelNewUri, Model.DefaultDepth, Model.DefaultHostDepth));
@@ -83,16 +97,25 @@ namespace CrawlerUI
             if (Model.CurrentCrawlerUri != null)
             {
                 var mem = new MemoryStream();
-                await Storage.GetUriContet(Model.CurrentCrawlerUri, mem, CancellationToken.None);
+                await Storage.GetUriContet(App.OwnerId, Model.CurrentCrawlerUri, mem, CancellationToken.None);
                 mem.Position = 0;
                 var reader = new StreamReader(mem);
                 var content = await reader.ReadToEndAsync();
                 Model.CurrentCrawlerContent = content;
+
+                var list = await Storage.GetUriMetadata(App.OwnerId, Model.CurrentCrawlerUri, CancellationToken.None)
+                                        .ToListAsync();
+                Model.CurrentCrawlerMetadata = list;
             }
             else
             {
                 Model.CurrentCrawlerContent = string.Empty;
             }
+        }
+
+        private void DeleteMetaCondition_Click(object sender, RoutedEventArgs e)
+        {
+            Model.MetaConditions.Remove((OperatorModel)((Button)sender).DataContext);
         }
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
@@ -106,37 +129,21 @@ namespace CrawlerUI
             Model.Input.Remove(urlItem);
         }
 
-        private void SearchText()
+        private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
-            Model.SearchCancellation = new CancellationTokenSource();
-            Model.SearchResult.Clear();
-            var cancellation = Model.SearchCancellation.Token;
-            var searchString = Model.SearchString;
-            var task = Task.Run(
-                async () =>
-                {
-                    try
-                    {
-                        Dispatcher.Invoke(() => Model.IsSearching = true);
-                        var en = Storage.SearchByText(searchString, cancellation);
-                        await en.ForEachAsync(
-                            uri =>
-                            {
-                                cancellation.ThrowIfCancellationRequested();
-                                Dispatcher.InvokeAsync(() => { Model.SearchResult.Add(uri); });
-                            },
-                            cancellation);
-                    }
-                    catch (Exception ex)
-                    {
-                        Model.AddLogLine(ex.ToString());
-                    }
-                    finally
-                    {
-                        Dispatcher.Invoke(() => Model.IsSearching = false);
-                    }
-                },
-                cancellation);
+            if (Model.IsTextSearch)
+            {
+                SearchText();
+            }
+            else
+            {
+                SearchMeta();
+            }
+        }
+
+        private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
         }
 
         private void SearchMeta()
@@ -177,21 +184,37 @@ namespace CrawlerUI
                 cancellation);
         }
 
-        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        private void SearchText()
         {
-            if (Model.IsTextSearch)
-            {
-                SearchText();
-            }
-            else
-            {
-                SearchMeta();
-            }
-        }
-
-        private void SearchContent_LostFocus(object sender, RoutedEventArgs e)
-        {
-            e.Handled = true;
+            Model.SearchCancellation = new CancellationTokenSource();
+            Model.SearchResult.Clear();
+            var cancellation = Model.SearchCancellation.Token;
+            var searchString = Model.SearchString;
+            var task = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        Dispatcher.Invoke(() => Model.IsSearching = true);
+                        var en = Storage.SearchByText(searchString, cancellation);
+                        await en.ForEachAsync(
+                            uri =>
+                            {
+                                cancellation.ThrowIfCancellationRequested();
+                                Dispatcher.InvokeAsync(() => { Model.SearchResult.Add(uri); });
+                            },
+                            cancellation);
+                    }
+                    catch (Exception ex)
+                    {
+                        Model.AddLogLine(ex.ToString());
+                    }
+                    finally
+                    {
+                        Dispatcher.Invoke(() => Model.IsSearching = false);
+                    }
+                },
+                cancellation);
         }
 
         private void SearchText_Changed(object sender, KeyEventArgs e)
@@ -207,7 +230,7 @@ namespace CrawlerUI
             if (Model.CurrentSearchUri != null)
             {
                 var mem = new MemoryStream();
-                await Storage.GetUriContet(Model.CurrentSearchUri, mem, CancellationToken.None);
+                await Storage.GetUriContet(App.OwnerId, Model.CurrentSearchUri, mem, CancellationToken.None);
                 mem.Position = 0;
                 var reader = new StreamReader(mem);
                 var content = await reader.ReadToEndAsync();
@@ -224,6 +247,10 @@ namespace CrawlerUI
                         SearchContent.Select(selStart, Model.SearchString.Length);
                     }
                 }
+
+                var list = await Storage.GetUriMetadata(App.OwnerId, Model.CurrentSearchUri, CancellationToken.None)
+                                        .ToListAsync();
+                Model.CurrentSearchMetadata = list;
             }
             else
             {
@@ -249,6 +276,11 @@ namespace CrawlerUI
                                  Depth = Model.DefaultDepth,
                                  HostDepth = Model.DefaultHostDepth,
                                  Logger = new GuiLogger(Model),
+                                 MetadataExtractors = new IMetadataExtractor[]
+                                                      {
+                                                          new MicrodataMetadataExtractor(),
+                                                          new RdfaMetadataExtractor()
+                                                      },
                                  Storage = Storage
                              };
 
@@ -258,9 +290,9 @@ namespace CrawlerUI
                 crawler.UriCrawled += Crawler_UriCrawled;
                 try
                 {
-                    await crawler.Incite(Model.Input.Select(i => new Uri(i.Uri)).ToList());
+                    await crawler.Incite(App.OwnerId, Model.Input.Select(i => new Uri(i.Uri)).ToList());
                 }
-                catch (TaskCanceledException)
+                catch (OperationCanceledException)
                 {
                     // Ignore
                 }
@@ -282,6 +314,13 @@ namespace CrawlerUI
             Model.CrawlerCancellation?.Cancel();
         }
 
+        private void StopSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.SearchCancellation?.Cancel();
+            Model.SearchCancellation?.Dispose();
+            Model.SearchCancellation = null;
+        }
+
         private void TextBlock_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             LogScrollViewer.ScrollToBottom();
@@ -295,13 +334,6 @@ namespace CrawlerUI
             }
         }
 
-        private void StopSearchButton_Click(object sender, RoutedEventArgs e)
-        {
-            Model.SearchCancellation?.Cancel();
-            Model.SearchCancellation?.Dispose();
-            Model.SearchCancellation = null;
-        }
-
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             var enumerable = await Storage.GetAvailableMetadata().ToListAsync();
@@ -312,19 +344,6 @@ namespace CrawlerUI
                     Model.AvailableMetadata.Add(meta);
                 }
             });
-        }
-
-        private void AddMetadata_Click(object sender, RoutedEventArgs e)
-        {
-            if (Model.SelectedMetadata != null)
-            {
-                Model.MetaConditions.Add(new OperatorModel(Model.SelectedMetadata));
-            }
-        }
-
-        private void DeleteMetaCondition_Click(object sender, RoutedEventArgs e)
-        {
-            Model.MetaConditions.Remove((OperatorModel)((Button)sender).DataContext);
         }
     }
 }

@@ -14,6 +14,11 @@ namespace CrawlerLib.Data
     public interface ISessionInfo
     {
         /// <summary>
+        /// Gets session owner id.
+        /// </summary>
+        string OwnerId { get; }
+
+        /// <summary>
         /// Gets session Id.
         /// </summary>
         [UsedImplicitly]

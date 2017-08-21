@@ -4,6 +4,7 @@
 
 namespace CrawlerUI.Models
 {
+    using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Linq;
@@ -20,8 +21,10 @@ namespace CrawlerUI.Models
     {
         private readonly StringBuilder log = new StringBuilder();
         private string currentCrawlerContent = string.Empty;
+        private IList<KeyValuePair<string, string>> currentCrawlerMetadata;
         private string currentCrawlerUri;
         private string currentSearchContent;
+        private IList<KeyValuePair<string, string>> currentSearchMetadata;
         private string currentSearchUri;
         private int defaultDepth = 3;
         private int defaultHostDepth;
@@ -44,91 +47,9 @@ namespace CrawlerUI.Models
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
-        /// Gets or sets uRI to add.
+        /// Gets metadata available to search.
         /// </summary>
-        public string NewUri
-        {
-            get => newUri;
-            set
-            {
-                if (value == newUri)
-                {
-                    return;
-                }
-
-                newUri = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets initial Crawling URIs.
-        /// </summary>
-        public ObservableCollection<InputItem> Input { get; } = new ObservableCollection<InputItem>();
-
-        /// <summary>
-        /// Gets uRIs found by crawler including initial.
-        /// </summary>
-        public ObservableCollection<string> CrawlerResult { get; } = new ObservableCollection<string>();
-
-        /// <summary>
-        /// Gets uRIs found by searching.
-        /// </summary>
-        public ObservableCollection<string> SearchResult { get; } = new ObservableCollection<string>();
-
-        /// <summary>
-        /// Gets or sets crawling Host Depth.
-        /// </summary>
-        public int DefaultHostDepth
-        {
-            get => defaultHostDepth;
-            set
-            {
-                if (value == defaultHostDepth)
-                {
-                    return;
-                }
-
-                defaultHostDepth = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets crawler Depth.
-        /// </summary>
-        public int DefaultDepth
-        {
-            get => defaultDepth;
-            set
-            {
-                if (value == defaultDepth)
-                {
-                    return;
-                }
-
-                defaultDepth = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether true if crawling.
-        /// </summary>
-        public bool IsCrawlerRunning
-        {
-            get => isCrawlerRunning;
-            set
-            {
-                if (value == isCrawlerRunning)
-                {
-                    return;
-                }
-
-                isCrawlerRunning = value;
-                OnPropertyChanged();
-            }
-        }
+        public ObservableCollection<string> AvailableMetadata { get; } = new ObservableCollection<string>();
 
         /// <summary>
         /// Gets or sets cancellation Token Source to stop crawler.
@@ -136,9 +57,41 @@ namespace CrawlerUI.Models
         public CancellationTokenSource CrawlerCancellation { get; set; }
 
         /// <summary>
-        /// Gets log content.
+        /// Gets uRIs found by crawler including initial.
         /// </summary>
-        public string Log => log.ToString();
+        public ObservableCollection<string> CrawlerResult { get; } = new ObservableCollection<string>();
+
+        /// <summary>
+        /// Gets or sets content of selected URI selected in the list of URIs found by Crawler.
+        /// </summary>
+        public string CurrentCrawlerContent
+        {
+            get => currentCrawlerContent;
+            set
+            {
+                if (value != currentCrawlerContent)
+                {
+                    currentCrawlerContent = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets list of page metadata for selected URI in crawler tab.
+        /// </summary>
+        public IList<KeyValuePair<string, string>> CurrentCrawlerMetadata
+        {
+            get => currentCrawlerMetadata;
+            set
+            {
+                if (!Equals(value, currentCrawlerMetadata))
+                {
+                    currentCrawlerMetadata = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets uRI selected in the list of URIs found by Crawler.
@@ -148,31 +101,11 @@ namespace CrawlerUI.Models
             get => currentCrawlerUri;
             set
             {
-                if (value == currentCrawlerUri)
+                if (value != currentCrawlerUri)
                 {
-                    return;
+                    currentCrawlerUri = value;
+                    OnPropertyChanged();
                 }
-
-                currentCrawlerUri = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets uRI selected in the list of URIs found by Search.
-        /// </summary>
-        public string CurrentSearchUri
-        {
-            get => currentSearchUri;
-            set
-            {
-                if (value == currentSearchUri)
-                {
-                    return;
-                }
-
-                currentSearchUri = value;
-                OnPropertyChanged();
             }
         }
 
@@ -184,56 +117,98 @@ namespace CrawlerUI.Models
             get => currentSearchContent;
             set
             {
-                if (value == currentSearchContent)
+                if (value != currentSearchContent)
                 {
-                    return;
+                    currentSearchContent = value;
+                    OnPropertyChanged();
                 }
-
-                currentSearchContent = value;
-                OnPropertyChanged();
             }
         }
 
         /// <summary>
-        /// Gets or sets content of selected URI selected in the list of URIs found by Crawler.
+        /// Gets or sets list of metadata for current page selected on Search tab.
         /// </summary>
-        public string CurrentCrawlerContent
+        public IList<KeyValuePair<string, string>> CurrentSearchMetadata
         {
-            get => currentCrawlerContent;
+            get => currentSearchMetadata;
             set
             {
-                if (value == currentCrawlerContent)
+                if (!Equals(value, currentSearchMetadata))
                 {
-                    return;
+                    currentSearchMetadata = value;
+                    OnPropertyChanged();
                 }
-
-                currentCrawlerContent = value;
-                OnPropertyChanged();
             }
         }
 
         /// <summary>
-        /// Gets or sets text in search line.
+        /// Gets or sets uRI selected in the list of URIs found by Search.
         /// </summary>
-        public string SearchString
+        public string CurrentSearchUri
         {
-            get => searchString;
+            get => currentSearchUri;
             set
             {
-                if (value == searchString)
+                if (value != currentSearchUri)
                 {
-                    return;
+                    currentSearchUri = value;
+                    OnPropertyChanged();
                 }
-
-                searchString = value;
-                OnPropertyChanged();
             }
         }
 
         /// <summary>
-        /// Gets or sets cancellation Token Source to stop search.
+        /// Gets or sets crawler Depth.
         /// </summary>
-        public CancellationTokenSource SearchCancellation { get; set; }
+        public int DefaultDepth
+        {
+            get => defaultDepth;
+            set
+            {
+                if (value != defaultDepth)
+                {
+                    defaultDepth = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets crawling Host Depth.
+        /// </summary>
+        public int DefaultHostDepth
+        {
+            get => defaultHostDepth;
+            set
+            {
+                if (value != defaultHostDepth)
+                {
+                    defaultHostDepth = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets initial Crawling URIs.
+        /// </summary>
+        public ObservableCollection<InputItem> Input { get; } = new ObservableCollection<InputItem>();
+
+        /// <summary>
+        /// Gets or sets a value indicating whether true if crawling.
+        /// </summary>
+        public bool IsCrawlerRunning
+        {
+            get => isCrawlerRunning;
+            set
+            {
+                if (value != isCrawlerRunning)
+                {
+                    isCrawlerRunning = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether search is in process.
@@ -254,9 +229,14 @@ namespace CrawlerUI.Models
         }
 
         /// <summary>
-        /// Gets metadata available to search.
+        /// Gets a value indicating whether search is full text (true) or metadata query (false)
         /// </summary>
-        public ObservableCollection<string> AvailableMetadata { get; } = new ObservableCollection<string>();
+        public bool IsTextSearch => !MetaConditions.Any();
+
+        /// <summary>
+        /// Gets log content.
+        /// </summary>
+        public string Log => log.ToString();
 
         /// <summary>
         /// Gets current metadata search conditions.
@@ -265,14 +245,51 @@ namespace CrawlerUI.Models
             new ObservableCollection<OperatorModel>();
 
         /// <summary>
+        /// Gets or sets uRI to add.
+        /// </summary>
+        public string NewUri
+        {
+            get => newUri;
+            set
+            {
+                if (value != newUri)
+                {
+                    newUri = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets cancellation Token Source to stop search.
+        /// </summary>
+        public CancellationTokenSource SearchCancellation { get; set; }
+
+        /// <summary>
+        /// Gets uRIs found by searching.
+        /// </summary>
+        public ObservableCollection<string> SearchResult { get; } = new ObservableCollection<string>();
+
+        /// <summary>
+        /// Gets or sets text in search line.
+        /// </summary>
+        public string SearchString
+        {
+            get => searchString;
+            set
+            {
+                if (value != searchString)
+                {
+                    searchString = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets or sets gets name of metadata selected for adding into query
         /// </summary>
         public string SelectedMetadata { get; set; }
-
-        /// <summary>
-        /// Gets a value indicating whether search is full text (true) or metadata query (false)
-        /// </summary>
-        public bool IsTextSearch => !MetaConditions.Any();
 
         /// <summary>
         /// Add line into log.

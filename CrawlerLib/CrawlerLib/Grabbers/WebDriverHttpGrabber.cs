@@ -31,7 +31,7 @@ namespace CrawlerLib.Grabbers
             return Task.Run(
                 async () =>
                 {
-                    using (var webDriver = new PhantomJSDriver())
+                    using (var webDriver = new PhantomJsDriver())
                     {
                         var content = await webDriver.Grab(uri, Config.CancellationToken);
 

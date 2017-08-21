@@ -2,14 +2,12 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib.Tests
+namespace CrawlerLib.Tests.XPath
 {
     using System.Collections.Generic;
     using System.Linq;
-    using System.Xml;
     using HtmlAgilityPack;
     using Metadata;
-    using Wmhelp.XPath2;
     using Xunit;
 
     public class XPathMetadataExtractorTests

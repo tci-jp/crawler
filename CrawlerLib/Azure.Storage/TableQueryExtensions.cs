@@ -29,6 +29,35 @@ namespace Azure.Storage
             return query.Where(querystring);
         }
 
+        private static string CombineBinary(string op, BinaryExpression parameters)
+        {
+            return TableQuery.CombineFilters(ConvertTop(parameters.Left), op, ConvertTop(parameters.Right));
+        }
+
+        private static string CombineNot(UnaryExpression parameter)
+        {
+            return $"not ({ConvertTop(parameter.Operand)})";
+        }
+
+        private static string ConvertBinary(string op, BinaryExpression expression)
+        {
+            var left = GetGettingProperty(expression.Left);
+            if (left != null)
+            {
+                var value = Expression.Lambda(expression.Right).Compile().DynamicInvoke();
+                return GenerateFilter(left, op, value);
+            }
+
+            var right = GetGettingProperty(expression.Right);
+            if (right != null)
+            {
+                var value = Expression.Lambda(expression.Left).Compile().DynamicInvoke();
+                return GenerateFilter(right, InvertOp(op), value);
+            }
+
+            throw new InvalidOperationException("Must be comparison with TableEntity property.");
+        }
+
         private static string ConvertNext(Expression expression)
         {
             string op;
@@ -70,45 +99,45 @@ namespace Azure.Storage
                     return CombineNot((UnaryExpression)expression);
                 case ExpressionType.OrElse:
                     return CombineBinary("or", (BinaryExpression)expression);
+                case ExpressionType.Equal:
+                case ExpressionType.GreaterThan:
+                case ExpressionType.GreaterThanOrEqual:
+                case ExpressionType.LessThan:
+                case ExpressionType.LessThanOrEqual:
+                case ExpressionType.NotEqual:
+                    return ConvertNext(expression);
                 default:
                     throw new InvalidOperationException("Operation is not supported: " + expression.NodeType);
             }
         }
 
-        private static string ConvertBinary(string op, BinaryExpression expression)
-        {
-            var left = GetGettingProperty(expression.Left);
-            if (left != null)
-            {
-                var value = Expression.Lambda(expression.Right).Compile().DynamicInvoke();
-                return GenerateFilter(left, op, value);
-            }
-
-            var right = GetGettingProperty(expression.Right);
-            if (right != null)
-            {
-                var value = Expression.Lambda(expression.Left).Compile().DynamicInvoke();
-                return GenerateFilter(right, InvertOp(op), value);
-            }
-
-            throw new InvalidOperationException("Must be comparison with TableEntity property.");
-        }
-
-        private static string InvertOp(string op)
-        {
-            switch (op)
-            {
-                case "gt": return "lt";
-                case "lt": return "gt";
-                case "ge": return "le";
-                case "le": return "ge";
-                default: return op;
-            }
-        }
-
         private static string GenerateFilter(string left, string op, object value)
         {
-            throw new NotImplementedException();
+            switch (value)
+            {
+                case string s:
+                    return TableQuery.GenerateFilterCondition(left, op, s);
+                case bool b:
+                    return TableQuery.GenerateFilterConditionForBool(left, op, b);
+                case DateTime d:
+                    return TableQuery.GenerateFilterConditionForDate(left, op, d);
+                case DateTimeOffset d:
+                    return TableQuery.GenerateFilterConditionForDate(left, op, d);
+                case double d:
+                    return TableQuery.GenerateFilterConditionForDouble(left, op, d);
+                case float f:
+                    return TableQuery.GenerateFilterConditionForDouble(left, op, f);
+                case byte i:
+                    return TableQuery.GenerateFilterConditionForInt(left, op, i);
+                case short i:
+                    return TableQuery.GenerateFilterConditionForInt(left, op, i);
+                case int i:
+                    return TableQuery.GenerateFilterConditionForInt(left, op, i);
+                case long l:
+                    return TableQuery.GenerateFilterConditionForLong(left, op, l);
+                default:
+                    throw new InvalidOperationException("Type is not supported: " + value.GetType());
+            }
         }
 
         private static string GetGettingProperty(Expression expr)
@@ -124,14 +153,16 @@ namespace Azure.Storage
             return null;
         }
 
-        private static string CombineBinary(string op, BinaryExpression parameters)
+        private static string InvertOp(string op)
         {
-            return TableQuery.CombineFilters(ConvertTop(parameters.Left), op, ConvertTop(parameters.Right));
-        }
-
-        private static string CombineNot(UnaryExpression parameter)
-        {
-            return $"not ({ConvertTop(parameter.Operand)})";
+            switch (op)
+            {
+                case "gt": return "lt";
+                case "lt": return "gt";
+                case "ge": return "le";
+                case "le": return "ge";
+                default: return op;
+            }
         }
     }
 }

@@ -24,7 +24,7 @@ namespace CrawlerLib
         /// </summary>
         public static void RegisterEncodings()
         {
-            if (Encoding.GetEncoding("\"UTF-8\"") == null && Encoding.GetEncoding("\"utf-8\"") == null)
+            if ((Encoding.GetEncoding("\"UTF-8\"") == null) && (Encoding.GetEncoding("\"utf-8\"") == null))
             {
                 Encoding.RegisterProvider(new EncodingRedirector());
             }

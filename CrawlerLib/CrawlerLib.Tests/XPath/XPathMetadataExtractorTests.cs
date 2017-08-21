@@ -12,7 +12,7 @@ namespace CrawlerLib.Tests.XPath
 
     public class XPathMetadataExtractorTests
     {
-        private HtmlDocument doc;
+        private readonly HtmlDocument doc;
 
         public XPathMetadataExtractorTests()
         {

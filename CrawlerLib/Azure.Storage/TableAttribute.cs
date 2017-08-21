@@ -30,7 +30,7 @@ namespace Azure.Storage
         /// <summary>
         /// Gets or sets optional Partition Key
         /// </summary>
-        public string PartitionKey { get; set; } = null;
+        public string PartitionKey { get; set; }
 
         /// <summary>
         /// Gets or sets optional Row Key.

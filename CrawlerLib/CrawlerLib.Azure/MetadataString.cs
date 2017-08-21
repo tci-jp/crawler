@@ -31,7 +31,7 @@ namespace CrawlerLib.Azure
         /// <param name="metaname">Metadata name.</param>
         /// <param name="metavalue">Metadata value.</param>
         public MetadataString(string ownerid, string blobname, string metaname, string metavalue)
-            : base(ownerid, DataStorage.EncodeString(blobname + metaname + metavalue))
+            : base(ownerid, Codec.EncodeString(blobname + metaname + metavalue))
         {
             BlobName = blobname;
             Name = metaname;

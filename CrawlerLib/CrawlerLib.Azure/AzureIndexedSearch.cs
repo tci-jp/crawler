@@ -75,7 +75,7 @@ namespace CrawlerLib.Azure
 
             var tablequery = new TableQuery<BlobMetadataDictionary>().Where(querystring);
 
-            var result = storage.ExecuteQuery<BlobMetadataDictionary>(tablequery);
+            var result = storage.ExecuteQuery(tablequery);
 
             return result.Select(i => i.BlobName);
         }

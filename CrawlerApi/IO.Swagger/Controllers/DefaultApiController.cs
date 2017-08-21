@@ -54,7 +54,7 @@ namespace CrawlerApi.Controllers
         [HttpPost]
         [Route("/CrawlerApi/1.0.0/parser")]
         [SwaggerOperation("AddParser")]
-        public async Task AddParser([FromBody] ParserParameters parserParameters, DataStorage storage)
+        public async Task AddParser([FromBody] ParserParameters parserParameters, IDataStorage storage)
         {
             await storage.InsertOrReplaceAsync(parserParameters);
         }
@@ -68,7 +68,7 @@ namespace CrawlerApi.Controllers
         [HttpGet]
         [Route("/CrawlerApi/1.0.0/incite")]
         [SwaggerOperation("GetIncites")]
-        [SwaggerResponse(200, type: typeof(Session))]
+        [SwaggerResponse(200, type: typeof(Paged<Session>))]
         public async Task<IActionResult> GetIncites([FromBody] SessionsRequestParameters param, ICrawlerStorage storage)
         {
             var page = await storage.GetSessions(
@@ -87,7 +87,7 @@ namespace CrawlerApi.Controllers
 
             var pagination = new Paged<Session>(sessions, page.RequestId);
 
-            return new ObjectResult(sessions);
+            return new ObjectResult(pagination);
         }
 
         /// <summary>download crawled page</summary>
@@ -156,7 +156,7 @@ namespace CrawlerApi.Controllers
             return new ObjectResult(session.SessionId);
         }
 
-        private SessionState HttpStateToSessionState(int state)
+        private static SessionState HttpStateToSessionState(int state)
         {
             switch (state)
             {

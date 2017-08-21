@@ -124,10 +124,11 @@ namespace CrawlerApi
                 options.ModelFilter<XmlCommentsModelFilter>(comments);
             });
 
-            services.AddSingleton<IDataStorage>(new DataStorage(Configuration["CrawlerStorageConnectionString"]));
+            var storage = new DataStorage(Configuration["CrawlerStorageConnectionString"]);
+            services.AddSingleton<IDataStorage>(storage);
             services.AddSingleton<IBlobSearcher>(
                 new AzureIndexedSearch(
-                    new DataStorage(Configuration["CrawlerStorageConnectionString"]),
+                    storage,
                     Configuration["SearchServiceName"],
                     Configuration["SearchServiceAdminApiKey"],
                     Configuration["TextSearchIndexName"],

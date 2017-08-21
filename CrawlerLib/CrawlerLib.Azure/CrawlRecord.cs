@@ -20,14 +20,14 @@ namespace CrawlerLib.Azure
         /// <param name="ownerid">Blob owner Id.</param>
         /// <param name="uri">Crawled URI.</param>
         public CrawlRecord(string ownerid, string uri)
-            : base(ownerid, DataStorage.EncodeString(uri))
+            : base(ownerid, Codec.EncodeString(uri))
         {
         }
 
         /// <summary>
         /// Gets crawled URI.
         /// </summary>
-        public string Uri => DataStorage.DecodeString(RowKey);
+        public string Uri => Codec.DecodeString(RowKey);
 
         /// <summary>
         /// Gets or sets page dumping HTTP status.

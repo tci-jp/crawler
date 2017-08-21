@@ -47,26 +47,6 @@ namespace Azure.Storage
 
         private CloudTableClient TableClient { get; }
 
-        /// <summary>
-        /// Decodes string from Base64.
-        /// </summary>
-        /// <param name="code">Base64 string.</param>
-        /// <returns>Decoded string.</returns>
-        public static string DecodeString(string code)
-        {
-            return Encoding.UTF8.GetString(Convert.FromBase64String(code));
-        }
-
-        /// <summary>
-        /// Encodes string into Base64.
-        /// </summary>
-        /// <param name="str">String to encode.</param>
-        /// <returns>Encoded string.</returns>
-        public static string EncodeString(string str)
-        {
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
-        }
-
         /// <inheritdoc />
         [UsedImplicitly]
         public async Task<bool> DeleteAsync<TEntity>(TEntity entity)
@@ -79,13 +59,7 @@ namespace Azure.Storage
             return retrievedResult.HttpStatusCode == 200;
         }
 
-        /// <summary>
-        /// Executes asynchronuous query
-        /// </summary>
-        /// <typeparam name="TEntity">Table entity.</typeparam>
-        /// <param name="query">Query to execute.</param>
-        /// <param name="token">Cancellation.</param>
-        /// <returns>Async enumerable with result.</returns>
+        /// <inheritdoc />
         public IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(
             TableQuery<TEntity> query,
             CancellationToken token = default(CancellationToken))
@@ -174,7 +148,7 @@ namespace Azure.Storage
         /// <inheritdoc />
         [UsedImplicitly]
         public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(
-            [NotNull] TEntity entity,
+            TEntity entity,
             CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {

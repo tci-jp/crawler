@@ -1,4 +1,4 @@
-// <copyright file="SessionUris.cs" company="DECTech.Tokyo">
+// <copyright file="SessionUri.cs" company="DECTech.Tokyo">
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 

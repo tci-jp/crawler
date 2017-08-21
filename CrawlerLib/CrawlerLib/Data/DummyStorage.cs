@@ -21,9 +21,6 @@ namespace CrawlerLib.Data
     /// </summary>
     public class DummyStorage : ICrawlerStorage
     {
-        private readonly ConcurrentDictionary<string, string> codes =
-            new ConcurrentDictionary<string, string>();
-
         private readonly ConcurrentDictionary<string, byte[]> dumpedPages =
             new ConcurrentDictionary<string, byte[]>();
 
@@ -92,7 +89,11 @@ namespace CrawlerLib.Data
         /// <inheritdoc />
         public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
         {
-            return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState { Uri = k, State = 200 })
+            return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState
+                                                                            {
+                                                                                Uri = k,
+                                                                                State = 200
+                                                                            })
                                       .ToAsyncEnumerable();
         }
 
@@ -140,15 +141,7 @@ namespace CrawlerLib.Data
         /// <inheritdoc />
         public Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
-            codes[uri] = code.ToString();
             return Task.CompletedTask;
-        }
-
-        public class UriState : IUriState
-        {
-            public int State { get; set; }
-
-            public string Uri { get; set; }
         }
 
         private class SessionInfo : ISessionInfo
@@ -163,6 +156,16 @@ namespace CrawlerLib.Data
             public IList<string> RootUris { get; set; } = new List<string>();
 
             public DateTime Timestamp { get; set; }
+        }
+
+        /// <inheritdoc />
+        private class UriState : IUriState
+        {
+            /// <inheritdoc />
+            public int State { get; set; }
+
+            /// <inheritdoc />
+            public string Uri { get; set; }
         }
     }
 }

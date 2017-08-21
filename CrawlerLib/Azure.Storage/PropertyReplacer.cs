@@ -29,7 +29,7 @@ namespace Azure.Storage
         /// <inheritdoc />
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            if (node.Left is UnaryExpression left && IsEnumConvert(left) && node.Right.Type == typeof(int))
+            if (node.Left is UnaryExpression left && IsEnumConvert(left) && (node.Right.Type == typeof(int)))
             {
                 var newMember = ReplaceMember(left.Operand as MemberExpression);
                 if (newMember != null)
@@ -41,7 +41,7 @@ namespace Azure.Storage
                 }
             }
 
-            if (node.Right is UnaryExpression right && IsEnumConvert(right) && node.Left.Type == typeof(int))
+            if (node.Right is UnaryExpression right && IsEnumConvert(right) && (node.Left.Type == typeof(int)))
             {
                 var newMember = ReplaceMember(right.Operand as MemberExpression);
                 if (newMember != null)
@@ -69,7 +69,7 @@ namespace Azure.Storage
 
         private static bool IsEnumConvert(UnaryExpression node)
         {
-            return node?.NodeType == ExpressionType.Convert && node.Operand.Type.GetTypeInfo().IsEnum;
+            return (node?.NodeType == ExpressionType.Convert) && node.Operand.Type.GetTypeInfo().IsEnum;
         }
 
         private static MemberExpression ReplaceMember(MemberExpression node)

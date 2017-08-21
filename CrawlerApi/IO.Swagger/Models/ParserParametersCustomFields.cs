@@ -30,12 +30,14 @@ namespace CrawlerApi.Models
     using System.IO;
     using System.Runtime.Serialization;
     using System.Text;
+    using JetBrains.Annotations;
     using Newtonsoft.Json;
 
     /// <summary>
     /// Metadata name and XPath for custom parsing.
     /// </summary>
     [DataContract]
+    [UsedImplicitly]
     public class ParserParametersCustomFields : IEquatable<ParserParametersCustomFields>
     {
         /// <summary>

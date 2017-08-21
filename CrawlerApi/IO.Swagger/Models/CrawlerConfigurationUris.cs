@@ -30,12 +30,14 @@ namespace CrawlerApi.Models
     using System.IO;
     using System.Runtime.Serialization;
     using System.Text;
+    using JetBrains.Annotations;
     using Newtonsoft.Json;
 
     /// <summary>
     /// Uri to crawl and parserId for settings to use .
     /// </summary>
     [DataContract]
+    [UsedImplicitly]
     public class CrawlerConfigurationUris : IEquatable<CrawlerConfigurationUris>
     {
         /// <summary>

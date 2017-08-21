@@ -176,7 +176,7 @@ namespace CrawlerLib
 
         private async Task AddUrl(string ownerId, State state, Uri uri, int depth, int hostDepth)
         {
-            if (depth > config.Depth || hostDepth > config.HostDepth)
+            if ((depth > config.Depth) || (hostDepth > config.HostDepth))
             {
                 return;
             }
@@ -259,7 +259,7 @@ namespace CrawlerLib
                             var result = await config.HttpGrabber.Grab(state.Uri, state.Referrer);
 
                             lastCode = result.Status;
-                            if (config.RetryErrors.Contains(lastCode) || result.Content == null)
+                            if (config.RetryErrors.Contains(lastCode) || (result.Content == null))
                             {
                                 await Task.Delay(config.RequestErrorRetryDelay);
                                 continue;
@@ -431,15 +431,7 @@ namespace CrawlerLib
                 {
                     uri = value;
                     Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
-                    UriHostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.UriEscaped);
                 }
-            }
-
-            public string UriHostAndPort
-            {
-                [UsedImplicitly]
-                get;
-                private set;
             }
 
             public Uri Host { get; private set; }

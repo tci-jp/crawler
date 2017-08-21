@@ -29,12 +29,14 @@ namespace CrawlerApi.Models
     using System;
     using System.Runtime.Serialization;
     using System.Text;
+    using JetBrains.Annotations;
     using Newtonsoft.Json;
 
     /// <summary>
     /// paging request parameters
     /// </summary>
     [DataContract]
+    [UsedImplicitly]
     public class Pagination : IEquatable<Pagination>
     {
         /// <summary>

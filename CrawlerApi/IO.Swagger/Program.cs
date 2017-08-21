@@ -10,7 +10,7 @@ namespace CrawlerApi
     /// <summary>
     /// App Main.
     /// </summary>
-    public class Program
+    public static class Program
     {
         /// <summary>
         /// App Main.

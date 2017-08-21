@@ -13,6 +13,9 @@ namespace Azure.Storage
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Table;
 
+    /// <summary>
+    /// Base interface for storage mocking.
+    /// </summary>
     public interface IDataStorage
     {
         /// <summary>
@@ -29,6 +32,13 @@ namespace Azure.Storage
         Task<bool> DeleteAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity;
 
+        /// <summary>
+        /// Execute Table query
+        /// </summary>
+        /// <typeparam name="TEntity">Table entity for query.</typeparam>
+        /// <param name="query">Query.</param>
+        /// <param name="token">Cancellation.</param>
+        /// <returns>Async collection of entitoes.</returns>
         IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(
             TableQuery<TEntity> query,
             CancellationToken token = default(CancellationToken))
@@ -40,7 +50,6 @@ namespace Azure.Storage
         /// <param name="name">Blob Container name.</param>
         /// <returns>Blob Container object. A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task<CloudBlobContainer> GetBlobContainerAsync(string name);
-
 
         /// <summary>
         /// Gets Table object by type.
@@ -174,5 +183,5 @@ namespace Azure.Storage
         /// </returns>
         Task<TEntity> RetreiveOrCreateAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity;
-    }
+   }
 }

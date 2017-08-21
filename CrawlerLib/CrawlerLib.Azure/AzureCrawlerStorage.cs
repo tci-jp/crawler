@@ -33,14 +33,14 @@ namespace CrawlerLib.Azure
         private static readonly Regex WrongCharRegex = new Regex("[^\\w\\d_]+");
         private readonly ConcurrentDictionary<string, bool> metadataSet = new ConcurrentDictionary<string, bool>();
         private readonly IBlobSearcher searcher;
-        private readonly DataStorage storage;
+        private readonly IDataStorage storage;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureCrawlerStorage" /> class.
         /// </summary>
         /// <param name="storage">Azure Storage helper class.</param>
         /// <param name="searcher">Blob searcher.</param>
-        public AzureCrawlerStorage(DataStorage storage, IBlobSearcher searcher)
+        public AzureCrawlerStorage(IDataStorage storage, IBlobSearcher searcher)
         {
             this.storage = storage;
             this.searcher = searcher;
@@ -102,7 +102,7 @@ namespace CrawlerLib.Azure
                     }
 
                     var pairkey = EscapeMetadataName(pair.Key);
-                    await storage.InsertAsync(new MetadataString(ownerId, record.BlobName, DataStorage.EncodeString(pair.Key), pair.Value));
+                    await storage.InsertAsync(new MetadataString(ownerId, record.BlobName, Codec.EncodeString(pair.Key), pair.Value));
                     var metaname = pairkey;
                     for (var index = 1; blobMeta.ContainsKey(metaname); index++)
                     {
@@ -194,7 +194,7 @@ namespace CrawlerLib.Azure
             var rec = new CrawlRecord(ownerId, uri);
             return storage
                 .QueryAsync<MetadataString>(m => (m.OwnerId == ownerId) && (m.BlobName == rec.BlobName), cancellation)
-                .Select(m => new KeyValuePair<string, string>(DataStorage.DecodeString(m.Name), m.Value));
+                .Select(m => new KeyValuePair<string, string>(Codec.DecodeString(m.Name), m.Value));
         }
 
         /// <inheritdoc />
@@ -209,13 +209,13 @@ namespace CrawlerLib.Azure
                     Op = c.Op,
                     Value = c.Value
                 }),
-                cancellation).Select(DataStorage.DecodeString);
+                cancellation).Select(Codec.DecodeString);
         }
 
         /// <inheritdoc />
         public IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation)
         {
-            return searcher.SearchByText(text, cancellation).Select(DataStorage.DecodeString);
+            return searcher.SearchByText(text, cancellation).Select(Codec.DecodeString);
         }
 
         /// <inheritdoc />

@@ -29,13 +29,13 @@ namespace CrawlerLib.Azure
         /// <param name="uri">Crawled URI.</param>
         /// <param name="referer">Crawler URI HTTP Referer.</param>
         public UriReferer(string sessionId, string uri, string referer)
-            : base(DataStorage.EncodeString(sessionId + "|" + uri), DataStorage.EncodeString(referer))
+            : base(Codec.EncodeString(sessionId + "|" + uri), Codec.EncodeString(referer))
         {
         }
 
         /// <summary>
         /// Gets HTTP Referer for crawled URI.
         /// </summary>
-        public string Referer => DataStorage.DecodeString(RowKey);
+        public string Referer => Codec.DecodeString(RowKey);
     }
 }

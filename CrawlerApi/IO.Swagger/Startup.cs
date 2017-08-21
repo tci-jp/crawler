@@ -87,8 +87,8 @@ namespace CrawlerApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            app.UseSwagger("{apiVersion}/swagger.json");
-            app.UseSwaggerUi("ui", "/v1/swagger.json");
+            app.UseSwagger();
+            app.UseSwaggerUi();
         }
 
         /// <summary>

@@ -45,23 +45,36 @@ namespace CrawlerApi.Controllers
     /// </summary>
     public sealed class DefaultApiController : Controller
     {
+        private readonly ICrawlerStorage crawlerStorage;
+        private readonly IDataStorage storage;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultApiController" /> class.
+        /// </summary>
+        /// <param name="storage">Azure storage helper class.</param>
+        /// <param name="crawlerStorage">Crawler storage.</param>
+        public DefaultApiController(IDataStorage storage, ICrawlerStorage crawlerStorage)
+        {
+            this.storage = storage;
+            this.crawlerStorage = crawlerStorage;
+        }
+
         /// <summary>adds or replaces metadata parsing parameters</summary>
         /// <param name="parserParameters">Parameters.</param>
-        /// <param name="storage">Azure storage.</param>
         /// <response code="200">parser added</response>
         /// <response code="400">invalid parameters</response>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         [HttpPost]
         [Route("/CrawlerApi/1.0.0/parser")]
         [SwaggerOperation("AddParser")]
-        public async Task AddParser([FromBody] ParserParameters parserParameters, IDataStorage storage)
+        [SwaggerResponse(200)]
+        public async Task AddParser([FromBody] ParserParameters parserParameters)
         {
             await storage.InsertOrReplaceAsync(parserParameters);
         }
 
         /// <summary>get list of crawling sessions information by list of ids</summary>
         /// <param name="param">sessions request</param>
-        /// <param name="storage">Azure storage.</param>
         /// <response code="200">list of selected sessions information</response>
         /// <response code="400">wrong parameters</response>
         /// <returns>Pagination with collection of sessions info.</returns>
@@ -69,16 +82,16 @@ namespace CrawlerApi.Controllers
         [Route("/CrawlerApi/1.0.0/incite")]
         [SwaggerOperation("GetIncites")]
         [SwaggerResponse(200, type: typeof(Paged<Session>))]
-        public async Task<IActionResult> GetIncites([FromBody] SessionsRequestParameters param, ICrawlerStorage storage)
+        public async Task<IActionResult> GetIncites([FromBody] SessionsRequestParameters param)
         {
-            var page = await storage.GetSessions(
+            var page = await crawlerStorage.GetSessions(
                            param.OwnerId,
                            param.SessionIds,
                            param.Page.PageSize ?? 10,
                            param.Page.RequestId);
             var sessionsTasks = page.Select(async sess =>
             {
-                var urls = await storage.GetSessionUris(sess.Id).ToListAsync();
+                var urls = await crawlerStorage.GetSessionUris(sess.Id).ToListAsync();
                 var sessionUris = urls.Select(u => new SessionUri(u.Uri, HttpStateToSessionState(u.State)));
                 return new Session(sess.Id, sessionUris.ToList());
             });
@@ -92,24 +105,22 @@ namespace CrawlerApi.Controllers
 
         /// <summary>download crawled page</summary>
         /// <param name="param">Parameters</param>
-        /// <param name="storage">Azure storage.</param>
         /// <response code="200">responce with page content</response>
         /// <response code="400">invalid input</response>
         /// <returns>Page content.</returns>
         [HttpGet]
         [Route("/CrawlerApi/1.0.0/page")]
         [SwaggerOperation("GetPage")]
-        [SwaggerResponse(200, type: typeof(Stream))]
-        public async Task<IActionResult> GetPage([FromBody] GetPageParameters param, ICrawlerStorage storage)
+        [SwaggerResponse(200, type: typeof(byte[]))]
+        public async Task<IActionResult> GetPage([FromBody] GetPageParameters param)
         {
             var stream = new MemoryStream(); // TODO remove it rewriting to Response.
-            await storage.GetUriContet(param.OwnerId, param.Uri, stream);
+            await crawlerStorage.GetUriContet(param.OwnerId, param.Uri, stream);
             return new FileStreamResult(stream, MediaTypeNames.Application.Octet);
         }
 
         /// <summary>get metadata parsing parameters set</summary>
         /// <param name="param">Parameters</param>
-        /// <param name="storage">Azure storage.</param>
         /// <response code="200">parsers collection</response>
         /// <response code="400">invalid parameters</response>
         /// <returns>Collection of parsers settings.</returns>
@@ -117,7 +128,7 @@ namespace CrawlerApi.Controllers
         [Route("/CrawlerApi/1.0.0/parser")]
         [SwaggerOperation("GetParsers")]
         [SwaggerResponse(200, type: typeof(IList<ParserParameters>))]
-        public async Task<IActionResult> GetParsers([FromBody] ParsersRequestParameters param, IDataStorage storage)
+        public async Task<IActionResult> GetParsers([FromBody] ParsersRequestParameters param)
         {
             var result = new List<ParserParameters>();
 

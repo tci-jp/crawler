@@ -4,7 +4,6 @@
 
 namespace CrawlerLib.Azure
 {
-    using System;
     using global::Azure.Storage;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage.Table;

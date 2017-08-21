@@ -87,8 +87,8 @@ namespace CrawlerApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            app.UseSwagger();
-            app.UseSwaggerUi();
+            app.UseSwagger("{apiVersion}/swagger.json");
+            app.UseSwaggerUi("ui", "/v1/swagger.json");
         }
 
         /// <summary>
@@ -105,25 +105,6 @@ namespace CrawlerApi
                             opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
                         });
 
-            services.AddSwaggerGen();
-            services.ConfigureSwaggerGen(options =>
-            {
-                options.SingleApiVersion(new Info
-                                         {
-                                             Version = "v1",
-                                             Title = "IO.Swagger",
-                                             Description = "IO.Swagger (ASP.NET Core 1.0)"
-                                         });
-
-                options.DescribeAllEnumsAsStrings();
-
-                var comments =
-                    new XPathDocument(
-                        $"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{hostingEnv.ApplicationName}.xml");
-                options.OperationFilter<XmlCommentsOperationFilter>(comments);
-                options.ModelFilter<XmlCommentsModelFilter>(comments);
-            });
-
             var storage = new DataStorage(Configuration["CrawlerStorageConnectionString"]);
             services.AddSingleton<IDataStorage>(storage);
             services.AddSingleton<IBlobSearcher>(
@@ -134,6 +115,25 @@ namespace CrawlerApi
                     Configuration["TextSearchIndexName"],
                     Configuration["MetaSearchIndexName"]));
             services.AddSingleton<ICrawlerStorage, AzureCrawlerStorage>();
+
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(options =>
+            {
+                options.SingleApiVersion(new Info
+                {
+                    Version = "v1",
+                    Title = "CrawlerApi",
+                    Description = "CrawlerApi (ASP.NET Core 2.0)"
+                });
+
+                options.DescribeAllEnumsAsStrings();
+
+                var comments =
+                    new XPathDocument(
+                        $"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{hostingEnv.ApplicationName}.xml");
+                options.OperationFilter<XmlCommentsOperationFilter>(comments);
+                options.ModelFilter<XmlCommentsModelFilter>(comments);
+            });
         }
     }
 }

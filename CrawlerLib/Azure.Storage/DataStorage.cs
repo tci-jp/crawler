@@ -11,7 +11,6 @@ namespace Azure.Storage
     using System.Linq.Expressions;
     using System.Net;
     using System.Reflection;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using JetBrains.Annotations;

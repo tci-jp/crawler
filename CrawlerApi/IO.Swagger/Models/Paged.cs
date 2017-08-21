@@ -4,15 +4,16 @@
 
 namespace CrawlerApi.Models
 {
-    using System.Collections;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
+    using JetBrains.Annotations;
 
     /// <summary>
     /// Pagination container.
     /// </summary>
     /// <typeparam name="TItem">Page items type.</typeparam>
-    public class Paged<TItem> : IEnumerable<TItem>
+    [DataContract]
+    public class Paged<TItem>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Paged{TItem}" /> class.
@@ -36,24 +37,14 @@ namespace CrawlerApi.Models
         /// Gets or sets page items.
         /// </summary>
         [DataMember(Name = "items")]
+        [UsedImplicitly]
         public IList<TItem> Items { get; set; }
 
         /// <summary>
         /// Gets or sets pagination continuation token.
         /// </summary>
         [DataMember(Name = "requestId")]
+        [UsedImplicitly]
         public string RequestId { get; set; }
-
-        /// <inheritdoc />
-        public IEnumerator<TItem> GetEnumerator()
-        {
-            return Items.GetEnumerator();
-        }
-
-        /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)Items).GetEnumerator();
-        }
     }
 }

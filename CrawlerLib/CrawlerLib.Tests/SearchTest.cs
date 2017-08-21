@@ -10,7 +10,6 @@ namespace CrawlerLib.Tests
     using Azure;
     using global::Azure.Storage;
     using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.Configuration.Json;
     using Xunit;
     using Xunit.Abstractions;
 

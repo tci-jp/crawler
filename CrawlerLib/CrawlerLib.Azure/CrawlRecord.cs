@@ -30,7 +30,7 @@ namespace CrawlerLib.Azure
         public string Uri => Codec.DecodeString(RowKey);
 
         /// <summary>
-        /// Gets or sets page dumping HTTP status.
+        /// Gets or sets page dumping HTTP status message.
         /// </summary>
         public string Status { get; set; }
 

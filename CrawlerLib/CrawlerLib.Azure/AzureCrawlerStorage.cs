@@ -50,7 +50,6 @@ namespace CrawlerLib.Azure
         public async Task AddPageReferer(string sessionId, string uri, string referer)
         {
             await storage.InsertOrReplaceAsync(new UriReferer(sessionId, uri, referer));
-            await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
         }
 
         /// <inheritdoc />
@@ -85,10 +84,11 @@ namespace CrawlerLib.Azure
                 new OperationContext(),
                 cancellation);
 
-            await storage.QueryAsync<MetadataString>(m => (m.PartitionKey == ownerId) && (m.BlobName == record.BlobName))
-                         .ForEachAsync(
-                             async meta => { await storage.DeleteAsync(meta).ConfigureAwait(false); },
-                             cancellation);
+            await storage
+                .QueryAsync<MetadataString>(m => (m.PartitionKey == ownerId) && (m.BlobName == record.BlobName))
+                .ForEachAsync(
+                    async meta => { await storage.DeleteAsync(meta).ConfigureAwait(false); },
+                    cancellation);
 
             if (metadata != null)
             {
@@ -102,7 +102,8 @@ namespace CrawlerLib.Azure
                     }
 
                     var pairkey = EscapeMetadataName(pair.Key);
-                    await storage.InsertAsync(new MetadataString(ownerId, record.BlobName, Codec.EncodeString(pair.Key), pair.Value));
+                    await storage.InsertAsync(
+                        new MetadataString(ownerId, record.BlobName, Codec.EncodeString(pair.Key), pair.Value));
                     var metaname = pairkey;
                     for (var index = 1; blobMeta.ContainsKey(metaname); index++)
                     {
@@ -168,7 +169,7 @@ namespace CrawlerLib.Azure
         /// <inheritdoc />
         public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
         {
-            return storage.QueryAsync<SessionUri>().Cast<IUriState>();
+            return storage.QueryAsync<SessionUri>(s => s.SessionId == sessionId).Cast<IUriState>();
         }
 
         /// <inheritdoc />
@@ -183,6 +184,12 @@ namespace CrawlerLib.Azure
                 new BlobRequestOptions(),
                 new OperationContext(),
                 cancellation);
+        }
+
+        /// <inheritdoc />
+        public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
+        {
+            await storage.InsertAsync(new SessionUri(sessionId, uri, statusCode));
         }
 
         /// <inheritdoc />
@@ -228,6 +235,12 @@ namespace CrawlerLib.Azure
             });
 
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, (int)code));
+        }
+
+        /// <inheritdoc />
+        public async Task EnqueSessionUri(string sessionId, string uri)
+        {
+            await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
         }
 
         private static string EscapeMetadataName(string key)

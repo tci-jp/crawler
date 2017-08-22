@@ -136,6 +136,23 @@ namespace CrawlerLib.Data
         Task StorePageError(string ownerId, string sessionId, string uri, HttpStatusCode code);
 
         /// <summary>
+        /// Puts uri to sesion queue for crawling
+        /// </summary>
+        /// <param name="sessionId">Crawling session id.</param>
+        /// <param name="uri">Page URI.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task EnqueSessionUri(string sessionId, string uri);
+
+        /// <summary>
+        /// Updates uri crawling state
+        /// </summary>
+        /// <param name="sessionId">Crawling session id.</param>
+        /// <param name="uri">Page URI.</param>
+        /// <param name="statusCode">Crawling Http status code.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task UpdateSessionUri(string sessionId, string uri, int statusCode);
+
+        /// <summary>
         /// Gets metadata parsed from URI
         /// </summary>
         /// <param name="ownerId">Blob owner id.</param>

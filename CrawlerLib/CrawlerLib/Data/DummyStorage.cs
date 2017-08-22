@@ -38,11 +38,11 @@ namespace CrawlerLib.Data
         public Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
         {
             var sess = new SessionInfo
-                       {
-                           Id = Guid.NewGuid().ToString(),
-                           RootUris = new List<string>(rootUris),
-                           Timestamp = DateTime.UtcNow
-                       };
+            {
+                Id = Guid.NewGuid().ToString(),
+                RootUris = new List<string>(rootUris),
+                Timestamp = DateTime.UtcNow
+            };
 
             sessions.TryAdd(sess.Id, sess);
             return Task.FromResult(sess.Id);
@@ -90,10 +90,10 @@ namespace CrawlerLib.Data
         public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
         {
             return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState
-                                                                            {
-                                                                                Uri = k,
-                                                                                State = 200
-                                                                            })
+            {
+                Uri = k,
+                State = 200
+            })
                                       .ToAsyncEnumerable();
         }
 
@@ -101,6 +101,12 @@ namespace CrawlerLib.Data
         public async Task GetUriContet(string ownerId, string uri, Stream destination, CancellationToken cancellation)
         {
             await destination.WriteAsync(dumpedPages[uri], 0, dumpedPages[uri].Length, cancellation);
+        }
+
+        /// <inheritdoc />
+        public Task UpdateSessionUri(string sessionId, string uri, int statusCode)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -142,6 +148,12 @@ namespace CrawlerLib.Data
         public Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task EnqueSessionUri(string sessionId, string uri)
+        {
+            throw new NotImplementedException();
         }
 
         private class SessionInfo : ISessionInfo

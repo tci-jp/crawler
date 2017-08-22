@@ -52,13 +52,13 @@ namespace CrawlerLib
         /// Gets or sets how deep crawler show fallow links from the initial URIs.
         /// 0 means it will crawl only initial URIs.
         /// </summary>
-        public int Depth { get; set; } = 3;
+        public int Depth { get; set; } = 0;
 
         /// <summary>
         /// Gets or sets how deep crawler show fallow links different hosts from the initial URIs.
         /// 0 means it will crawl only hosts in initial URIs.
         /// </summary>
-        public int HostDepth { get; set; } = 2;
+        public int HostDepth { get; set; } = 0;
 
         /// <summary>
         /// Gets or sets delay between crawling the same host. Other hosts can be crawled without delay.

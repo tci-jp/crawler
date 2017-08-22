@@ -209,6 +209,8 @@ namespace CrawlerLib
                 return;
             }
 
+            await config.Storage.EnqueSessionUri(sessionid, uri.ToString());
+
             Interlocked.Increment(ref countdown);
             var runner = taskRunners.GetOrAdd(
                 newstate.Host,

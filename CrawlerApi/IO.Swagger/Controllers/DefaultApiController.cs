@@ -39,6 +39,7 @@ namespace CrawlerApi.Controllers
     using Microsoft.AspNetCore.Mvc;
     using Models;
     using Swashbuckle.SwaggerGen.Annotations;
+    using SessionState = Models.SessionState;
 
     /// <summary>
     /// Main API controller
@@ -93,7 +94,7 @@ namespace CrawlerApi.Controllers
             {
                 var urls = await crawlerStorage.GetSessionUris(sess.Id).ToListAsync();
                 var sessionUris = urls.Select(u => new SessionUri(u.Uri, HttpStateToSessionState(u.State)));
-                return new Session(sess.Id, sessionUris.ToList());
+                return new Session(sess.Id, sessionUris.ToList(), ToSessionState(sess.State));
             });
 
             var sessions = await Task.WhenAll(sessionsTasks);
@@ -177,6 +178,23 @@ namespace CrawlerApi.Controllers
                     return SessionState.Done;
                 default:
                     return SessionState.Error;
+            }
+        }
+
+        private SessionState ToSessionState(CrawlerLib.Data.SessionState sessState)
+        {
+            switch (sessState)
+            {
+                case CrawlerLib.Data.SessionState.NotStarted:
+                    return SessionState.NotStarted;
+                case CrawlerLib.Data.SessionState.InProcess:
+                    return SessionState.InProcess;
+                case CrawlerLib.Data.SessionState.Done:
+                    return SessionState.Done;
+                case CrawlerLib.Data.SessionState.Error:
+                    return SessionState.Error;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(sessState), sessState, null);
             }
         }
     }

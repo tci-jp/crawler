@@ -35,6 +35,15 @@ namespace CrawlerLib.Data
         Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris);
 
         /// <summary>
+        /// Create new crawling session.
+        /// </summary>
+        /// <param name="ownerId">Id of session owner.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <param name="state">Session state.</param>
+        /// <returns>New session Id.</returns>
+        Task UpdateSessionState(string ownerId, string sessionId, SessionState state);
+
+        /// <summary>
         /// Stores page content.
         /// </summary>
         /// <param name="ownerId">Page owner id.</param>

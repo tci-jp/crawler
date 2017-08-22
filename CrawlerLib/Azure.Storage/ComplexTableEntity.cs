@@ -45,7 +45,8 @@ namespace Azure.Storage
             foreach (var prop in GetType()
                 .GetRuntimeProperties().Where(p => p.CanWrite))
             {
-                if (properties.TryGetValue(prop.Name, out var entity))
+                if (properties.TryGetValue(prop.Name, out var entity) &&
+                    (prop.GetCustomAttribute<IgnorePropertyAttribute>() == null))
                 {
                     switch (entity.PropertyType)
                     {
@@ -53,7 +54,12 @@ namespace Azure.Storage
                             prop.SetValue(this, entity.BinaryValue);
                             break;
                         case EdmType.String:
-                            prop.SetValue(this, entity.StringValue);
+                            var value = prop.PropertyType.IsEquivalentTo(typeof(string))
+                                            ? entity.StringValue
+                                            : JsonConvert.DeserializeObject(
+                                                entity.StringValue,
+                                                prop.PropertyType);
+                            prop.SetValue(this, value);
                             break;
                         case EdmType.Boolean:
                             prop.SetValue(this, entity.BooleanValue);
@@ -90,6 +96,11 @@ namespace Azure.Storage
             {
                 var name = prop.Name;
                 var val = prop.GetValue(this);
+                if (prop.GetCustomAttribute<IgnorePropertyAttribute>() != null)
+                {
+                    continue;
+                }
+
                 switch (val)
                 {
                     case string str:

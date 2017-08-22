@@ -55,9 +55,25 @@ namespace CrawlerLib.Azure
         /// <inheritdoc />
         public async Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
         {
-            var session = new SessionInfo(ownerId, rootUris);
+            var session = new SessionInfo(ownerId, rootUris)
+            {
+                State = SessionState.InProcess
+            };
             await storage.InsertOrReplaceAsync(session);
             return session.Id;
+        }
+
+        /// <inheritdoc />
+        public async Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
+        {
+            var session = await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
+            if (session == null)
+            {
+                throw new InvalidOperationException("Session does not exist: " + sessionId);
+            }
+
+            session.State = state;
+            await storage.InsertOrReplaceAsync(session);
         }
 
         /// <inheritdoc />

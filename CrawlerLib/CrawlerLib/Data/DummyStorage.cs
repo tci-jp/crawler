@@ -49,6 +49,12 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
+        public Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public async Task DumpUriContent(
             string ownerId,
             string sessionId,
@@ -166,6 +172,8 @@ namespace CrawlerLib.Data
                 new ConcurrentDictionary<string, ConcurrentBag<string>>();
 
             public IList<string> RootUris { get; set; } = new List<string>();
+
+            public SessionState State { get; set; }
 
             public DateTime Timestamp { get; set; }
         }

@@ -138,12 +138,21 @@ namespace CrawlerLib
             sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
             var task = Task.Run(async () =>
             {
-                foreach (var uri in urisList)
+                try
                 {
-                    await AddUrl(ownerId, null, uri, 0, 0);
-                }
+                    foreach (var uri in urisList)
+                    {
+                        await AddUrl(ownerId, null, uri, 0, 0);
+                    }
 
-                await WaitForTheEnd();
+                    await WaitForTheEnd();
+                    await storage.UpdateSessionState(ownerId, sessionid, SessionState.Done);
+                }
+                catch (Exception)
+                {
+                    await storage.UpdateSessionState(ownerId, sessionid, SessionState.Error);
+                    throw;
+                }
             });
             return new CrawlerSession(sessionid, task);
         }

@@ -28,7 +28,6 @@ namespace CrawlerApi.Models
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
     using Newtonsoft.Json;
@@ -44,10 +43,12 @@ namespace CrawlerApi.Models
         /// </summary>
         /// <param name="id">session id.</param>
         /// <param name="uris">array of URIs used to start crawling and states of crawling.</param>
-        public Session(string id = null, List<SessionUri> uris = null)
+        /// <param name="state">Session state.</param>
+        public Session(string id = null, List<SessionUri> uris = null, SessionState state = default(SessionState))
         {
             Id = id;
             Uris = uris;
+            State = state;
         }
 
         /// <summary>
@@ -55,6 +56,12 @@ namespace CrawlerApi.Models
         /// </summary>
         [DataMember(Name = "id")]
         public string Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets session id
+        /// </summary>
+        [DataMember(Name = "state")]
+        public SessionState State { get; set; }
 
         /// <summary>
         /// Gets or sets array of URIs used to start crawling and states of crawling
@@ -120,15 +127,7 @@ namespace CrawlerApi.Models
                 return true;
             }
 
-            return
-                (
-                    (Id == other.Id) ||
-                    ((Id != null) &&
-                     Id.Equals(other.Id))) &&
-                (
-                    (Uris == other.Uris) ||
-                    ((Uris != null) &&
-                     Uris.SequenceEqual(other.Uris)));
+            return string.Equals(Id, other.Id) && (State == other.State) && Equals(Uris, other.Uris);
         }
 
         /// <summary>
@@ -137,23 +136,12 @@ namespace CrawlerApi.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            // credit: http://stackoverflow.com/a/263416/677735
             unchecked
             {
-                var hash = 41;
-
-                // Suitable nullity checks etc, of course :)
-                if (Id != null)
-                {
-                    hash = (hash * 59) + Id.GetHashCode();
-                }
-
-                if (Uris != null)
-                {
-                    hash = (hash * 59) + Uris.GetHashCode();
-                }
-
-                return hash;
+                var hashCode = Id != null ? Id.GetHashCode() : 0;
+                hashCode = (hashCode * 397) ^ (int)State;
+                hashCode = (hashCode * 397) ^ (Uris != null ? Uris.GetHashCode() : 0);
+                return hashCode;
             }
         }
 

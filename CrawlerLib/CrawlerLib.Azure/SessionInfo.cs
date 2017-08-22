@@ -9,15 +9,26 @@ namespace CrawlerLib.Azure
     using System.Linq;
     using Data;
     using global::Azure.Storage;
+    using Microsoft.WindowsAzure.Storage.Table;
 
-    /// <inheritdoc cref="ComplexTableEntity"/>
+    /// <inheritdoc cref="ComplexTableEntity" />
     [Table("sessions")]
     public class SessionInfo : ComplexTableEntity, ISessionInfo
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SessionInfo"/> class.
+        /// Initializes a new instance of the <see cref="SessionInfo" /> class.
         /// </summary>
         public SessionInfo()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionInfo" /> class.
+        /// </summary>
+        /// <param name="ownerId">Owner Id.</param>
+        /// <param name="sessionId">Session Id.</param>
+        public SessionInfo(string ownerId, string sessionId)
+            : base(ownerId, sessionId)
         {
         }
 
@@ -33,7 +44,7 @@ namespace CrawlerLib.Azure
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SessionInfo"/> class.
+        /// Initializes a new instance of the <see cref="SessionInfo" /> class.
         /// </summary>
         /// <param name="ownerId">Session owner id.</param>
         /// <param name="id">Session id.</param>
@@ -46,16 +57,29 @@ namespace CrawlerLib.Azure
 
         /// <inheritdoc />
         [PartitionKey]
-        public string OwnerId => PartitionKey;
-
-        /// <inheritdoc />
-        [PartitionKey]
         public string Id => RowKey;
 
         /// <inheritdoc />
-        public new DateTime Timestamp => base.Timestamp.UtcDateTime;
+        [PartitionKey]
+        public string OwnerId => PartitionKey;
 
         /// <inheritdoc />
         public IList<string> RootUris { get; set; }
+
+        /// <inheritdoc />
+        [IgnoreProperty]
+        public SessionState State { get; set; }
+
+        /// <summary>
+        /// Gets or sets string representation for State
+        /// </summary>
+        public string StateString
+        {
+            get => State.ToString();
+            set => State = (SessionState)Enum.Parse(typeof(SessionState), value);
+        }
+
+        /// <inheritdoc />
+        public new DateTime Timestamp => base.Timestamp.UtcDateTime;
     }
 }

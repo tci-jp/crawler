@@ -35,5 +35,11 @@ namespace CrawlerLib.Data
         /// </summary>
         [UsedImplicitly]
         IList<string> RootUris { get; }
+
+        /// <summary>
+        /// Gets state of the session.
+        /// </summary>
+        [UsedImplicitly]
+        SessionState State { get; }
     }
 }

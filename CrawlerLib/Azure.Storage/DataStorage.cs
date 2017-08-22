@@ -166,10 +166,7 @@ namespace Azure.Storage
             CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
-            var visitor = new PropertyReplacer<TEntity>();
-            var newfunc = visitor.VisitAndConvert(func);
-
-            var query = Query<TEntity>().Where(newfunc);
+            var query = Query<TEntity>().Where(func);
             return ExecuteQuery(query, token);
         }
 
@@ -190,10 +187,7 @@ namespace Azure.Storage
             CancellationToken cancellation = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
-            var visitor = new PropertyReplacer<TEntity>();
-            var newfunc = visitor.VisitAndConvert(func);
-
-            var query = Query<TEntity>().Where(newfunc);
+            var query = Query<TEntity>().Where(func);
             query.TakeCount = segmentSize;
 
             var table = GetTable<TEntity>();
@@ -333,12 +327,12 @@ namespace Azure.Storage
             var query = new TableQuery<TEntity>();
             if ((attr.PartitionKey != null) && (attr.RowKey == null) && (entity.RowKey != null))
             {
-                return query.Where(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == entity.RowKey));
+                return query.InnerWhere(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == entity.RowKey));
             }
 
             if ((attr.PartitionKey == null) && (attr.RowKey != null) && (entity.PartitionKey != null))
             {
-                return query.Where(i => (i.RowKey == attr.RowKey) && (i.PartitionKey == entity.PartitionKey));
+                return query.InnerWhere(i => (i.RowKey == attr.RowKey) && (i.PartitionKey == entity.PartitionKey));
             }
 
             return Query<TEntity>();
@@ -352,15 +346,15 @@ namespace Azure.Storage
             var query = new TableQuery<TEntity>();
             if ((attr.PartitionKey != null) && (attr.RowKey != null))
             {
-                query = query.Where(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == attr.RowKey));
+                query = query.InnerWhere(i => (i.PartitionKey == attr.PartitionKey) && (i.RowKey == attr.RowKey));
             }
             else if ((attr.PartitionKey != null) && (attr.RowKey == null))
             {
-                query = query.Where(i => i.PartitionKey == attr.PartitionKey);
+                query = query.InnerWhere(i => i.PartitionKey == attr.PartitionKey);
             }
             else if ((attr.PartitionKey == null) && (attr.RowKey != null))
             {
-                query = query.Where(i => i.RowKey == attr.RowKey);
+                query = query.InnerWhere(i => i.RowKey == attr.RowKey);
             }
 
             return query;

@@ -14,13 +14,30 @@ namespace Azure.Storage
     public static class TableQueryExtensions
     {
         /// <summary>
-        /// Add conditions for query
+        /// Add conditions for query. Convert properties marked as PartitionKey or RowKey as such key.
         /// </summary>
         /// <typeparam name="TEntity">Table entity.</typeparam>
         /// <param name="query">Query object.</param>
         /// <param name="expression">Condition expression.</param>
         /// <returns>Updated query.</returns>
         public static TableQuery<TEntity> Where<TEntity>(
+            this TableQuery<TEntity> query,
+            Expression<Func<TEntity, bool>> expression)
+            where TEntity : TableEntity, new()
+        {
+            var visitor = new PropertyReplacer<TEntity>();
+            var newfunc = visitor.VisitAndConvert(expression);
+            return query.InnerWhere(newfunc);
+        }
+
+        /// <summary>
+        /// Add conditions for query. Does not convert any properties.
+        /// </summary>
+        /// <typeparam name="TEntity">Table entity.</typeparam>
+        /// <param name="query">Query object.</param>
+        /// <param name="expression">Condition expression.</param>
+        /// <returns>Updated query.</returns>
+        internal static TableQuery<TEntity> InnerWhere<TEntity>(
             this TableQuery<TEntity> query,
             Expression<Func<TEntity, bool>> expression)
             where TEntity : TableEntity, new()

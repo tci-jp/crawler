@@ -127,6 +127,21 @@ namespace Azure.Storage
             where TEntity : TableEntity, new();
 
         /// <summary>
+        /// Query Azure Table by expression
+        /// </summary>
+        /// <param name="query">Query expression.</param>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <param name="token">Continuation token.</param>
+        /// <param name="cancellation">Cancellation</param>
+        /// <returns>Queryable with result.</returns>
+        Task<TableQuerySegment<TEntity>> QuerySegmentedAsync<TEntity>(
+            TableQuery<TEntity> query,
+            TableContinuationToken token = null,
+            CancellationToken cancellation =
+                default(CancellationToken))
+            where TEntity : TableEntity, new();
+
+        /// <summary>
         /// Replace only if entity already exists.
         /// </summary>
         /// <param name="entity">Entity to replace.</param>

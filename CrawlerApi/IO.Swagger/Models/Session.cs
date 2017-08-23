@@ -31,6 +31,7 @@ namespace CrawlerApi.Models
     using System.Runtime.Serialization;
     using System.Text;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
 
     /// <summary>
     /// information about crawling session.
@@ -61,6 +62,7 @@ namespace CrawlerApi.Models
         /// Gets or sets session id
         /// </summary>
         [DataMember(Name = "state")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public SessionState State { get; set; }
 
         /// <summary>

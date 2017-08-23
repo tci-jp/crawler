@@ -118,7 +118,7 @@ namespace Azure.Storage.Tests
         }
 
         [Fact]
-        public void TestGOrLFloatField()
+        public void TestGorLFloatField()
         {
             var testQuery = baseQuery.Where(e => (e.FloatField > 1 || e.FloatField < 2));
             Assert.Equal("(FloatField gt 1.0) or (FloatField lt 2.0)", testQuery.FilterString);
@@ -205,7 +205,7 @@ namespace Azure.Storage.Tests
         }
 
         [Fact]
-        public void TestGOrLIntField()
+        public void TestGorLIntField()
         {
             var testQuery = baseQuery.Where(e => (e.IntField > 1 || e.IntField < 2));
             Assert.Equal("(IntField gt 1) or (IntField lt 2)", testQuery.FilterString);

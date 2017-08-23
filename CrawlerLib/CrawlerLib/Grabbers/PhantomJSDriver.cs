@@ -6,6 +6,8 @@ namespace CrawlerLib.Grabbers
 {
     using System;
     using System.Diagnostics;
+    using System.IO;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -26,8 +28,13 @@ namespace CrawlerLib.Grabbers
         /// <param name="scriptPath">Path to script.</param>
         public PhantomJsDriver(string exePath = null, string scriptPath = null)
         {
-            this.scriptPath = scriptPath ?? "Grabbers\\script.js";
-            this.exePath = exePath ?? "phantomjs.exe";
+            var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+            var exeuri = new UriBuilder(codeBase);
+            var path = Uri.UnescapeDataString(exeuri.Path);
+            var exeDir = Path.GetDirectoryName(path);
+
+            this.scriptPath = scriptPath ?? Path.Combine(exeDir, "Grabbers\\script.js");
+            this.exePath = exePath ?? Path.Combine(exeDir, "phantomjs.exe");
         }
 
         /// <inheritdoc />

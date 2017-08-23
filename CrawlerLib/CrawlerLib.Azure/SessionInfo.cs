@@ -56,7 +56,7 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        [PartitionKey]
+        [RowKey]
         public string Id => RowKey;
 
         /// <inheritdoc />

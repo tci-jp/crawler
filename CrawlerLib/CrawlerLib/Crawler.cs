@@ -53,9 +53,9 @@ namespace CrawlerLib
             config = new Configuration(conf);
 
             client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
+                     {
+                         Timeout = config.RequestTimeout
+                     };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -162,7 +162,8 @@ namespace CrawlerLib
             var nofollow = false;
             var noindex = false;
             foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
-                                     .Select(m => m.Attributes["content"].Value) ?? new string[0])
+                                     .Select(m => m.Attributes["content"].Value) ??
+                                 new string[0])
             {
                 if (meta.IndexOf("NOFOLLOW", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -204,13 +205,13 @@ namespace CrawlerLib
             }
 
             var newstate = new State
-            {
-                OwnerId = ownerId,
-                Uri = uri,
-                Depth = depth,
-                HostDepth = hostDepth,
-                Referrer = state?.Uri
-            };
+                           {
+                               OwnerId = ownerId,
+                               Uri = uri,
+                               Depth = depth,
+                               HostDepth = hostDepth,
+                               Referrer = state?.Uri
+                           };
 
             var robotstxt = await GetRobotsTxt(newstate.Host);
             if (robotstxt?.IsPathAllowed(uri.PathAndQuery) == false)
@@ -227,6 +228,11 @@ namespace CrawlerLib
             var task = new Task(async () => await InnerIncite(newstate));
             tasks.Add(task);
             runner.Enqueue(task);
+        }
+
+        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html)
+        {
+            return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
         }
 
         private Task<Robots> GetRobotsTxt(Uri host)
@@ -370,11 +376,6 @@ namespace CrawlerLib
             }
         }
 
-        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html)
-        {
-            return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
-        }
-
         private async Task ParseLinks(State state, HtmlDocument html)
         {
             foreach (var link in linkParser.ParseLinks(html))
@@ -395,9 +396,9 @@ namespace CrawlerLib
                                             UriComponents.SchemeAndServer,
                                             UriFormat.UriEscaped));
                             linkuri = new Uri(linkuri.GetComponents(
-                                                  UriComponents.SchemeAndServer
-                                                  | UriComponents.UserInfo
-                                                  | UriComponents.PathAndQuery,
+                                                  UriComponents.SchemeAndServer |
+                                                  UriComponents.UserInfo |
+                                                  UriComponents.PathAndQuery,
                                                   UriFormat.UriEscaped)); // remove fragment
 
                             await AddUrl(
@@ -412,9 +413,9 @@ namespace CrawlerLib
                     {
                         linkuri = new Uri(state.Host, linkuri);
                         linkuri = new Uri(linkuri.GetComponents(
-                                              UriComponents.SchemeAndServer
-                                              | UriComponents.UserInfo
-                                              | UriComponents.PathAndQuery,
+                                              UriComponents.SchemeAndServer |
+                                              UriComponents.UserInfo |
+                                              UriComponents.PathAndQuery,
                                               UriFormat.UriEscaped)); // remove fragment
 
                         await AddUrl(state.OwnerId, state, linkuri, state.Depth + 1, state.HostDepth);
@@ -435,6 +436,16 @@ namespace CrawlerLib
         {
             private Uri uri;
 
+            public int Depth { get; set; }
+
+            public Uri Host { get; private set; }
+
+            public int HostDepth { get; set; }
+
+            public string OwnerId { get; set; }
+
+            public Uri Referrer { get; set; }
+
             public Uri Uri
             {
                 get => uri;
@@ -444,16 +455,6 @@ namespace CrawlerLib
                     Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
                 }
             }
-
-            public Uri Host { get; private set; }
-
-            public int Depth { get; set; }
-
-            public int HostDepth { get; set; }
-
-            public Uri Referrer { get; set; }
-
-            public string OwnerId { get; set; }
         }
     }
 }

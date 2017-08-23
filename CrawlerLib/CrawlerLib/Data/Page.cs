@@ -4,7 +4,6 @@
 
 namespace CrawlerLib.Data
 {
-    using System.Collections;
     using System.Collections.Generic;
 
     /// <summary>
@@ -13,8 +12,6 @@ namespace CrawlerLib.Data
     /// <typeparam name="TItem">Type of items.</typeparam>
     public class Page<TItem> : IPage<TItem>
     {
-        private readonly IEnumerable<TItem> pageImplementation;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Page{TItem}" /> class.
         /// </summary>
@@ -22,23 +19,14 @@ namespace CrawlerLib.Data
         /// <param name="requestId">Paged request id.</param>
         public Page(IEnumerable<TItem> items, string requestId)
         {
-            pageImplementation = items;
+            Items = items;
             RequestId = requestId;
         }
 
         /// <inheritdoc />
+        public IEnumerable<TItem> Items { get; }
+
+        /// <inheritdoc />
         public string RequestId { get; }
-
-        /// <inheritdoc />
-        public IEnumerator<TItem> GetEnumerator()
-        {
-            return pageImplementation.GetEnumerator();
-        }
-
-        /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)pageImplementation).GetEnumerator();
-        }
     }
 }

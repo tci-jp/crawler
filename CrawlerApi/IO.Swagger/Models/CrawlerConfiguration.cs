@@ -44,9 +44,12 @@ namespace CrawlerApi.Models
         /// Initializes a new instance of the <see cref="CrawlerConfiguration" /> class.
         /// </summary>
         /// <param name="ownerId">id used to keep history of requests and blobs collection (required).</param>
+        /// <param name="parserId">Custom parser Id</param>
         /// <param name="uris">array of URIs to crawl (required).</param>
-        public CrawlerConfiguration(string ownerId = null, List<CrawlerConfigurationUris> uris = null)
+        public CrawlerConfiguration(string ownerId = null, string parserId = null, List<string> uris = null)
         {
+            ParserId = parserId;
+
             // to ensure "OwnerId" is required (not null)
             OwnerId =
                 ownerId ?? throw new InvalidDataException(
@@ -58,6 +61,12 @@ namespace CrawlerApi.Models
         }
 
         /// <summary>
+        /// Gets or Sets ParserId for parsing settings
+        /// </summary>
+        [DataMember(Name = "parserId")]
+        public string ParserId { get; }
+
+        /// <summary>
         /// Gets id used to keep history of requests and blobs collection
         /// </summary>
         [DataMember(Name = "ownerId")]
@@ -67,7 +76,7 @@ namespace CrawlerApi.Models
         /// Gets array of URIs to crawl
         /// </summary>
         [DataMember(Name = "uris")]
-        public List<CrawlerConfigurationUris> Uris { get; }
+        public List<string> Uris { get; }
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>

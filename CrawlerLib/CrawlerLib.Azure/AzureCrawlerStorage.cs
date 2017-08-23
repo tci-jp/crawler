@@ -10,8 +10,8 @@ namespace CrawlerLib.Azure
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Linq.Expressions;
     using System.Net;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -56,24 +56,11 @@ namespace CrawlerLib.Azure
         public async Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
         {
             var session = new SessionInfo(ownerId, rootUris)
-            {
-                State = SessionState.InProcess
-            };
+                          {
+                              State = SessionState.InProcess
+                          };
             await storage.InsertOrReplaceAsync(session);
             return session.Id;
-        }
-
-        /// <inheritdoc />
-        public async Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
-        {
-            var session = await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
-            if (session == null)
-            {
-                throw new InvalidOperationException("Session does not exist: " + sessionId);
-            }
-
-            session.State = state;
-            await storage.InsertOrReplaceAsync(session);
         }
 
         /// <inheritdoc />
@@ -88,9 +75,9 @@ namespace CrawlerLib.Azure
             var container = await storage.GetBlobContainerAsync("pages");
 
             var record = new CrawlRecord(ownerId, uri)
-            {
-                Status = HttpStatusCode.OK.ToString()
-            };
+                         {
+                             Status = HttpStatusCode.OK.ToString()
+                         };
 
             var blob = container.GetBlockBlobReference(record.BlobName);
             await blob.UploadFromStreamAsync(
@@ -140,6 +127,12 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
+        public async Task EnqueSessionUri(string sessionId, string uri)
+        {
+            await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
+        }
+
+        /// <inheritdoc />
         public IAsyncEnumerable<string> GetAvailableMetadata()
         {
             return storage.QueryAsync<MetadataItem>().Select(m => m.Name);
@@ -160,25 +153,30 @@ namespace CrawlerLib.Azure
             string requestId = null,
             CancellationToken cancellation = default(CancellationToken))
         {
-            Expression expression = (Expression<Func<SessionInfo, bool>>)(s => s.PartitionKey == ownerId);
-            foreach (var id in sessionIds)
+            var filter = new StringBuilder();
+            filter.Append("(").Append(TableQuery.GenerateFilterCondition("PartitionKey", "eq", ownerId)).Append(")");
+            if (sessionIds != null)
             {
-                Expression<Func<SessionInfo, bool>> orexpression = s => s.Id == id;
-                expression = Expression.OrElse(expression, orexpression);
+                var enumerable = sessionIds.Select(s => $"({TableQuery.GenerateFilterCondition("RowKey", "eq", s)})");
+                var infilter = string.Join(" or ", enumerable);
+                if (!string.IsNullOrWhiteSpace(infilter))
+                {
+                    filter.Append(" and (");
+                    filter.Append(infilter);
+                    filter.Append(")");
+                }
             }
 
-            var token = requestId == null
-                            ? null
-                            : JsonConvert.DeserializeObject<TableContinuationToken>(requestId);
-            var segment = await storage.QuerySegmentedAsync(
-                              (Expression<Func<SessionInfo, bool>>)expression,
-                              pageSize,
-                              token,
-                              cancellation);
+            var query = new TableQuery<SessionInfo>
+                        {
+                            FilterString = filter.ToString(),
+                            TakeCount = pageSize
+                        };
 
-            var newRequestId = segment?.ContinuationToken == null
-                                   ? null
-                                   : JsonConvert.SerializeObject(segment.ContinuationToken);
+            var token = requestId == null ? null : FromBase64<TableContinuationToken>(requestId);
+            var segment = await storage.QuerySegmentedAsync(query, token, cancellation);
+
+            var newRequestId = segment?.ContinuationToken == null ? null : ToBase64(segment.ContinuationToken);
             return new Page<ISessionInfo>(segment ?? Enumerable.Empty<ISessionInfo>(), newRequestId);
         }
 
@@ -203,12 +201,6 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
-        {
-            await storage.InsertAsync(new SessionUri(sessionId, uri, statusCode));
-        }
-
-        /// <inheritdoc />
         public IAsyncEnumerable<KeyValuePair<string, string>> GetUriMetadata(
             string ownerId,
             string uri,
@@ -227,11 +219,11 @@ namespace CrawlerLib.Azure
         {
             return searcher.SearchByMeta(
                 query.Select(c => new SearchCondition
-                {
-                    Name = EscapeMetadataName(c.Name),
-                    Op = c.Op,
-                    Value = c.Value
-                }),
+                                  {
+                                      Name = EscapeMetadataName(c.Name),
+                                      Op = c.Op,
+                                      Value = c.Value
+                                  }),
                 cancellation).Select(Codec.DecodeString);
         }
 
@@ -246,17 +238,30 @@ namespace CrawlerLib.Azure
         public async Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(ownerid, uri)
-            {
-                Status = code.ToString()
-            });
+                                               {
+                                                   Status = code.ToString()
+                                               });
 
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, (int)code));
         }
 
         /// <inheritdoc />
-        public async Task EnqueSessionUri(string sessionId, string uri)
+        public async Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
         {
-            await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
+            var session = await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
+            if (session == null)
+            {
+                throw new InvalidOperationException("Session does not exist: " + sessionId);
+            }
+
+            session.State = state;
+            await storage.InsertOrReplaceAsync(session);
+        }
+
+        /// <inheritdoc />
+        public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
+        {
+            await storage.InsertAsync(new SessionUri(sessionId, uri, statusCode));
         }
 
         private static string EscapeMetadataName(string key)
@@ -264,6 +269,16 @@ namespace CrawlerLib.Azure
             const string http = "http://";
             var result = key.StartsWith(http) ? key.Substring(http.Length) : key;
             return WrongCharRegex.Replace(result, "_").Trim('_'); // O_o
+        }
+
+        private static TEntity FromBase64<TEntity>(string str)
+        {
+            return JsonConvert.DeserializeObject<TEntity>(Encoding.UTF8.GetString(Convert.FromBase64String(str)));
+        }
+
+        private static string ToBase64(object obj)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj)));
         }
     }
 }

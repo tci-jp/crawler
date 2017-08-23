@@ -30,6 +30,7 @@ namespace CrawlerApi.Models
     using System.Runtime.Serialization;
     using System.Text;
     using JetBrains.Annotations;
+    using Microsoft.AspNetCore.Mvc;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -39,6 +40,13 @@ namespace CrawlerApi.Models
     [UsedImplicitly]
     public class Pagination : IEquatable<Pagination>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Pagination"/> class.
+        /// </summary>
+        public Pagination()
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Pagination" /> class.
         /// </summary>
@@ -53,13 +61,13 @@ namespace CrawlerApi.Models
         /// <summary>
         /// Gets number of items to return in one request. if missing returns 10 items.
         /// </summary>
-        [DataMember(Name = "pageSize")]
+        [FromQuery(Name = "pagesize")]
         public int? PageSize { get; }
 
         /// <summary>
         /// Gets id of paged request to keep paging between requests. if missing starts new request.
         /// </summary>
-        [DataMember(Name = "requestId")]
+        [FromQuery(Name = "requestId")]
         public string RequestId { get; }
 
         /// <summary>Compare objects equality</summary>

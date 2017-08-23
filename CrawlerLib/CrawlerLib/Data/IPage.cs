@@ -10,8 +10,13 @@ namespace CrawlerLib.Data
     /// Page of items
     /// </summary>
     /// <typeparam name="TItem">Type of items.</typeparam>
-    public interface IPage<out TItem> : IEnumerable<TItem>
+    public interface IPage<out TItem>
     {
+        /// <summary>
+        /// Gets page items
+        /// </summary>
+        IEnumerable<TItem> Items { get; }
+
         /// <summary>
         /// Gets paged request id for other pages
         /// </summary>

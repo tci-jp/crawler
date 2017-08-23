@@ -40,6 +40,13 @@ namespace CrawlerApi.Models
     public class ParsersRequestParameters : IEquatable<ParsersRequestParameters>
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="ParsersRequestParameters"/> class.
+        /// </summary>
+        public ParsersRequestParameters()
+        {
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ParsersRequestParameters" /> class.
         /// </summary>
         /// <param name="ownerId">owner id.</param>

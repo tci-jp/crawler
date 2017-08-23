@@ -10,6 +10,7 @@ namespace CrawlerLib.Tests
     using System.Linq;
     using System.Threading.Tasks;
     using Azure;
+    using Data;
     using FluentAssertions;
     using global::Azure.Storage;
     using Grabbers;
@@ -19,6 +20,7 @@ namespace CrawlerLib.Tests
 
     public class TestCrawler
     {
+        private const string Owner = "unittest";
         private readonly Configuration crawlerConfig = new Configuration();
         private readonly ITestOutputHelper output;
 
@@ -45,7 +47,7 @@ namespace CrawlerLib.Tests
             crawlerConfig.Storage = new AzureCrawlerStorage(storage, searcher);
         }
 
-        private Crawler Crawler => crawler ?? NewCrawler();
+        private Crawler Crawler => crawler ?? (crawler = new Crawler(crawlerConfig));
 
         [Theory]
         [InlineData(0, 0, "http://www.dectech.tokyo", new[]
@@ -69,7 +71,7 @@ namespace CrawlerLib.Tests
             crawlerConfig.HostDepth = hostDepth;
             crawlerConfig.Depth = depth;
 
-            var session = await Crawler.InciteStart("unittest", new[] { new Uri(url) });
+            var session = await Crawler.InciteStart(Owner, new[] { new Uri(url) });
 
             await session.CrawlerTask;
 
@@ -84,24 +86,28 @@ namespace CrawlerLib.Tests
             crawlerConfig.HostDepth = 0;
             crawlerConfig.Depth = 0;
 
-            var session = await Crawler.InciteStart("unittest", new[] { new Uri(url) });
+            var session = await Crawler.InciteStart(Owner, new[] { new Uri(url) });
+
+            var sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session.SessionId });
+            sesspage.Items.Count().Should().Be(1);
+            var sessinfo = sesspage.Items.Single();
+            sessinfo.State.Should().Be(SessionState.InProcess);
 
             await session.CrawlerTask;
+
+            sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session.SessionId });
+            sesspage.Items.Count().Should().Be(1);
+            sessinfo = sesspage.Items.Single();
+            sessinfo.State.Should().Be(SessionState.Done);
 
             var urls = await crawlerConfig.Storage.GetSessionUris(session.SessionId).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(url);
 
             var stream = new MemoryStream();
-            await crawlerConfig.Storage.GetUriContet("unittest", url, stream);
+            await crawlerConfig.Storage.GetUriContet(Owner, url, stream);
             stream.Position = 0;
             var str = new StreamReader(stream).ReadToEnd();
             str.Should().Contain("<body").And.Contain("</body>");
-        }
-
-        private Crawler NewCrawler()
-        {
-            crawler = new Crawler(crawlerConfig);
-            return crawler;
         }
     }
 }

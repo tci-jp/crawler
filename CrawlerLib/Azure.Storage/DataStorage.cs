@@ -205,6 +205,27 @@ namespace Azure.Storage
 
         /// <inheritdoc />
         [UsedImplicitly]
+        public async Task<TableQuerySegment<TEntity>> QuerySegmentedAsync<TEntity>(
+            TableQuery<TEntity> query,
+            TableContinuationToken token = null,
+            CancellationToken cancellation = default(CancellationToken))
+            where TEntity : TableEntity, new()
+        {
+            var table = GetTable<TEntity>();
+            var requestOption = new TableRequestOptions();
+            var context = new OperationContext();
+
+            return await table.ExecuteQuerySegmentedAsync(
+                                  query,
+                                  token,
+                                  requestOption,
+                                  context,
+                                  cancellation)
+                              .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        [UsedImplicitly]
         public async Task ReplaceAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
         {

@@ -157,6 +157,32 @@ namespace CrawlerApi.Controllers
             return new FileStreamResult(stream, MediaTypeNames.Application.Octet);
         }
 
+        /// <summary>retrieves crawled page metadata</summary>
+        /// <param name="ownerId">Blob onwer id.</param>
+        /// <param name="uri">Page URI.</param>
+        /// <response code="200">responce with page metadata</response>
+        /// <response code="400">invalid input</response>
+        /// <returns>Page content.</returns>
+        [HttpGet]
+        [Route("/CrawlerApi/1.0.0/metadata")]
+        [SwaggerOperation("GetMetadata")]
+        [SwaggerResponse(200, type: typeof(IList<KeyValuePair<string, string>>))]
+        public async Task<IActionResult> GetMetadata([FromQuery] string ownerId = null, [FromQuery] string uri = null)
+        {
+            if (ownerId == null)
+            {
+                throw new ArgumentNullException(nameof(ownerId));
+            }
+
+            if (uri == null)
+            {
+                throw new ArgumentNullException(nameof(uri));
+            }
+
+            var meta = await crawlerStorage.GetUriMetadata(ownerId, uri).ToListAsync();
+            return new ObjectResult(meta);
+        }
+
         /// <summary>get metadata parsing parameters set</summary>
         /// <param name="ownerId">Parsers owner Id.</param>
         /// <param name="parserIds">Custom parsers Ids.</param>
@@ -199,16 +225,16 @@ namespace CrawlerApi.Controllers
         public async Task<IActionResult> Incite([FromBody] CrawlerConfiguration configuration)
         {
             var config = new Configuration
-                         {
-                             Storage = crawlerStorage,
-                             Depth = 0,
-                             HostDepth = 0,
-                             MetadataExtractors = new IMetadataExtractor[]
+            {
+                Storage = crawlerStorage,
+                Depth = 0,
+                HostDepth = 0,
+                MetadataExtractors = new IMetadataExtractor[]
                                                   {
                                                       new RdfaMetadataExtractor(),
                                                       new MicrodataMetadataExtractor()
                                                   }
-                         };
+            };
 
             config.HttpGrabber = new WebDriverHttpGrabber(config);
 

@@ -13,6 +13,12 @@
     <ApplicationInsightsAnnotationResourceId>/subscriptions/19b6e578-3b47-4e96-ba3e-315872e5a607/resourcegroups/grp_zakhar_amirov/providers/microsoft.insights/components/CrawlerApi</ApplicationInsightsAnnotationResourceId>
     <Company>DECTech.Tokyo</Company>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1705;NU1701</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;1705;NU1701</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="wwwroot\**\*;node_modules;bower_components" />

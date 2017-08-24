@@ -9,18 +9,18 @@ namespace CrawlerLib
     /// </summary>
     public class Robots
     {
-        private string userAgent;
-        private object robotstxt;
+        private readonly string userAgent;
+        private readonly RobotsTxt.Robots robotstxt;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Robots"/> class.
         /// </summary>
         /// <param name="userAgent">User agent used for grabbing.</param>
         /// <param name="robotstxt">Content of rebotstxt.</param>
-        public Robots(string userAgent, object robotstxt)
+        public Robots(string userAgent, string robotstxt)
         {
             this.userAgent = userAgent;
-            this.robotstxt = robotstxt;
+            this.robotstxt = new RobotsTxt.Robots(robotstxt);
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace CrawlerLib
         /// <returns>True if allowed.</returns>
         public bool IsPathAllowed(string uriPathAndQuery)
         {
-            return true;
+            return robotstxt.IsPathAllowed(userAgent, uriPathAndQuery);
         }
     }
 }

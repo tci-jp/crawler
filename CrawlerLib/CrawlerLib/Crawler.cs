@@ -21,27 +21,22 @@ namespace CrawlerLib
 
     /// <inheritdoc />
     /// <summary>
-    /// Crawls, parses and indexing web pages.
+    /// Crawls, parses and indexes web pages.
     /// </summary>
-    public sealed class Crawler : IDisposable
+    public sealed class Crawler : ICrawler
     {
         private readonly HttpClient client;
 
         private readonly Configuration config;
-        private readonly SemaphoreSlim lastEvent;
 
         private readonly ILinkParser linkParser = new LinkParser();
 
         private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
         private readonly ICrawlerStorage storage;
-        private readonly ConcurrentDictionary<Uri, QueuedTaskRunner> taskRunners;
-        private readonly ConcurrentBag<Task> tasks;
 
         private readonly SemaphoreSlim totalRequestsSemaphore;
         private readonly HashSet<string> visited;
         private readonly object visitedLock = new object();
-        private int countdown;
-        private string sessionid;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Crawler" /> class.
@@ -53,20 +48,15 @@ namespace CrawlerLib
             config = new Configuration(conf);
 
             client = new HttpClient
-                     {
-                         Timeout = config.RequestTimeout
-                     };
+            {
+                Timeout = config.RequestTimeout
+            };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
 
-            tasks = new ConcurrentBag<Task>();
             robots = new ConcurrentDictionary<Uri, Task<Robots>>();
-            taskRunners = new ConcurrentDictionary<Uri, QueuedTaskRunner>();
             visited = new HashSet<string>();
-            lastEvent = new SemaphoreSlim(0, 1);
-
-            config.CancellationToken.Register(() => lastEvent.Release());
 
             totalRequestsSemaphore = new SemaphoreSlim(config.NumberOfSimulataneousRequests);
         }
@@ -110,13 +100,22 @@ namespace CrawlerLib
                 return null;
             }
 
-            sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
+            var sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
             foreach (var uri in urisList)
             {
-                await AddUrl(ownerId, null, uri, 0, 0);
+                var newjob = new ParserJob
+                {
+                    OwnerId = ownerId,
+                    SessionId = sessionid,
+                    Uri = uri,
+                    Depth = config.Depth,
+                    HostDepth = config.HostDepth
+                };
+
+                await EnqueueAsync(newjob);
             }
 
-            await WaitForTheEnd();
+            await config.Queue.WaitForSession(sessionid, config.CancellationToken);
             return sessionid;
         }
 
@@ -127,7 +126,7 @@ namespace CrawlerLib
         /// <param name="uris">URIs to crawl.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
-        public async Task<CrawlerSession> InciteStart(string ownerId, IEnumerable<Uri> uris)
+        public async Task<string> InciteStart(string ownerId, IEnumerable<Uri> uris)
         {
             var urisList = new List<Uri>(uris);
             if (urisList.Count == 0)
@@ -135,26 +134,43 @@ namespace CrawlerLib
                 return null;
             }
 
-            sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
-            var task = Task.Run(async () =>
+            var sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
+            try
             {
-                try
+                foreach (var uri in urisList)
                 {
-                    foreach (var uri in urisList)
+                    var newjob = new ParserJob
                     {
-                        await AddUrl(ownerId, null, uri, 0, 0);
-                    }
+                        OwnerId = ownerId,
+                        SessionId = sessionid,
+                        Uri = uri,
+                        Depth = config.Depth,
+                        HostDepth = config.HostDepth
+                    };
+                    await EnqueueAsync(newjob);
+                }
+            }
+            catch (Exception)
+            {
+                await storage.UpdateSessionState(ownerId, sessionid, SessionState.Error);
+                throw;
+            }
 
-                    await WaitForTheEnd();
-                    await storage.UpdateSessionState(ownerId, sessionid, SessionState.Done);
-                }
-                catch (Exception)
-                {
-                    await storage.UpdateSessionState(ownerId, sessionid, SessionState.Error);
-                    throw;
-                }
-            });
-            return new CrawlerSession(sessionid, task);
+            return sessionid;
+        }
+
+        /// <summary>
+        /// Run workers to parse queue.
+        /// </summary>
+        /// <param name="workers">Number of workers</param>
+        public void RunParserWorkers(int workers)
+        {
+            for (var worker = 0; worker < workers; worker++)
+            {
+                var task = Task.Run(
+                    async () => { await InternalRunParsersJobs(); },
+                    config.CancellationToken);
+            }
         }
 
         private static(bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
@@ -184,50 +200,62 @@ namespace CrawlerLib
             return (nofollow, noindex);
         }
 
-        private async Task AddUrl(string ownerId, State state, Uri uri, int depth, int hostDepth)
+        private async Task AddUrl(IParserJob parent, Uri newUri)
         {
-            if ((depth > config.Depth) || (hostDepth > config.HostDepth))
+            if (parent.Depth <= 0)
             {
                 return;
             }
 
-            if (state != null)
+            var newjob = new ParserJob
             {
-                await config.Storage.AddPageReferer(sessionid, uri.ToString(), state.Uri.ToString());
+                OwnerId = parent.OwnerId,
+                SessionId = parent.SessionId,
+                Uri = newUri,
+                Depth = parent.Depth - 1,
+                HostDepth = parent.HostDepth,
+                Referrer = parent.Uri
+            };
+
+            if (parent.Host != newjob.Host)
+            {
+                if (newjob.HostDepth <= 0)
+                {
+                    return;
+                }
+
+                newjob.HostDepth--;
             }
+
+            await config.Storage.AddPageReferer(parent.SessionId, newjob.Uri.ToString(), newjob.Referrer.ToString());
 
             lock (visitedLock)
             {
-                if (!visited.Add(uri.ToString()))
+                if (!visited.Add(newjob.Uri.ToString()))
                 {
                     return;
                 }
             }
 
-            var newstate = new State
-                           {
-                               OwnerId = ownerId,
-                               Uri = uri,
-                               Depth = depth,
-                               HostDepth = hostDepth,
-                               Referrer = state?.Uri
-                           };
-
-            var robotstxt = await GetRobotsTxt(newstate.Host);
-            if (robotstxt?.IsPathAllowed(uri.PathAndQuery) == false)
+            var robotstxt = await GetRobotsTxt(newjob.Host);
+            if (robotstxt?.IsPathAllowed(newjob.Uri.PathAndQuery) == false)
             {
                 return;
             }
 
-            await config.Storage.EnqueSessionUri(sessionid, uri.ToString());
+            await config.Storage.EnqueSessionUri(parent.SessionId, newjob.Uri.ToString());
 
-            Interlocked.Increment(ref countdown);
-            var runner = taskRunners.GetOrAdd(
-                newstate.Host,
-                host => new QueuedTaskRunner(config.HostRequestsDelay, config.CancellationToken));
-            var task = new Task(async () => await InnerIncite(newstate));
-            tasks.Add(task);
-            runner.Enqueue(task);
+            await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
+        }
+
+        private async Task EnqueueAsync(IParserJob newjob)
+        {
+            lock (visitedLock)
+            {
+                visited.Add(newjob.Uri.ToString());
+            }
+
+            await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
         }
 
         private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html)
@@ -253,7 +281,7 @@ namespace CrawlerLib
                 });
         }
 
-        private async Task InnerIncite(State state)
+        private async Task InternalIncite(IParserJob job)
         {
             try
             {
@@ -273,7 +301,7 @@ namespace CrawlerLib
                                 break;
                             }
 
-                            var result = await config.HttpGrabber.Grab(state.Uri, state.Referrer);
+                            var result = await config.HttpGrabber.Grab(job.Uri, job.Referrer);
 
                             lastCode = result.Status;
                             if (config.RetryErrors.Contains(lastCode) || (result.Content == null))
@@ -294,15 +322,15 @@ namespace CrawlerLib
 
                         (var nofollow, var noindex) = CheckNofollowNoindex(html);
 
-                        var trace = new StringBuilder(state.Uri.ToString()).Append(" -");
+                        var trace = new StringBuilder(job.Uri.ToString()).Append(" -");
 
                         if (!noindex)
                         {
                             var metadata = ExtractMetadata(html);
                             await storage.DumpUriContent(
-                                state.OwnerId,
-                                sessionid,
-                                state.Uri.ToString(),
+                                job.OwnerId,
+                                job.SessionId,
+                                job.Uri.ToString(),
                                 new MemoryStream(Encoding.UTF8.GetBytes(page)),
                                 config.CancellationToken,
                                 metadata);
@@ -312,11 +340,11 @@ namespace CrawlerLib
                             trace.Append(" NOFOLLOW is in force: Skip Indexing.");
                         }
 
-                        UriCrawled?.Invoke(this, state.Uri.ToString());
+                        UriCrawled?.Invoke(this, job.Uri.ToString());
 
                         if (!nofollow)
                         {
-                            await ParseLinks(state, html);
+                            await ParseLinks(job, html);
                         }
                         else
                         {
@@ -336,7 +364,7 @@ namespace CrawlerLib
                     }
                     catch (TaskCanceledException ex)
                     {
-                        config.Logger.Error($"{state.Uri} - Retry {trycount} - Timeout");
+                        config.Logger.Error($"{job.Uri} - Retry {trycount} - Timeout");
                         if (config.CancellationToken.IsCancellationRequested)
                         {
                             return;
@@ -346,7 +374,7 @@ namespace CrawlerLib
                     }
                     catch (Exception ex)
                     {
-                        config.Logger.Error($"{state.Uri} - Retry {trycount} - Failed : ", ex);
+                        config.Logger.Error($"{job.Uri} - Retry {trycount} - Failed : ", ex);
                         lastException = ex;
                         await Task.Delay(config.RequestErrorRetryDelay);
                     }
@@ -357,26 +385,40 @@ namespace CrawlerLib
                     throw lastException;
                 }
 
-                await config.Storage.StorePageError(state.OwnerId, sessionid, state.Uri.ToString(), lastCode);
+                await config.Storage.StorePageError(job.OwnerId, job.SessionId, job.Uri.ToString(), lastCode);
             }
             catch (TaskCanceledException)
             {
-                config.Logger.Error($"{state.Uri} - Timeout");
+                config.Logger.Error($"{job.Uri} - Timeout");
             }
             catch (Exception ex)
             {
-                config.Logger.Error($"{state.Uri} - Failed : ", ex);
+                config.Logger.Error($"{job.Uri} - Failed : ", ex);
             }
-            finally
+        }
+
+        private async Task InternalRunParsersJobs()
+        {
+            while (!config.CancellationToken.IsCancellationRequested)
             {
-                if (Interlocked.Decrement(ref countdown) == 0)
+                try
                 {
-                    lastEvent.Release();
+                    var job = await config.Queue.DequeueAsync(config.CancellationToken);
+                    await InternalIncite(job);
+                    await job.Commit();
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore
+                }
+                catch (Exception ex)
+                {
+                    config.Logger.Error(ex);
                 }
             }
         }
 
-        private async Task ParseLinks(State state, HtmlDocument html)
+        private async Task ParseLinks(IParserJob state, HtmlDocument html)
         {
             foreach (var link in linkParser.ParseLinks(html))
             {
@@ -391,22 +433,13 @@ namespace CrawlerLib
                     {
                         if (linkuri.Scheme.StartsWith("http"))
                         {
-                            var newhostUri =
-                                new Uri(linkuri.GetComponents(
-                                            UriComponents.SchemeAndServer,
-                                            UriFormat.UriEscaped));
                             linkuri = new Uri(linkuri.GetComponents(
                                                   UriComponents.SchemeAndServer |
                                                   UriComponents.UserInfo |
                                                   UriComponents.PathAndQuery,
-                                                  UriFormat.UriEscaped)); // remove fragment
+                                                  UriFormat.UriEscaped)); // to remove address fragment
 
-                            await AddUrl(
-                                state.OwnerId,
-                                state,
-                                linkuri,
-                                state.Depth + 1,
-                                state.HostDepth + (state.Host == newhostUri ? 0 : 1));
+                            await AddUrl(state, linkuri);
                         }
                     }
                     else
@@ -416,43 +449,10 @@ namespace CrawlerLib
                                               UriComponents.SchemeAndServer |
                                               UriComponents.UserInfo |
                                               UriComponents.PathAndQuery,
-                                              UriFormat.UriEscaped)); // remove fragment
-
-                        await AddUrl(state.OwnerId, state, linkuri, state.Depth + 1, state.HostDepth);
+                                              UriFormat.UriEscaped)); // to remove address fragment
                     }
-                }
-            }
-        }
 
-        private async Task WaitForTheEnd()
-        {
-            await lastEvent.WaitAsync(config.CancellationToken);
-            lastEvent.Release();
-            await Task.WhenAll(tasks);
-            config.CancellationToken.ThrowIfCancellationRequested();
-        }
-
-        private class State
-        {
-            private Uri uri;
-
-            public int Depth { get; set; }
-
-            public Uri Host { get; private set; }
-
-            public int HostDepth { get; set; }
-
-            public string OwnerId { get; set; }
-
-            public Uri Referrer { get; set; }
-
-            public Uri Uri
-            {
-                get => uri;
-                set
-                {
-                    uri = value;
-                    Host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
+                    await AddUrl(state, linkuri);
                 }
             }
         }

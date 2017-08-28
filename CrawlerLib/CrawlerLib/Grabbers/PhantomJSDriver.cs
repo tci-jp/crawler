@@ -75,12 +75,29 @@ namespace CrawlerLib.Grabbers
                 EnableRaisingEvents = true
             };
 
-            cancellation.Register(() => { process.Kill(); });
+            cancellation.Register(() =>
+            {
+                try
+                {
+                    process?.Kill();
+                }
+                catch (Exception)
+                {
+                    // Ignore.
+                }
+            });
 
-            process.Start();
-            var page = await process.StandardOutput.ReadToEndAsync();
-            var errors = await process.StandardError.ReadToEndAsync();
-            return page;
+            try
+            {
+                process.Start();
+                var page = await process.StandardOutput.ReadToEndAsync();
+                var errors = await process.StandardError.ReadToEndAsync();
+                return page;
+            }
+            finally
+            {
+                process = null;
+            }
         }
     }
 }

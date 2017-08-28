@@ -96,6 +96,11 @@ namespace CrawlerLib
         public int NumberOfSimulataneousRequests { get; set; } = 8;
 
         /// <summary>
+        /// Gets or sets queue managing parsing jobs.
+        /// </summary>
+        public IParserJobsQueue Queue { get; set; }
+
+        /// <summary>
         /// Gets or sets delay before retrying error.
         /// </summary>
         public TimeSpan RequestErrorRetryDelay { get; set; } = TimeSpan.FromSeconds(30);

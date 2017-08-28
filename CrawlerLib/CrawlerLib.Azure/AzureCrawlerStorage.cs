@@ -55,11 +55,17 @@ namespace CrawlerLib.Azure
         /// <inheritdoc />
         public async Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
         {
-            var session = new SessionInfo(ownerId, rootUris)
-                          {
-                              State = SessionState.InProcess
-                          };
+            var uris = rootUris.ToList();
+            var session = new SessionInfo(ownerId, uris)
+            {
+                State = SessionState.InProcess
+            };
             await storage.InsertOrReplaceAsync(session);
+            foreach (var uri in uris)
+            {
+                await storage.InsertAsync(new SessionUri(session.Id, uri, 0));
+            }
+
             return session.Id;
         }
 
@@ -75,9 +81,9 @@ namespace CrawlerLib.Azure
             var container = await storage.GetBlobContainerAsync("pages");
 
             var record = new CrawlRecord(ownerId, uri)
-                         {
-                             Status = HttpStatusCode.OK.ToString()
-                         };
+            {
+                Status = HttpStatusCode.OK.ToString()
+            };
 
             var blob = container.GetBlockBlobReference(record.BlobName);
             await blob.UploadFromStreamAsync(
@@ -168,10 +174,10 @@ namespace CrawlerLib.Azure
             }
 
             var query = new TableQuery<SessionInfo>
-                        {
-                            FilterString = filter.ToString(),
-                            TakeCount = pageSize
-                        };
+            {
+                FilterString = filter.ToString(),
+                TakeCount = pageSize
+            };
 
             var token = requestId == null ? null : FromBase64<TableContinuationToken>(requestId);
             var segment = await storage.QuerySegmentedAsync(query, token, cancellation);
@@ -219,11 +225,11 @@ namespace CrawlerLib.Azure
         {
             return searcher.SearchByMeta(
                 query.Select(c => new SearchCondition
-                                  {
-                                      Name = EscapeMetadataName(c.Name),
-                                      Op = c.Op,
-                                      Value = c.Value
-                                  }),
+                {
+                    Name = EscapeMetadataName(c.Name),
+                    Op = c.Op,
+                    Value = c.Value
+                }),
                 cancellation).Select(Codec.DecodeString);
         }
 
@@ -238,9 +244,9 @@ namespace CrawlerLib.Azure
         public async Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(ownerid, uri)
-                                               {
-                                                   Status = code.ToString()
-                                               });
+            {
+                Status = code.ToString()
+            });
 
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, (int)code));
         }

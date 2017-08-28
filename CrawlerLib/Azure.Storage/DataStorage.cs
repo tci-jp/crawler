@@ -16,6 +16,7 @@ namespace Azure.Storage
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -36,10 +37,15 @@ namespace Azure.Storage
             StorageAccount = CloudStorageAccount.Parse(connectionString);
             TableClient = StorageAccount.CreateCloudTableClient();
             BlobClient = StorageAccount.CreateCloudBlobClient();
+            QueueClient = StorageAccount.CreateCloudQueueClient();
         }
 
+        /// <summary>
+        /// Gets Azure Storage Queue Client
+        /// </summary>
+        public CloudQueueClient QueueClient { get; }
+
         /// <inheritdoc />
-        [UsedImplicitly]
         public CloudBlobClient BlobClient { get; }
 
         private CloudStorageAccount StorageAccount { get; }

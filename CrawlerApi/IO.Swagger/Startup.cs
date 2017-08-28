@@ -29,9 +29,13 @@ namespace CrawlerApi
     using System;
     using System.IO;
     using System.Xml.XPath;
+    using System.Xml.Xsl;
     using Azure.Storage;
+    using CrawlerLib;
     using CrawlerLib.Azure;
     using CrawlerLib.Data;
+    using CrawlerLib.Grabbers;
+    using CrawlerLib.Metadata;
     using JetBrains.Annotations;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -106,15 +110,42 @@ namespace CrawlerApi
                         });
 
             var storage = new DataStorage(Configuration["CrawlerStorageConnectionString"]);
+
+            var azureIndexedSearch = new AzureIndexedSearch(
+                storage,
+                Configuration["SearchServiceName"],
+                Configuration["SearchServiceAdminApiKey"],
+                Configuration["TextSearchIndexName"],
+                Configuration["MetaSearchIndexName"]);
+
+            var crawlerStorage = new AzureCrawlerStorage(storage, azureIndexedSearch);
+
+            var queue = new MemoryParserJobsQueue(crawlerStorage);
+
+            services.AddSingleton<IParserJobsQueue>(queue);
             services.AddSingleton<IDataStorage>(storage);
-            services.AddSingleton<IBlobSearcher>(
-                new AzureIndexedSearch(
-                    storage,
-                    Configuration["SearchServiceName"],
-                    Configuration["SearchServiceAdminApiKey"],
-                    Configuration["TextSearchIndexName"],
-                    Configuration["MetaSearchIndexName"]));
-            services.AddSingleton<ICrawlerStorage, AzureCrawlerStorage>();
+            services.AddSingleton<IBlobSearcher>(azureIndexedSearch);
+            services.AddSingleton<ICrawlerStorage>(crawlerStorage);
+
+            var config = new Configuration
+            {
+                Storage = crawlerStorage,
+                Queue = queue,
+                Depth = 0,
+                HostDepth = 0,
+                MetadataExtractors = new IMetadataExtractor[]
+                                                  {
+                                                      new RdfaMetadataExtractor(),
+                                                      new MicrodataMetadataExtractor()
+                                                  }
+            };
+
+            config.HttpGrabber = new WebDriverHttpGrabber(config);
+
+            var crawler = new Crawler(config);
+            crawler.RunParserWorkers(Configuration.GetValue<int?>("CrawlerWorkers") ?? 4);
+
+            services.AddSingleton<ICrawler>(crawler);
 
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(options =>

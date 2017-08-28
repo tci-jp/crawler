@@ -50,6 +50,7 @@ namespace CrawlerApi.Controllers
     public sealed class DefaultApiController : Controller
     {
         private readonly ICrawlerStorage crawlerStorage;
+        private readonly ICrawler crawler;
         private readonly IDataStorage storage;
 
         /// <summary>
@@ -57,10 +58,12 @@ namespace CrawlerApi.Controllers
         /// </summary>
         /// <param name="storage">Azure storage helper class.</param>
         /// <param name="crawlerStorage">Crawler storage.</param>
-        public DefaultApiController(IDataStorage storage, ICrawlerStorage crawlerStorage)
+        /// <param name="crawler">Crawler class.</param>
+        public DefaultApiController(IDataStorage storage, ICrawlerStorage crawlerStorage, ICrawler crawler)
         {
             this.storage = storage;
             this.crawlerStorage = crawlerStorage;
+            this.crawler = crawler;
         }
 
         /// <summary>adds or replaces metadata parsing parameters</summary>
@@ -224,27 +227,11 @@ namespace CrawlerApi.Controllers
         [SwaggerResponse(200, type: typeof(string))]
         public async Task<IActionResult> Incite([FromBody] CrawlerConfiguration configuration)
         {
-            var config = new Configuration
-            {
-                Storage = crawlerStorage,
-                Depth = 0,
-                HostDepth = 0,
-                MetadataExtractors = new IMetadataExtractor[]
-                                                  {
-                                                      new RdfaMetadataExtractor(),
-                                                      new MicrodataMetadataExtractor()
-                                                  }
-            };
-
-            config.HttpGrabber = new WebDriverHttpGrabber(config);
-
-            var crawler = new Crawler(config);
-
             var session = await crawler.InciteStart(
                               configuration.OwnerId,
                               configuration.Uris.Select(u => new Uri(u)));
 
-            return new ObjectResult(session.SessionId);
+            return new ObjectResult(session);
         }
 
         private static SessionState HttpStateToSessionState(int state)

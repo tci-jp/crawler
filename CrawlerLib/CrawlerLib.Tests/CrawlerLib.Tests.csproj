@@ -57,7 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Robotstxt\RobotstxtTests.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>
 </Project>

@@ -36,6 +36,7 @@ namespace CrawlerApi
     using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
     using CrawlerLib.Metadata;
+    using CrawlerLib.Queue;
     using JetBrains.Annotations;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;

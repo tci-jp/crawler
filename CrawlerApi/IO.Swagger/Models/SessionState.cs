@@ -28,6 +28,7 @@ namespace CrawlerApi.Models
 
         /// <summary>
         /// Session is finished successfully.
+        /// Should not be used in Azure tables anymore as calculated by SessionUri-s
         /// </summary>
         [EnumMember(Value = "done")]
         [DataMember(Name = "done")]

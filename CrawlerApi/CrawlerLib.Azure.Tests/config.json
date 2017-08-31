@@ -1,0 +1,7 @@
+﻿{
+  "SearchServiceName": "crawler-search",
+  "SearchServiceAdminApiKey": "EE6C70F8CC8B88CC9F6509AA4E18E725",
+  "TextSearchIndexName": "fulltext",
+  "MetaSearchIndexName": "fulltext",
+  "CrawlerStorageConnectionString": "DefaultEndpointsProtocol=https;AccountName=crawlerstoragedev;AccountKey=bBRGgpR0FU0TpH45Mf6EWILX+6IW2yczK+eb5Ys6F/yALhDGwnO5iYT/rf2r18Btj9OMiUEKO89Gn3FREus4ew==;EndpointSuffix=core.windows.net"
+}

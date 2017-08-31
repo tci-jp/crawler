@@ -11,6 +11,7 @@ namespace Azure.Storage
     using System.Threading.Tasks;
     using JetBrains.Annotations;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -22,6 +23,11 @@ namespace Azure.Storage
         /// Gets Azure Cloud Blob Client
         /// </summary>
         CloudBlobClient BlobClient { get; }
+
+        /// <summary>
+        /// Gets Azure Storage Queue Client
+        /// </summary>
+        CloudQueueClient QueueClient { get; }
 
         /// <summary>
         /// Deletes Table entity with specific PartitionKey and RowKey.
@@ -39,7 +45,7 @@ namespace Azure.Storage
         /// <param name="query">Query.</param>
         /// <param name="token">Cancellation.</param>
         /// <returns>Async collection of entitoes.</returns>
-        IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(
+        IAsyncEnumerable<TEntity> ExecuteQueryAsync<TEntity>(
             TableQuery<TEntity> query,
             CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new();
@@ -64,7 +70,7 @@ namespace Azure.Storage
         /// <param name="entity">Entity to insert.</param>
         /// <typeparam name="TEntity">Entity type.</typeparam>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task InsertAsync<TEntity>(TEntity entity)
+        Task<bool> InsertAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity;
 
         /// <summary>
@@ -198,5 +204,24 @@ namespace Azure.Storage
         /// </returns>
         Task<TEntity> RetreiveOrCreateAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity;
-   }
+
+        /// <summary>
+        /// Merger values if ETag did not change.
+        /// </summary>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <param name="entity">Entity to merge. Should be previously retrieved from Storage.</param>
+        /// <returns>True if updated.</returns>
+        Task<bool> MergeAsync<TEntity>(TEntity entity)
+            where TEntity : TableEntity;
+
+        /// <summary>
+        /// Counts result.
+        /// </summary>
+        /// <typeparam name="TEntity">Type of entity to query and count</typeparam>
+        /// <param name="query">Query to count.</param>
+        /// <param name="token">Operation cancellation.</param>
+        /// <returns>Number of items selected by query.</returns>
+        Task<int> CountAsync<TEntity>(TableQuery<TEntity> query, CancellationToken token)
+            where TEntity : TableEntity, new();
+    }
 }

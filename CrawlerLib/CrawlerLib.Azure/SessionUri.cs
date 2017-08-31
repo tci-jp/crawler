@@ -40,6 +40,12 @@ namespace CrawlerLib.Azure
         [PartitionKey]
         public string SessionId => PartitionKey;
 
+        /// <summary>
+        /// Gets a value indicating whether crawling was stared.
+        /// </summary>
+        [IgnoreProperty]
+        public bool WasStarted => State != 0;
+
         /// <inheritdoc />
         public int State { get; set; }
 

@@ -122,7 +122,12 @@ namespace CrawlerApi.Controllers
             {
                 var urls = await crawlerStorage.GetSessionUris(sess.Id).ToListAsync();
                 var sessionUris = urls.Select(u => new SessionUri(u.Uri, HttpStateToSessionState(u.State)));
-                return new Session(sess.Id, sessionUris.ToList(), ToSessionState(sess.State));
+                var state = ToSessionState(sess.State);
+                if ((state == SessionState.InProcess) && urls.All(u => u.State != 0))
+                {
+                    state = SessionState.Done;
+                }
+                return new Session(sess.Id, sessionUris.ToList(), state);
             });
 
             var sessions = await Task.WhenAll(sessionsTasks);

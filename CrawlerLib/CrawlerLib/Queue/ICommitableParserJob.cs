@@ -2,8 +2,9 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace CrawlerLib.Queue
 {
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -14,7 +15,9 @@ namespace CrawlerLib
         /// <summary>
         /// Confirm job is processed
         /// </summary>
+        /// <param name="canncellation">Commit cancellation.</param>
+        /// <param name="status">HTTP status.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task Commit();
+        Task Commit(CancellationToken canncellation, int status);
     }
 }

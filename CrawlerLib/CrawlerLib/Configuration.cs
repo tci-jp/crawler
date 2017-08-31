@@ -14,6 +14,7 @@ namespace CrawlerLib
     using JetBrains.Annotations;
     using Logger;
     using Metadata;
+    using Queue;
 
     /// <summary>
     /// Crawler configuration.

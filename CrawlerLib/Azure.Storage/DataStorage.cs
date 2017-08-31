@@ -40,17 +40,50 @@ namespace Azure.Storage
             QueueClient = StorageAccount.CreateCloudQueueClient();
         }
 
+        /// <inheritdoc />
+        public CloudBlobClient BlobClient { get; }
+
         /// <summary>
         /// Gets Azure Storage Queue Client
         /// </summary>
         public CloudQueueClient QueueClient { get; }
 
-        /// <inheritdoc />
-        public CloudBlobClient BlobClient { get; }
-
         private CloudStorageAccount StorageAccount { get; }
 
         private CloudTableClient TableClient { get; }
+
+        /// <inheritdoc />
+        public async Task<int> CountAsync<TEntity>(TableQuery<TEntity> query, CancellationToken token)
+            where TEntity : TableEntity, new()
+        {
+            query = query.Select(new[] { "PartitionKey" });
+
+            var table = GetTable<TEntity>();
+            var requestOption = new TableRequestOptions();
+            var context = new OperationContext();
+
+            var count = 0;
+            TableQuerySegment<TEntity> segment = null;
+            do
+            {
+                segment = await table.ExecuteQuerySegmentedAsync(
+                              query,
+                              segment?.ContinuationToken,
+                              requestOption,
+                              context,
+                              token).ConfigureAwait(false);
+                if (segment == null)
+                {
+                    break;
+                }
+
+                token.ThrowIfCancellationRequested();
+                count += segment.Count();
+            }
+            while (segment.ContinuationToken != null);
+
+            return count;
+        }
 
         /// <inheritdoc />
         [UsedImplicitly]
@@ -65,7 +98,7 @@ namespace Azure.Storage
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<TEntity> ExecuteQuery<TEntity>(
+        public IAsyncEnumerable<TEntity> ExecuteQueryAsync<TEntity>(
             TableQuery<TEntity> query,
             CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
@@ -102,9 +135,9 @@ namespace Azure.Storage
                         while (segment.ContinuationToken != null);
                     }
                     catch (StorageException ex)
-                        when (ex.InnerException is WebException webex
-                              && webex.Response is HttpWebResponse resp
-                              && (resp.StatusCode == HttpStatusCode.NotFound))
+                        when (ex.InnerException is WebException webex &&
+                              webex.Response is HttpWebResponse resp &&
+                              (resp.StatusCode == HttpStatusCode.NotFound))
                     {
                         await table.CreateAsync();
                     }
@@ -130,12 +163,19 @@ namespace Azure.Storage
 
         /// <inheritdoc />
         [UsedImplicitly]
-        public async Task InsertAsync<TEntity>(TEntity entity)
+        public async Task<bool> InsertAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
         {
             PrepareEntity(entity);
             var cloudTable = await GetOrCreateTableAsync<TEntity>();
-            ProcessResult(await cloudTable.ExecuteAsync(TableOperation.Insert(entity)));
+            var tableResult = await cloudTable.ExecuteAsync(TableOperation.Insert(entity));
+            if (tableResult.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            {
+                return false;
+            }
+
+            ProcessResult(tableResult);
+            return true;
         }
 
         /// <inheritdoc />
@@ -150,6 +190,28 @@ namespace Azure.Storage
             ProcessResult(tableResult);
         }
 
+        /// <summary>
+        /// Merger values if ETag did not change.
+        /// </summary>
+        /// <typeparam name="TEntity">Type of Entity.</typeparam>
+        /// <param name="entity">Entity to merge. Should be previously retrieved from Storage.</param>
+        /// <returns>True if updated.</returns>
+        [UsedImplicitly]
+        public async Task<bool> MergeAsync<TEntity>(TEntity entity)
+            where TEntity : TableEntity
+        {
+            var cloudTable = await GetOrCreateTableAsync<TEntity>();
+            var merge = TableOperation.Merge(entity);
+            var tableResult = await cloudTable.ExecuteAsync(merge);
+            if (tableResult.HttpStatusCode == 412)
+            {
+                return false;
+            }
+
+            ProcessResult(tableResult);
+            return true;
+        }
+
         /// <inheritdoc />
         [UsedImplicitly]
         public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(
@@ -162,7 +224,7 @@ namespace Azure.Storage
                 throw new ArgumentNullException(nameof(entity));
             }
 
-            return ExecuteQuery(Query(entity), token);
+            return ExecuteQueryAsync(Query(entity), token);
         }
 
         /// <inheritdoc />
@@ -173,7 +235,7 @@ namespace Azure.Storage
             where TEntity : TableEntity, new()
         {
             var query = Query<TEntity>().Where(func);
-            return ExecuteQuery(query, token);
+            return ExecuteQueryAsync(query, token);
         }
 
         /// <inheritdoc />
@@ -181,7 +243,7 @@ namespace Azure.Storage
         public IAsyncEnumerable<TEntity> QueryAsync<TEntity>(CancellationToken token = default(CancellationToken))
             where TEntity : TableEntity, new()
         {
-            return ExecuteQuery(Query<TEntity>(), token);
+            return ExecuteQueryAsync(Query<TEntity>(), token);
         }
 
         /// <inheritdoc />
@@ -236,6 +298,7 @@ namespace Azure.Storage
             where TEntity : TableEntity
         {
             PrepareEntity(entity);
+            entity.ETag = "*";
             ProcessResult(await (await GetOrCreateTableAsync<TEntity>()).ExecuteAsync(TableOperation.Replace(entity)));
         }
 
@@ -290,19 +353,11 @@ namespace Azure.Storage
 
         private static TableAttribute GetEntityAttribute<T>()
         {
-            return TypeToAttribute.GetOrAdd(typeof(T), t =>
-            {
-                var attr = t.GetTypeInfo()
-                            .GetCustomAttributes(typeof(TableAttribute), true)
-                            .SingleOrDefault() as TableAttribute;
-                if (attr == null)
-                {
-                    throw new ArgumentException(
-                        $"Type {typeof(T)} does not have Table attribute");
-                }
-
-                return attr;
-            });
+            return TypeToAttribute.GetOrAdd(typeof(T), t => t.GetTypeInfo()
+                                                             .GetCustomAttributes(typeof(TableAttribute), true)
+                                                             .SingleOrDefault() as TableAttribute ??
+                                                            throw new ArgumentException(
+                                                                $"Type {typeof(T)} does not have Table attribute"));
         }
 
         private static string GetEntityPartiton<T>()

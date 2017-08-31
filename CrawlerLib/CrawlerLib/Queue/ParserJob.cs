@@ -2,7 +2,7 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace CrawlerLib.Queue
 {
     using System;
     using System.Runtime.Serialization;
@@ -25,7 +25,7 @@ namespace CrawlerLib
         /// <summary>
         /// Gets uri host part
         /// </summary>
-        [DataMember(Name = "depth")]
+        [DataMember(Name = "host")]
         public Uri Host { get; private set; }
 
         /// <summary>

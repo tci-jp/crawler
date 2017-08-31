@@ -61,11 +61,6 @@ namespace CrawlerLib.Azure
                 State = SessionState.InProcess
             };
             await storage.InsertOrReplaceAsync(session);
-            foreach (var uri in uris)
-            {
-                await storage.InsertAsync(new SessionUri(session.Id, uri, 0));
-            }
-
             return session.Id;
         }
 
@@ -267,7 +262,7 @@ namespace CrawlerLib.Azure
         /// <inheritdoc />
         public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
         {
-            await storage.InsertAsync(new SessionUri(sessionId, uri, statusCode));
+            await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, statusCode));
         }
 
         private static string EscapeMetadataName(string key)

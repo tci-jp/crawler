@@ -2,7 +2,7 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib
+namespace CrawlerLib.Queue
 {
     using System;
     using System.Collections.Concurrent;
@@ -144,7 +144,7 @@ namespace CrawlerLib
 
             public Uri Uri => job.Uri;
 
-            public async Task Commit()
+            public async Task Commit(CancellationToken canncellation, int status)
             {
                 await session.Decrement(async () =>
                 {

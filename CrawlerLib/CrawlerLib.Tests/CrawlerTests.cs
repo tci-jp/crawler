@@ -18,6 +18,7 @@ namespace CrawlerLib.Tests
     using Grabbers;
     using Metadata;
     using Microsoft.Extensions.Configuration;
+    using Queue;
     using Xunit;
     using Xunit.Abstractions;
 

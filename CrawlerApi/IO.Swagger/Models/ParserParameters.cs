@@ -28,6 +28,7 @@ namespace CrawlerApi.Models
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
@@ -112,6 +113,7 @@ namespace CrawlerApi.Models
         /// Gets or sets owner id
         /// </summary>
         [DataMember(Name = "ownerId")]
+        [Required]
         public string OwnerId
         {
             get => PartitionKey;
@@ -122,6 +124,7 @@ namespace CrawlerApi.Models
         /// Gets or sets parser id in free text unique for specified owner
         /// </summary>
         [DataMember(Name = "parserId")]
+        [Required]
         public string ParserId
         {
             get => RowKey;

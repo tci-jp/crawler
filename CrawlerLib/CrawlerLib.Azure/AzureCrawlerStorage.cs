@@ -188,13 +188,12 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task GetUriContet(string ownerId, string uri, Stream destination, CancellationToken cancellation)
+        public async Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation)
         {
             var rec = new CrawlRecord(ownerId, uri);
             var container = await storage.GetBlobContainerAsync("pages");
             var blob = container.GetBlockBlobReference(rec.BlobName);
-            await blob.DownloadToStreamAsync(
-                destination,
+            return await blob.OpenReadAsync(
                 new AccessCondition(),
                 new BlobRequestOptions(),
                 new OperationContext(),

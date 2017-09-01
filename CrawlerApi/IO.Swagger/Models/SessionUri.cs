@@ -27,6 +27,7 @@
 namespace CrawlerApi.Models
 {
     using System;
+    using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
     using System.Text;
     using Newtonsoft.Json;
@@ -54,12 +55,14 @@ namespace CrawlerApi.Models
         /// </summary>
         [DataMember(Name = "state")]
         [JsonConverter(typeof(StringEnumConverter))]
+        [Required]
         public SessionState State { get; }
 
         /// <summary>
         /// Gets Uri
         /// </summary>
         [DataMember(Name = "uri")]
+        [Required]
         public string Uri { get; }
 
         /// <summary>Compare objects equality</summary>

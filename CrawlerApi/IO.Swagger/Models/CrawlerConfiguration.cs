@@ -28,6 +28,7 @@ namespace CrawlerApi.Models
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
@@ -70,12 +71,14 @@ namespace CrawlerApi.Models
         /// Gets id used to keep history of requests and blobs collection
         /// </summary>
         [DataMember(Name = "ownerId")]
+        [Required]
         public string OwnerId { get; }
 
         /// <summary>
         /// Gets array of URIs to crawl
         /// </summary>
         [DataMember(Name = "uris")]
+        [Required]
         public List<string> Uris { get; }
 
         /// <summary>Compare objects equality</summary>

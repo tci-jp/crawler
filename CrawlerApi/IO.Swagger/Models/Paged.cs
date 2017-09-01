@@ -5,6 +5,7 @@
 namespace CrawlerApi.Models
 {
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
     using JetBrains.Annotations;
 
@@ -38,6 +39,7 @@ namespace CrawlerApi.Models
         /// </summary>
         [DataMember(Name = "items")]
         [UsedImplicitly]
+        [Required]
         public IList<TItem> Items { get; set; }
 
         /// <summary>

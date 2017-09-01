@@ -28,6 +28,7 @@ namespace CrawlerApi.Models
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
     using System.Text;
     using Newtonsoft.Json;
@@ -56,6 +57,7 @@ namespace CrawlerApi.Models
         /// Gets or sets session id
         /// </summary>
         [DataMember(Name = "id")]
+        [Required]
         public string Id { get; set; }
 
         /// <summary>
@@ -63,12 +65,14 @@ namespace CrawlerApi.Models
         /// </summary>
         [DataMember(Name = "state")]
         [JsonConverter(typeof(StringEnumConverter))]
+        [Required]
         public SessionState State { get; set; }
 
         /// <summary>
         /// Gets or sets array of URIs used to start crawling and states of crawling
         /// </summary>
         [DataMember(Name = "uris")]
+        [Required]
         public List<SessionUri> Uris { get; set; }
 
         /// <summary>Compare objects equality</summary>

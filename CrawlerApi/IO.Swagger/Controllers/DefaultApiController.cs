@@ -32,13 +32,13 @@ namespace CrawlerApi.Controllers
     using System.ComponentModel.DataAnnotations;
     using System.IO;
     using System.Linq;
+    using System.Net.Http;
     using System.Net.Mime;
     using System.Threading.Tasks;
     using Azure.Storage;
     using CrawlerLib;
     using CrawlerLib.Data;
-    using CrawlerLib.Grabbers;
-    using CrawlerLib.Metadata;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Models;
     using Swashbuckle.SwaggerGen.Annotations;
@@ -49,8 +49,8 @@ namespace CrawlerApi.Controllers
     /// </summary>
     public sealed class DefaultApiController : Controller
     {
-        private readonly ICrawlerStorage crawlerStorage;
         private readonly ICrawler crawler;
+        private readonly ICrawlerStorage crawlerStorage;
         private readonly IDataStorage storage;
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace CrawlerApi.Controllers
         [SwaggerOperation("GetIncites")]
         [SwaggerResponse(200, type: typeof(Paged<Session>))]
         public async Task<IActionResult> GetIncites(
-            [FromQuery] [Required] string ownerId = null,
+            [FromQuery] [Required] string ownerId,
             [FromQuery] List<string> sessionIds = null,
             [FromQuery] int? pagesize = null,
             [FromQuery] string requestId = null)
@@ -137,34 +137,6 @@ namespace CrawlerApi.Controllers
             return new ObjectResult(pagination);
         }
 
-        /// <summary>download crawled page</summary>
-        /// <param name="ownerId">Blob onwer id.</param>
-        /// <param name="uri">Page URI.</param>
-        /// <response code="200">responce with page content</response>
-        /// <response code="400">invalid input</response>
-        /// <returns>Page content.</returns>
-        [HttpGet]
-        [Route("/CrawlerApi/1.0.0/page")]
-        [SwaggerOperation("GetPage")]
-        [SwaggerResponse(200, type: typeof(byte[]))]
-        public async Task<IActionResult> GetPage([FromQuery] string ownerId = null, [FromQuery] string uri = null)
-        {
-            if (ownerId == null)
-            {
-                throw new ArgumentNullException(nameof(ownerId));
-            }
-
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
-
-            var stream = new MemoryStream(); // TODO remove it rewriting to Response.
-            await crawlerStorage.GetUriContet(ownerId, uri, stream);
-            stream.Position = 0;
-            return new FileStreamResult(stream, MediaTypeNames.Application.Octet);
-        }
-
         /// <summary>retrieves crawled page metadata</summary>
         /// <param name="ownerId">Blob onwer id.</param>
         /// <param name="uri">Page URI.</param>
@@ -175,7 +147,9 @@ namespace CrawlerApi.Controllers
         [Route("/CrawlerApi/1.0.0/metadata")]
         [SwaggerOperation("GetMetadata")]
         [SwaggerResponse(200, type: typeof(IList<KeyValuePair<string, string>>))]
-        public async Task<IActionResult> GetMetadata([FromQuery] string ownerId = null, [FromQuery] string uri = null)
+        public async Task<IActionResult> GetMetadata(
+            [FromQuery][Required] string ownerId,
+            [FromQuery][Required] string uri)
         {
             if (ownerId == null)
             {
@@ -191,6 +165,34 @@ namespace CrawlerApi.Controllers
             return new ObjectResult(meta);
         }
 
+        /// <summary>download crawled page</summary>
+        /// <param name="ownerId">Blob onwer id.</param>
+        /// <param name="uri">Page URI.</param>
+        /// <response code="200">responce with page content</response>
+        /// <response code="400">invalid input</response>
+        /// <returns>Page content.</returns>
+        [HttpGet]
+        [Route("/CrawlerApi/1.0.0/page")]
+        [SwaggerOperation("GetPage")]
+        [SwaggerResponse(200, type: typeof(byte[]))]
+        public async Task<IActionResult> GetPage(
+            [FromQuery] [Required] string ownerId,
+            [FromQuery] [Required] string uri)
+        {
+            if (ownerId == null)
+            {
+                throw new ArgumentNullException(nameof(ownerId));
+            }
+
+            if (uri == null)
+            {
+                throw new ArgumentNullException(nameof(uri));
+            }
+
+            var stream = await crawlerStorage.GetUriContent(ownerId, uri);
+            return new FileStreamResult(stream, MediaTypeNames.Application.Octet);
+        }
+
         /// <summary>get metadata parsing parameters set</summary>
         /// <param name="ownerId">Parsers owner Id.</param>
         /// <param name="parserIds">Custom parsers Ids.</param>
@@ -202,7 +204,7 @@ namespace CrawlerApi.Controllers
         [SwaggerOperation("GetParsers")]
         [SwaggerResponse(200, type: typeof(IList<ParserParameters>))]
         public async Task<IActionResult> GetParsers(
-            [FromQuery] [Required] string ownerId = null,
+            [FromQuery] [Required] string ownerId,
             [FromQuery] List<string> parserIds = null)
         {
             if (ownerId == null)
@@ -210,15 +212,22 @@ namespace CrawlerApi.Controllers
                 throw new ArgumentNullException(nameof(ownerId));
             }
 
-            var result = new List<ParserParameters>();
-
-            foreach (var id in parserIds)
+            if (parserIds != null)
             {
-                var pp = await storage.RetreiveAsync(new ParserParameters(ownerId, id));
-                result.Add(pp);
-            }
+                var result = new List<ParserParameters>();
+                foreach (var id in parserIds)
+                {
+                    var pp = await storage.RetreiveAsync(new ParserParameters(ownerId, id));
+                    result.Add(pp);
+                }
 
-            return new ObjectResult(result);
+                return new ObjectResult(result);
+            }
+            else
+            {
+                var result = await storage.QueryAsync<ParserParameters>(p => p.OwnerId == ownerId).ToListAsync();
+                return new ObjectResult(result);
+            }
         }
 
         /// <summary>starts crawling</summary>
@@ -230,7 +239,7 @@ namespace CrawlerApi.Controllers
         [Route("/CrawlerApi/1.0.0/incite")]
         [SwaggerOperation("Incite")]
         [SwaggerResponse(200, type: typeof(string))]
-        public async Task<IActionResult> Incite([FromBody] CrawlerConfiguration configuration)
+        public async Task<IActionResult> Incite([FromBody][Required] CrawlerConfiguration configuration)
         {
             var session = await crawler.InciteStart(
                               configuration.OwnerId,

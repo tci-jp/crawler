@@ -104,9 +104,9 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public async Task GetUriContet(string ownerId, string uri, Stream destination, CancellationToken cancellation)
+        public Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation = default(CancellationToken))
         {
-            await destination.WriteAsync(dumpedPages[uri], 0, dumpedPages[uri].Length, cancellation);
+             return Task.FromResult<Stream>(new MemoryStream(dumpedPages[uri]));
         }
 
         /// <inheritdoc />

@@ -110,11 +110,10 @@ namespace CrawlerLib.Data
         /// </summary>
         /// <param name="ownerId">Blob owner Id.</param>
         /// <param name="uri">Crawled URI.</param>
-        /// <param name="destination">Content destination stream</param>
         /// <param name="cancellation">Download cancellation</param>
         /// <returns>Stream with content.</returns>
         [UsedImplicitly]
-        Task GetUriContet(string ownerId, string uri, Stream destination, CancellationToken cancellation = default(CancellationToken));
+        Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation = default(CancellationToken));
 
         /// <summary>
         /// Search blobs by metadata

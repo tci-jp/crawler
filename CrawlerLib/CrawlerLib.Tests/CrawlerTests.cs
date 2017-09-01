@@ -86,11 +86,11 @@ namespace CrawlerLib.Tests
             var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(url);
 
-            var stream = new MemoryStream();
-            await crawlerConfig.Storage.GetUriContet(Owner, url, stream);
-            stream.Position = 0;
-            var str = new StreamReader(stream).ReadToEnd();
-            str.Should().Contain("<body").And.Contain("</body>");
+            using (var stream = await crawlerConfig.Storage.GetUriContent(Owner, url))
+            {
+                var str = new StreamReader(stream).ReadToEnd();
+                str.Should().Contain("<body").And.Contain("</body>");
+            }
         }
 
         [Theory]

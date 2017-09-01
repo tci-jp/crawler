@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Metadata
 {
+    using System.Collections;
     using System.Collections.Generic;
     using System.Xml.XPath;
     using HtmlAgilityPack;
@@ -43,10 +44,13 @@ namespace CrawlerLib.Metadata
             foreach (var pair in xpaths)
             {
                 var key = pair.Value;
-                var value = nav.Evaluate(pair.Key)?.ToString();
-                if (value != null)
+                var value = nav.Evaluate(pair.Key);
+                if (value is string strval)
                 {
-                    yield return new KeyValuePair<string, string>(key, value);
+                    foreach (var item in strval.Split('\0'))
+                    {
+                        yield return new KeyValuePair<string, string>(key, item.ToString());
+                    }
                 }
             }
         }

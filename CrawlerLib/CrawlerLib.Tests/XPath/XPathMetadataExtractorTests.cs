@@ -6,27 +6,24 @@ namespace CrawlerLib.Tests.XPath
 {
     using System.Collections.Generic;
     using System.Linq;
+    using FluentAssertions;
     using HtmlAgilityPack;
     using Metadata;
     using Xunit;
 
     public class XPathMetadataExtractorTests
     {
-        private readonly HtmlDocument doc;
-
-        public XPathMetadataExtractorTests()
-        {
-            doc = new HtmlDocument();
-            doc.LoadHtml("<body><div id=\"asdf1234qwer\"/></body>");
-        }
-
         [Theory]
-        [InlineData("string(//div/@id)", "asdf1234qwer")]
-        [InlineData("fn:match(string(//div/@id),'(\\d+)')", "1234")]
-        public void TestXPath(string xpath, string result)
+        [InlineData("<body><div id=\"asdf1234qwer\"/></body>", "string(//div/@id)", new[] { "asdf1234qwer" })]
+        [InlineData("<body><div id=\"asdf1234qwer\"/></body>", "fn:match(string(//div/@id),'(\\d+)')", new[] { "1234" })]
+        [InlineData("<body><div id=\"asdf1234qwer\"/><div id=\"asdf097qwer\"/></body>", "fn:match(//div/@id,'(\\d+)')", new[] { "1234", "097" })]
+        public void TestXPath(string doccontent, string xpath, string[] result)
         {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(doccontent);
             var extractor = new XPathMetadataExtractor(new[] { new KeyValuePair<string, string>(xpath, "field") });
-            Assert.Equal(result, extractor.ExtractMetadata(doc).Single().Value);
+            var meta = extractor.ExtractMetadata(doc);
+            meta.Select(m => m.Value).ShouldBeEquivalentTo(result);
         }
     }
 }

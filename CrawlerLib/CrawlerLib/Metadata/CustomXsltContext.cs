@@ -6,6 +6,7 @@ namespace CrawlerLib.Metadata
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Xml.XPath;
     using System.Xml.Xsl;
 
@@ -17,8 +18,9 @@ namespace CrawlerLib.Metadata
         private readonly Dictionary<string, IXsltContextFunction> functions =
             new Dictionary<string, IXsltContextFunction>
             {
-                ["fn:replace"] = new XPathRegExReplaceExtensionFunction(),
-                ["fn:match"] = new XPathRegExMatchExtensionFunction()
+                ["fn:replace" + XPathResultType.String + XPathResultType.String] = new XPathRegExReplaceExtensionFunction(),
+                ["fn:match" + XPathResultType.String + XPathResultType.String] = new XPathRegExMatchExtensionFunction(),
+                ["fn:match" + XPathResultType.NodeSet + XPathResultType.String] = new XPathRegExMatchNodeSetExtensionFunction()
             };
 
         /// <inheritdoc/>
@@ -39,7 +41,8 @@ namespace CrawlerLib.Metadata
             string name,
             XPathResultType[] argTypes)
         {
-            return functions.TryGetValue(prefix + ":" + name, out var res) ? res : null;
+            var fname = prefix + ":" + name + string.Join(string.Empty, argTypes.Select(s => s.ToString()));
+            return functions.TryGetValue(fname, out var res) ? res : null;
         }
 
         /// <inheritdoc/>

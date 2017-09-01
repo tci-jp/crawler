@@ -4,9 +4,12 @@
 
 namespace CrawlerLib.Metadata
 {
+    using System.Linq;
     using System.Text.RegularExpressions;
+    using System.Xml;
     using System.Xml.XPath;
     using System.Xml.Xsl;
+    using HtmlAgilityPack;
 
     /// <summary>
     /// Custom XPath function Match. See <see cref="Regex.Match(string, string)"/>

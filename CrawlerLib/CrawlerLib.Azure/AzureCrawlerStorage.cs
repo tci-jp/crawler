@@ -128,9 +128,9 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task EnqueSessionUri(string sessionId, string uri)
+        public async Task<bool> EnqueSessionUri(string sessionId, string uri)
         {
-            await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
+            return await storage.InsertAsync(new SessionUri(sessionId, uri, 0));
         }
 
         /// <inheritdoc />
@@ -261,7 +261,7 @@ namespace CrawlerLib.Azure
         /// <inheritdoc />
         public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
         {
-            await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, statusCode));
+            await storage.ReplaceAsync(new SessionUri(sessionId, uri, statusCode));
         }
 
         private static string EscapeMetadataName(string key)

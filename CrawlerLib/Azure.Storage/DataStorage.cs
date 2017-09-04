@@ -168,14 +168,21 @@ namespace Azure.Storage
         {
             PrepareEntity(entity);
             var cloudTable = await GetOrCreateTableAsync<TEntity>();
-            var tableResult = await cloudTable.ExecuteAsync(TableOperation.Insert(entity));
-            if (tableResult.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            try
+            {
+                var tableResult = await cloudTable.ExecuteAsync(TableOperation.Insert(entity));
+                if (tableResult.HttpStatusCode == (int)HttpStatusCode.Conflict)
+                {
+                    return false;
+                }
+
+                ProcessResult(tableResult);
+                return true;
+            }
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict)
             {
                 return false;
             }
-
-            ProcessResult(tableResult);
-            return true;
         }
 
         /// <inheritdoc />

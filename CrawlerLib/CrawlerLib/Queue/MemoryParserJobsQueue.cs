@@ -47,7 +47,7 @@ namespace CrawlerLib.Queue
         }
 
         /// <inheritdoc />
-        public Task EnqueueAsync(IParserJob job, CancellationToken cancellation)
+        public async Task EnqueueAsync(IParserJob job, CancellationToken cancellation)
         {
             jobs.Enqueue(job);
 
@@ -62,11 +62,15 @@ namespace CrawlerLib.Queue
                 }
             }
 
+            var inserted = await crawlerStorage.EnqueSessionUri(job.SessionId, job.Uri.ToString());
+            if (!inserted)
+            {
+                return;
+            }
+
             sess.Increment();
 
             tasksSemaphore.Release();
-
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
@@ -146,6 +150,8 @@ namespace CrawlerLib.Queue
 
             public async Task Commit(CancellationToken canncellation, int status)
             {
+                await queue.crawlerStorage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), status);
+
                 await session.Decrement(async () =>
                 {
                     queue.sessions.TryRemove(SessionId, out _);

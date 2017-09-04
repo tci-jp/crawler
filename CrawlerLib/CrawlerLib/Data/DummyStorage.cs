@@ -157,7 +157,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task EnqueSessionUri(string sessionId, string uri)
+        public Task<bool> EnqueSessionUri(string sessionId, string uri)
         {
             throw new NotImplementedException();
         }

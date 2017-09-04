@@ -149,7 +149,7 @@ namespace CrawlerLib.Data
         /// <param name="sessionId">Crawling session id.</param>
         /// <param name="uri">Page URI.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task EnqueSessionUri(string sessionId, string uri);
+        Task<bool> EnqueSessionUri(string sessionId, string uri);
 
         /// <summary>
         /// Updates uri crawling state

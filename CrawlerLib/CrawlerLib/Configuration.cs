@@ -50,6 +50,11 @@ namespace CrawlerLib
         public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
         /// <summary>
+        /// Gets or sets crawler Job timeout
+        /// </summary>
+        public TimeSpan CrawlerJobTimeout { get; set; } = TimeSpan.FromMinutes(1);
+
+        /// <summary>
         /// Gets or sets how deep crawler show fallow links from the initial URIs.
         /// 0 means it will crawl only initial URIs.
         /// </summary>

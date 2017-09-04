@@ -109,6 +109,7 @@ namespace CrawlerApi
                         {
                             opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
                         });
+            services.AddApplicationInsightsTelemetry(Configuration);
 
             var storage = new DataStorage(Configuration["CrawlerStorageConnectionString"]);
 

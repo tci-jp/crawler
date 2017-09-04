@@ -49,9 +49,9 @@ namespace CrawlerLib
             config = new Configuration(conf);
 
             client = new HttpClient
-                     {
-                         Timeout = config.RequestTimeout
-                     };
+            {
+                Timeout = config.RequestTimeout
+            };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -105,13 +105,13 @@ namespace CrawlerLib
             foreach (var uri in urisList)
             {
                 var newjob = new ParserJob
-                             {
-                                 OwnerId = ownerId,
-                                 SessionId = sessionid,
-                                 Uri = uri,
-                                 Depth = config.Depth,
-                                 HostDepth = config.HostDepth
-                             };
+                {
+                    OwnerId = ownerId,
+                    SessionId = sessionid,
+                    Uri = uri,
+                    Depth = config.Depth,
+                    HostDepth = config.HostDepth
+                };
 
                 await EnqueueAsync(newjob);
             }
@@ -141,13 +141,13 @@ namespace CrawlerLib
                 foreach (var uri in urisList)
                 {
                     var newjob = new ParserJob
-                                 {
-                                     OwnerId = ownerId,
-                                     SessionId = sessionid,
-                                     Uri = uri,
-                                     Depth = config.Depth,
-                                     HostDepth = config.HostDepth
-                                 };
+                    {
+                        OwnerId = ownerId,
+                        SessionId = sessionid,
+                        Uri = uri,
+                        Depth = config.Depth,
+                        HostDepth = config.HostDepth
+                    };
                     await EnqueueAsync(newjob);
                 }
             }
@@ -209,14 +209,14 @@ namespace CrawlerLib
             }
 
             var newjob = new ParserJob
-                         {
-                             OwnerId = parent.OwnerId,
-                             SessionId = parent.SessionId,
-                             Uri = newUri,
-                             Depth = parent.Depth - 1,
-                             HostDepth = parent.HostDepth,
-                             Referrer = parent.Uri
-                         };
+            {
+                OwnerId = parent.OwnerId,
+                SessionId = parent.SessionId,
+                Uri = newUri,
+                Depth = parent.Depth - 1,
+                HostDepth = parent.HostDepth,
+                Referrer = parent.Uri
+            };
 
             if (parent.Host != newjob.Host)
             {
@@ -282,7 +282,7 @@ namespace CrawlerLib
                 });
         }
 
-        private async Task InternalIncite(ICommitableParserJob job)
+        private async Task InternalIncite(ICommitableParserJob job, CancellationToken cancellation)
         {
             try
             {
@@ -296,8 +296,8 @@ namespace CrawlerLib
                         string page;
                         try
                         {
-                            await totalRequestsSemaphore.WaitAsync(config.CancellationToken);
-                            if (config.CancellationToken.IsCancellationRequested)
+                            await totalRequestsSemaphore.WaitAsync(cancellation);
+                            if (cancellation.IsCancellationRequested)
                             {
                                 break;
                             }
@@ -307,7 +307,7 @@ namespace CrawlerLib
                             lastCode = result.Status;
                             if (config.RetryErrors.Contains(lastCode) || (result.Content == null))
                             {
-                                await Task.Delay(config.RequestErrorRetryDelay);
+                                await Task.Delay(config.RequestErrorRetryDelay, cancellation);
                                 continue;
                             }
 
@@ -333,7 +333,7 @@ namespace CrawlerLib
                                 job.SessionId,
                                 job.Uri.ToString(),
                                 new MemoryStream(Encoding.UTF8.GetBytes(page)),
-                                config.CancellationToken,
+                                cancellation,
                                 metadata);
                         }
                         else
@@ -377,7 +377,7 @@ namespace CrawlerLib
                     {
                         config.Logger.Error($"{job.Uri} - Retry {trycount} - Failed : ", ex);
                         lastException = ex;
-                        await Task.Delay(config.RequestErrorRetryDelay);
+                        await Task.Delay(config.RequestErrorRetryDelay, cancellation);
                     }
                 }
 
@@ -405,7 +405,11 @@ namespace CrawlerLib
                 try
                 {
                     var job = await config.Queue.DequeueAsync(config.CancellationToken);
-                    await InternalIncite(job);
+                    using (var timeout = new CancellationTokenSource(config.CrawlerJobTimeout))
+                    using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
+                    {
+                        await InternalIncite(job, cancellation.Token);
+                    }
                 }
                 catch (OperationCanceledException)
                 {

@@ -152,10 +152,10 @@ namespace CrawlerLib.Queue
             {
                 await queue.crawlerStorage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), status);
 
-                await session.Decrement(async () =>
+                await session.Decrement(() =>
                 {
                     queue.sessions.TryRemove(SessionId, out _);
-                    await queue.crawlerStorage.UpdateSessionState(job.OwnerId, job.SessionId, SessionState.Done);
+                    return Task.CompletedTask;
                 });
             }
         }

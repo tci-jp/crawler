@@ -30,16 +30,14 @@ namespace CrawlerApi.Controllers
     using System.Collections.Async;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
-    using System.IO;
     using System.Linq;
-    using System.Net.Http;
     using System.Net.Mime;
     using System.Threading.Tasks;
     using Azure.Storage;
     using CrawlerLib;
     using CrawlerLib.Data;
-    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Swashbuckle.SwaggerGen.Annotations;
     using SessionState = Models.SessionState;
@@ -51,6 +49,7 @@ namespace CrawlerApi.Controllers
     {
         private readonly ICrawler crawler;
         private readonly ICrawlerStorage crawlerStorage;
+        private readonly ILogger<DefaultApiController> logger;
         private readonly IDataStorage storage;
 
         /// <summary>
@@ -59,11 +58,17 @@ namespace CrawlerApi.Controllers
         /// <param name="storage">Azure storage helper class.</param>
         /// <param name="crawlerStorage">Crawler storage.</param>
         /// <param name="crawler">Crawler class.</param>
-        public DefaultApiController(IDataStorage storage, ICrawlerStorage crawlerStorage, ICrawler crawler)
+        /// <param name="logger">Logger</param>
+        public DefaultApiController(
+            IDataStorage storage,
+            ICrawlerStorage crawlerStorage,
+            ICrawler crawler,
+            ILogger<DefaultApiController> logger)
         {
             this.storage = storage;
             this.crawlerStorage = crawlerStorage;
             this.crawler = crawler;
+            this.logger = logger;
         }
 
         /// <summary>adds or replaces metadata parsing parameters</summary>
@@ -148,8 +153,8 @@ namespace CrawlerApi.Controllers
         [SwaggerOperation("GetMetadata")]
         [SwaggerResponse(200, type: typeof(IList<KeyValuePair<string, string>>))]
         public async Task<IActionResult> GetMetadata(
-            [FromQuery][Required] string ownerId,
-            [FromQuery][Required] string uri)
+            [FromQuery] [Required] string ownerId,
+            [FromQuery] [Required] string uri)
         {
             if (ownerId == null)
             {
@@ -212,7 +217,7 @@ namespace CrawlerApi.Controllers
                 throw new ArgumentNullException(nameof(ownerId));
             }
 
-            if (parserIds != null)
+            if (parserIds?.Any() == true)
             {
                 var result = new List<ParserParameters>();
                 foreach (var id in parserIds)
@@ -239,11 +244,12 @@ namespace CrawlerApi.Controllers
         [Route("/CrawlerApi/1.0.0/incite")]
         [SwaggerOperation("Incite")]
         [SwaggerResponse(200, type: typeof(string))]
-        public async Task<IActionResult> Incite([FromBody][Required] CrawlerConfiguration configuration)
+        public async Task<IActionResult> Incite([FromBody] [Required] CrawlerConfiguration configuration)
         {
             var session = await crawler.InciteStart(
                               configuration.OwnerId,
                               configuration.Uris.Select(u => new Uri(u)));
+            crawler.RunParserWorkers(4); // TODO Workaround, need replace to webjobs
 
             return new ObjectResult(session);
         }

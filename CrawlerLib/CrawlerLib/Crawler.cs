@@ -368,7 +368,7 @@ namespace CrawlerLib
                     catch (TaskCanceledException ex)
                     {
                         config.Logger.Error($"{job.Uri} - Retry {trycount} - Timeout");
-                        if (config.CancellationToken.IsCancellationRequested)
+                        if (cancellation.IsCancellationRequested)
                         {
                             return;
                         }
@@ -388,7 +388,7 @@ namespace CrawlerLib
                     throw lastException;
                 }
 
-                await job.Commit(config.CancellationToken, (int)lastCode);
+                await job.Commit(cancellation, (int)lastCode);
             }
             catch (TaskCanceledException)
             {
@@ -404,25 +404,11 @@ namespace CrawlerLib
         {
             while (!config.CancellationToken.IsCancellationRequested)
             {
-                try
+                using (var timeout = new CancellationTokenSource(config.CrawlerJobTimeout))
+                using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
                 {
-                    var job = await config.Queue.DequeueAsync(config.CancellationToken);
-                    using (var timeout = new CancellationTokenSource(config.CrawlerJobTimeout))
-                    using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
-                    {
-                        await InternalIncite(job, cancellation.Token);
-                    }
-                }
-                catch (OperationCanceledException ex)
-                {
-                    if (!config.CancellationToken.IsCancellationRequested)
-                    {
-                        config.Logger.Error(ex);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    config.Logger.Error(ex);
+                    var job = await config.Queue.DequeueAsync(cancellation.Token);
+                    await InternalIncite(job, cancellation.Token);
                 }
             }
         }

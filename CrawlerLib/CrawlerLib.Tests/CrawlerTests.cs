@@ -81,10 +81,11 @@ namespace CrawlerLib.Tests
             sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session });
             sesspage.Items.Count().Should().Be(1);
             var sessinfo = sesspage.Items.Single();
-            sessinfo.State.Should().Be(SessionState.Done);
+            sessinfo.State.Should().Be(SessionState.InProcess);
 
             var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(url);
+            urls.All(u => u.State == 200).Should().Be(true);
 
             using (var stream = await crawlerConfig.Storage.GetUriContent(Owner, url))
             {
@@ -125,10 +126,12 @@ namespace CrawlerLib.Tests
             sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session });
             sesspage.Items.Count().Should().Be(1);
             sessinfo = sesspage.Items.Single();
-            sessinfo.State.Should().Be(SessionState.Done);
+            sessinfo.State.Should().Be(SessionState.InProcess);
 
             var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(url);
+            urls.All(u => u.State == 200).Should().Be(true);
+
             var resultMetadata = await crawlerConfig.Storage.GetUriMetadata(Owner, url).ToListAsync();
             resultMetadata.Select(t => t.Value.ToString()).Should().BeEquivalentTo(result);
             resultMetadata.Select(t => t.Key).Should().BeEquivalentTo("field");

@@ -42,7 +42,7 @@ namespace CrawlerApi.Models
     /// </summary>
     [DataContract]
     [Table("parserParameters")]
-    public class ParserParameters : TableEntity, IEquatable<ParserParameters>
+    public class ParserParameters : ComplexTableEntity, IEquatable<ParserParameters>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ParserParameters" /> class.
@@ -106,16 +106,17 @@ namespace CrawlerApi.Models
         }
 
         /// <summary>
-        /// Gets or Sets CustomFields
+        /// Gets or sets CustomFields
         /// </summary>
         [DataMember(Name = "customFields")]
-        public List<ParserParametersCustomFields> CustomFields { get; }
+        public List<ParserParametersCustomFields> CustomFields { get; set; }
 
         /// <summary>
         /// Gets or sets owner id
         /// </summary>
         [DataMember(Name = "ownerId")]
         [Required]
+        [PartitionKey]
         public string OwnerId
         {
             get => PartitionKey;
@@ -134,16 +135,16 @@ namespace CrawlerApi.Models
         }
 
         /// <summary>
-        /// Gets use Microdata attributes for parsing metadata
+        /// Gets or sets use Microdata attributes for parsing metadata
         /// </summary>
         [DataMember(Name = "useMicrodata")]
-        public bool? UseMicrodata { get; }
+        public bool? UseMicrodata { get; set; }
 
         /// <summary>
-        /// Gets use RDFa attributes for parsing metadata.
+        /// Gets or sets use RDFa attributes for parsing metadata.
         /// </summary>
         [DataMember(Name = "useRDFa")]
-        public bool? UseRdFa { get; }
+        public bool? UseRdFa { get; set; }
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>

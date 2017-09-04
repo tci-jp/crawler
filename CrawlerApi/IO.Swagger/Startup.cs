@@ -38,6 +38,8 @@ namespace CrawlerApi
     using CrawlerLib.Metadata;
     using CrawlerLib.Queue;
     using JetBrains.Annotations;
+    using Microsoft.ApplicationInsights;
+    using Microsoft.ApplicationInsights.Extensibility;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -133,6 +135,7 @@ namespace CrawlerApi
             {
                 Storage = crawlerStorage,
                 Queue = queue,
+                Logger = new AppInsLogger(new TelemetryClient(new TelemetryConfiguration(Configuration["ApplicationInsightsKey"]))),
                 Depth = 0,
                 HostDepth = 0,
                 MetadataExtractors = new IMetadataExtractor[]

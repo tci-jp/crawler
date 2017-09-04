@@ -33,6 +33,7 @@ namespace CrawlerApi.Models
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
+    using Azure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
 
@@ -40,6 +41,7 @@ namespace CrawlerApi.Models
     /// Parameters for parsing pages.
     /// </summary>
     [DataContract]
+    [Table("parserParameters")]
     public class ParserParameters : TableEntity, IEquatable<ParserParameters>
     {
         /// <summary>

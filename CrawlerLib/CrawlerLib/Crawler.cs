@@ -168,9 +168,11 @@ namespace CrawlerLib
         {
             for (var worker = 0; worker < workers; worker++)
             {
-                var task = Task.Run(
+                var task = Task.Factory.StartNew(
                     async () => { await InternalRunParsersJobs(); },
-                    config.CancellationToken);
+                    config.CancellationToken,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default);
             }
         }
 
@@ -411,9 +413,12 @@ namespace CrawlerLib
                         await InternalIncite(job, cancellation.Token);
                     }
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
-                    // Ignore
+                    if (!config.CancellationToken.IsCancellationRequested)
+                    {
+                        config.Logger.Error(ex);
+                    }
                 }
                 catch (Exception ex)
                 {

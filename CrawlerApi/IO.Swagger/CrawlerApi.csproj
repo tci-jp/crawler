@@ -30,7 +30,13 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
   </ItemGroup>
-
+  <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">
+    <ItemGroup>
+      <ExeFile Include="bin\$(Configuration)\$(TargetFramework)\*.exe" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ExeFile)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="false" />
+  </Target>
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.0" />

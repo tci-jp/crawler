@@ -288,6 +288,7 @@ namespace CrawlerLib
         {
             try
             {
+                await storage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), 1);
                 Exception lastException = null;
                 var lastCode = HttpStatusCode.OK;
 
@@ -385,6 +386,8 @@ namespace CrawlerLib
 
                 if (lastException != null)
                 {
+                    await job.Commit(cancellation, -1, lastException.ToString());
+
                     throw lastException;
                 }
 

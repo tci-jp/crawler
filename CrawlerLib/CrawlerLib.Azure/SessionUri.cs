@@ -28,11 +28,18 @@ namespace CrawlerLib.Azure
         /// <param name="sessionId">Crawler session Id.</param>
         /// <param name="uri">Found URI.</param>
         /// <param name="state">Crawling state as HTTP status code.</param>
-        public SessionUri(string sessionId, string uri, int state)
+        /// <param name="message">Error message</param>
+        public SessionUri(string sessionId, string uri, int state, string message = null)
             : base(sessionId, Codec.EncodeString(uri))
         {
             State = state;
+            Message = message;
         }
+
+        /// <summary>
+        /// Gets or sets additional error message
+        /// </summary>
+        public string Message { get; set; }
 
         /// <summary>
         /// Gets crawling session Id
@@ -40,16 +47,16 @@ namespace CrawlerLib.Azure
         [PartitionKey]
         public string SessionId => PartitionKey;
 
-        /// <summary>
-        /// Gets a value indicating whether crawling was stared.
-        /// </summary>
-        [IgnoreProperty]
-        public bool WasStarted => State != 0;
-
         /// <inheritdoc />
         public int State { get; set; }
 
         /// <inheritdoc />
         public string Uri => Codec.DecodeString(RowKey);
+
+        /// <summary>
+        /// Gets a value indicating whether crawling was stared.
+        /// </summary>
+        [IgnoreProperty]
+        public bool WasStarted => State != 0;
     }
 }

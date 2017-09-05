@@ -148,7 +148,7 @@ namespace CrawlerLib.Queue
 
             public Uri Uri => job.Uri;
 
-            public async Task Commit(CancellationToken canncellation, int status)
+            public async Task Commit(CancellationToken canncellation, int status, string toString)
             {
                 await queue.crawlerStorage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), status);
 

@@ -107,7 +107,7 @@ namespace CrawlerLib.Azure
 
                     var pairkey = EscapeMetadataName(pair.Key);
                     await storage.InsertAsync(
-                        new MetadataString(ownerId, record.BlobName, Codec.EncodeString(pair.Key), pair.Value));
+                        new MetadataString(ownerId, record.BlobName, pair.Key, pair.Value));
                     var metaname = pairkey;
                     for (var index = 1; blobMeta.ContainsKey(metaname); index++)
                     {
@@ -209,7 +209,7 @@ namespace CrawlerLib.Azure
             var rec = new CrawlRecord(ownerId, uri);
             return storage
                 .QueryAsync<MetadataString>(m => (m.OwnerId == ownerId) && (m.BlobName == rec.BlobName), cancellation)
-                .Select(m => new KeyValuePair<string, string>(Codec.DecodeString(m.Name), m.Value));
+                .Select(m => new KeyValuePair<string, string>(m.Name, m.Value));
         }
 
         /// <inheritdoc />

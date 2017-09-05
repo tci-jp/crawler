@@ -27,6 +27,7 @@
 namespace CrawlerApi.Models
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
     using System.Text;
@@ -64,6 +65,12 @@ namespace CrawlerApi.Models
         [DataMember(Name = "uri")]
         [Required]
         public string Uri { get; }
+
+        /// <summary>
+        /// Gets or sets metadata for this page.
+        /// </summary>
+        [DataMember(Name = "metadata")]
+        public List<KeyValuePair<string, string>> Metadata { get; set; }
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>

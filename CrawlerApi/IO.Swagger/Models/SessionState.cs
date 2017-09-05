@@ -39,6 +39,6 @@ namespace CrawlerApi.Models
         /// </summary>
         [EnumMember(Value = "error")]
         [DataMember(Name = "error")]
-        Error = 4
+        Error = -1
     }
 }

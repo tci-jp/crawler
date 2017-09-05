@@ -98,6 +98,7 @@ namespace CrawlerApi.Controllers
         /// <summary>get list of crawling sessions information by list of ids</summary>
         /// <param name="ownerId">Session owner id.</param>
         /// <param name="sessionIds">Collection of session ids.</param>
+        /// <param name="getMetadata">Retrieve metadata if true.</param>
         /// <param name="pagesize">Number of items in a page. 10 by default.</param>
         /// <param name="requestId">Paginated request id for continuation.</param>
         /// <response code="200">list of selected sessions information</response>
@@ -110,6 +111,7 @@ namespace CrawlerApi.Controllers
         public async Task<IActionResult> GetIncites(
             [FromQuery] [Required] string ownerId,
             [FromQuery] List<string> sessionIds = null,
+            [FromQuery] bool getMetadata = false,
             [FromQuery] int? pagesize = null,
             [FromQuery] string requestId = null)
         {
@@ -125,13 +127,16 @@ namespace CrawlerApi.Controllers
                            requestId);
             var sessionsTasks = page.Items.Select(async sess =>
             {
-                var urls = await crawlerStorage.GetSessionUris(sess.Id).ToListAsync();
-                var sessionUris = urls.Select(u => new SessionUri(u.Uri, HttpStateToSessionState(u.State)));
+                var urls = crawlerStorage.GetSessionUris(sess.Id);
+                var sessionUris = await GetSessionUris(urls, ownerId, getMetadata);
+
                 var state = ToSessionState(sess.State);
-                if ((state == SessionState.InProcess) && urls.All(u => u.State != 0))
+                if ((state == SessionState.InProcess) &&
+                    sessionUris.All(u => (u.State != SessionState.InProcess) && (u.State != SessionState.NotStarted)))
                 {
                     state = SessionState.Done;
                 }
+
                 return new Session(sess.Id, sessionUris.ToList(), state);
             });
 
@@ -249,7 +254,6 @@ namespace CrawlerApi.Controllers
             var session = await crawler.InciteStart(
                               configuration.OwnerId,
                               configuration.Uris.Select(u => new Uri(u)));
-            crawler.RunParserWorkers(4); // TODO Workaround, need replace to webjobs
 
             return new ObjectResult(session);
         }
@@ -260,11 +264,37 @@ namespace CrawlerApi.Controllers
             {
                 case 0:
                     return SessionState.NotStarted;
+                case 1:
+                    return SessionState.InProcess;
                 case 200:
                     return SessionState.Done;
                 default:
                     return SessionState.Error;
             }
+        }
+
+        private async Task<SessionUri> GetSessionUriInfoAsync(IUriState u, bool getMetadata, string ownerId)
+        {
+            var result = new SessionUri(u.Uri, HttpStateToSessionState(u.State));
+            if (getMetadata)
+            {
+                var meta = await crawlerStorage.GetUriMetadata(ownerId, u.Uri).ToListAsync();
+                result.Metadata = meta;
+            }
+
+            return result;
+        }
+
+        private async Task<List<SessionUri>> GetSessionUris(
+            System.Collections.Async.IAsyncEnumerable<IUriState> urls,
+            string ownerId,
+            bool getMetadata)
+        {
+            var result = new List<SessionUri>();
+
+            await urls.ForEachAsync(async u => { result.Add(await GetSessionUriInfoAsync(u, getMetadata, ownerId)); });
+
+            return result;
         }
 
         private SessionState ToSessionState(CrawlerLib.Data.SessionState sessState)

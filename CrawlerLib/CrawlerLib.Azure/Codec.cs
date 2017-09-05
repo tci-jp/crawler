@@ -5,6 +5,7 @@
 namespace CrawlerLib.Azure
 {
     using System;
+    using System.Security.Cryptography;
     using System.Text;
 
     /// <summary>
@@ -30,6 +31,29 @@ namespace CrawlerLib.Azure
         public static string EncodeString(string str)
         {
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
+        }
+
+        /// <summary>
+        /// Calculate MD5 Hash for string as string.
+        /// </summary>
+        /// <param name="s">Input string to hash.</param>
+        /// <returns>String with hex MD5.</returns>
+        public static string HashString(string s)
+        {
+            var inputBytes = Encoding.UTF8.GetBytes(s);
+
+            using (var md5 = MD5.Create())
+            {
+                var hash = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                for (var i = 0; i < hash.Length; i++)
+                {
+                    sb.Append(hash[i].ToString("X2"));
+                }
+
+                return sb.ToString();
+            }
         }
     }
 }

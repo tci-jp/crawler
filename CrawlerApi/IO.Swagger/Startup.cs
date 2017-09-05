@@ -45,6 +45,7 @@ namespace CrawlerApi
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
     using Swashbuckle.Swagger.Model;
     using Swashbuckle.SwaggerGen.Annotations;
@@ -110,6 +111,7 @@ namespace CrawlerApi
                         opts =>
                         {
                             opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                            opts.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                         });
             services.AddApplicationInsightsTelemetry(Configuration);
 

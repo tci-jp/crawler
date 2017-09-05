@@ -52,7 +52,7 @@ namespace CrawlerLib
         /// <summary>
         /// Gets or sets crawler Job timeout
         /// </summary>
-        public TimeSpan CrawlerJobTimeout { get; set; } = TimeSpan.FromMinutes(1);
+        public TimeSpan CrawlerJobTimeout { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
         /// Gets or sets how deep crawler show fallow links from the initial URIs.

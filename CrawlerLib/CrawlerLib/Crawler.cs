@@ -176,10 +176,10 @@ namespace CrawlerLib
             }
         }
 
-        private static(bool nofollow, bool noindex) CheckNofollowNoindex(HtmlDocument html)
+        private static void CheckNofollowNoindex(HtmlDocument html, out bool nofollow, out bool noindex)
         {
-            var nofollow = false;
-            var noindex = false;
+            nofollow = false;
+            noindex = false;
             foreach (var meta in html.DocumentNode.SelectNodes("//meta[name='robots']")?
                                      .Select(m => m.Attributes["content"].Value) ??
                                  new string[0])
@@ -199,8 +199,6 @@ namespace CrawlerLib
                     break;
                 }
             }
-
-            return (nofollow, noindex);
         }
 
         private async Task AddUrl(IParserJob parent, Uri newUri)
@@ -324,7 +322,7 @@ namespace CrawlerLib
                         var html = new HtmlDocument();
                         html.LoadHtml(page);
 
-                        (var nofollow, var noindex) = CheckNofollowNoindex(html);
+                        CheckNofollowNoindex(html, out var nofollow, out var noindex);
 
                         var trace = new StringBuilder(job.Uri.ToString()).Append(" -");
 
@@ -407,11 +405,23 @@ namespace CrawlerLib
         {
             while (!config.CancellationToken.IsCancellationRequested)
             {
-                using (var timeout = new CancellationTokenSource(config.CrawlerJobTimeout))
-                using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
+                try
                 {
-                    var job = await config.Queue.DequeueAsync(cancellation.Token);
-                    await InternalIncite(job, cancellation.Token);
+                    using (var timeout = new CancellationTokenSource(config.CrawlerJobTimeout))
+                    using (var cancellation =
+                        CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
+                    {
+                        var job = await config.Queue.DequeueAsync(cancellation.Token);
+                        await InternalIncite(job, cancellation.Token);
+                    }
+                }
+                catch (OperationCanceledException) when (config.CancellationToken.IsCancellationRequested)
+                {
+                    // Ignore
+                }
+                catch (Exception ex)
+                {
+                    config.Logger.Error(ex);
                 }
             }
         }

@@ -95,18 +95,19 @@ namespace CrawlerLib.Tests
         }
 
         [Theory]
-        [InlineData("fn:match(string(//div/@id),'(\\d+)')", "http://www.dectech.tokyo/", new[]
+        [InlineData("fn:match(//div/@class, '\\d+')", "http://www.dectech.tokyo/", new[]
                                                                                          {
-                                                                                             "02"
+                                                                                            "0",
+                                                                                            "2",
+                                                                                            "3"
                                                                                          })]
-        [InlineData("fn:match(string(//input/@id), '(\\D+)')", "http://www.dectech.tokyo/", new[]
+        [InlineData("fn:match(//a/@class, '\\D+')", "http://www.dectech.tokyo/", new[]
                                                                                             {
-                                                                                                "q"
+                                                                                                "btn btn-outline-secondary",
+                                                                                                "card-footer",
+                                                                                                "footer-link",
+                                                                                                "navbar-brand"
                                                                                             })]
-        [InlineData("fn:match(string(//h1/@class), '(\\D+\\d+)')", "http://www.dectech.tokyo/", new[]
-                                                                                                {
-                                                                                                    "display-4"
-                                                                                                })]
         public async Task TestCustomParsing(string xpath, string url, string[] result)
         {
             crawlerConfig.HostDepth = 0;
@@ -134,7 +135,7 @@ namespace CrawlerLib.Tests
 
             var resultMetadata = await crawlerConfig.Storage.GetUriMetadata(Owner, url).ToListAsync();
             resultMetadata.Select(t => t.Value.ToString()).Should().BeEquivalentTo(result);
-            resultMetadata.Select(t => t.Key).Should().BeEquivalentTo("field");
+            resultMetadata.Select(t => t.Key).Should().Contain("field");
         }
 
         [Theory]

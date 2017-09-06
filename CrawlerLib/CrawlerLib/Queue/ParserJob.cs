@@ -43,16 +43,22 @@ namespace CrawlerLib.Queue
         public string OwnerId { get; set; }
 
         /// <summary>
-        /// Gets or sets crawling session id.
+        /// Gets or sets partser parameters.
         /// </summary>
-        [DataMember(Name = "sessionId")]
-        public string SessionId { get; set; }
+        [DataMember(Name = "parserParameters")]
+        public ParserParameters ParserParameters { get; set; }
 
         /// <summary>
         /// Gets or sets referer for URI.
         /// </summary>
         [DataMember(Name = "referrer")]
         public Uri Referrer { get; set; }
+
+        /// <summary>
+        /// Gets or sets crawling session id.
+        /// </summary>
+        [DataMember(Name = "sessionId")]
+        public string SessionId { get; set; }
 
         /// <summary>
         /// Gets or sets uRI to parse.

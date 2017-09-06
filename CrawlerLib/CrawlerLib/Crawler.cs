@@ -49,9 +49,9 @@ namespace CrawlerLib
             config = new Configuration(conf);
 
             client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
+                     {
+                         Timeout = config.RequestTimeout
+                     };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -105,13 +105,13 @@ namespace CrawlerLib
             foreach (var uri in urisList)
             {
                 var newjob = new ParserJob
-                {
-                    OwnerId = ownerId,
-                    SessionId = sessionid,
-                    Uri = uri,
-                    Depth = config.Depth,
-                    HostDepth = config.HostDepth
-                };
+                             {
+                                 OwnerId = ownerId,
+                                 SessionId = sessionid,
+                                 Uri = uri,
+                                 Depth = config.Depth,
+                                 HostDepth = config.HostDepth
+                             };
 
                 await EnqueueAsync(newjob);
             }
@@ -125,11 +125,15 @@ namespace CrawlerLib
         /// </summary>
         /// <param name="ownerId">Session owner id.</param>
         /// <param name="uris">URIs to crawl.</param>
+        /// <param name="parserParameters">Parsing parameters.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
-        public async Task<string> InciteStart(string ownerId, IEnumerable<Uri> uris)
+        public async Task<string> InciteStart(
+            string ownerId,
+            IEnumerable<UriParameter> uris,
+            ParserParameters parserParameters = null)
         {
-            var urisList = new List<Uri>(uris);
+            var urisList = new List<UriParameter>(uris);
             if (urisList.Count == 0)
             {
                 return null;
@@ -140,15 +144,23 @@ namespace CrawlerLib
             {
                 foreach (var uri in urisList)
                 {
-                    var newjob = new ParserJob
+                    try
                     {
-                        OwnerId = ownerId,
-                        SessionId = sessionid,
-                        Uri = uri,
-                        Depth = config.Depth,
-                        HostDepth = config.HostDepth
-                    };
-                    await EnqueueAsync(newjob);
+                        var newjob = new ParserJob
+                                     {
+                                         OwnerId = ownerId,
+                                         SessionId = sessionid,
+                                         Uri = new Uri(uri.Uri),
+                                         Depth = uri.Depth ?? config.Depth,
+                                         HostDepth = uri.HostDepth ?? config.HostDepth,
+                                         ParserParameters = parserParameters
+                                     };
+                        await EnqueueAsync(newjob);
+                    }
+                    catch (Exception ex)
+                    {
+                        await storage.UpdateSessionUri(sessionid, uri.Uri, (int)SessionState.Error, ex.ToString());
+                    }
                 }
             }
             catch (Exception)
@@ -209,14 +221,14 @@ namespace CrawlerLib
             }
 
             var newjob = new ParserJob
-            {
-                OwnerId = parent.OwnerId,
-                SessionId = parent.SessionId,
-                Uri = newUri,
-                Depth = parent.Depth - 1,
-                HostDepth = parent.HostDepth,
-                Referrer = parent.Uri
-            };
+                         {
+                             OwnerId = parent.OwnerId,
+                             SessionId = parent.SessionId,
+                             Uri = newUri,
+                             Depth = parent.Depth - 1,
+                             HostDepth = parent.HostDepth,
+                             Referrer = parent.Uri
+                         };
 
             if (parent.Host != newjob.Host)
             {
@@ -244,8 +256,6 @@ namespace CrawlerLib
                 return;
             }
 
-            await config.Storage.EnqueSessionUri(parent.SessionId, newjob.Uri.ToString());
-
             await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
         }
 
@@ -259,9 +269,14 @@ namespace CrawlerLib
             await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
         }
 
-        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html)
+        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html, IParserJob job)
         {
-            return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
+            if (job.ParserParameters == null)
+            {
+                return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
+            }
+
+            return job.ParserParameters.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html));
         }
 
         private Task<Robots> GetRobotsTxt(Uri host)
@@ -328,7 +343,7 @@ namespace CrawlerLib
 
                         if (!noindex)
                         {
-                            var metadata = ExtractMetadata(html);
+                            var metadata = ExtractMetadata(html, job);
                             await storage.DumpUriContent(
                                 job.OwnerId,
                                 job.SessionId,

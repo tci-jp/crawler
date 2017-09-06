@@ -21,7 +21,7 @@ namespace CrawlerLib.Queue
         private readonly SemaphoreSlim tasksSemaphore = new SemaphoreSlim(0, int.MaxValue);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryParserJobsQueue"/> class.
+        /// Initializes a new instance of the <see cref="MemoryParserJobsQueue" /> class.
         /// </summary>
         /// <param name="crawlerStorage">Crawler Storage service.</param>
         public MemoryParserJobsQueue(ICrawlerStorage crawlerStorage)
@@ -35,12 +35,14 @@ namespace CrawlerLib.Queue
             await tasksSemaphore.WaitAsync(cancellation);
             if (jobs.TryDequeue(out var job))
             {
-                if (sessions.TryGetValue(job.SessionId, out var sess))
+                var sess = sessions.GetOrAdd(job.SessionId, id =>
                 {
-                    return new DummyCommitableParserJob(job, sess, this);
-                }
+                    var s = new Session();
+                    s.Increment();
+                    return s;
+                });
 
-                throw new InvalidOperationException("Session is not found");
+                return new DummyCommitableParserJob(job, sess, this);
             }
 
             throw new InvalidOperationException("Queus is empty");
@@ -91,6 +93,20 @@ namespace CrawlerLib.Queue
             private readonly SemaphoreSlim finished = new SemaphoreSlim(0, 1);
             private int jobs;
 
+            public async Task Decrement(Func<Task> action)
+            {
+                if (Interlocked.Decrement(ref jobs) == 0)
+                {
+                    await action();
+                    finished.Release();
+                }
+            }
+
+            public void Increment()
+            {
+                Interlocked.Increment(ref jobs);
+            }
+
             public async Task WaitAsync(CancellationToken cancellation)
             {
                 try
@@ -100,20 +116,6 @@ namespace CrawlerLib.Queue
                 finally
                 {
                     finished.Dispose();
-                }
-            }
-
-            public void Increment()
-            {
-                Interlocked.Increment(ref jobs);
-            }
-
-            public async Task Decrement(Func<Task> action)
-            {
-                if (Interlocked.Decrement(ref jobs) == 0)
-                {
-                    await action();
-                    finished.Release();
                 }
             }
         }
@@ -141,6 +143,8 @@ namespace CrawlerLib.Queue
             public int HostDepth => job.HostDepth;
 
             public string OwnerId => job.OwnerId;
+
+            public ParserParameters ParserParameters => job.ParserParameters;
 
             public Uri Referrer => job.Referrer;
 

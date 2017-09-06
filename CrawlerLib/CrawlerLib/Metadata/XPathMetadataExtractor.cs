@@ -8,6 +8,7 @@ namespace CrawlerLib.Metadata
     using System.Collections.Generic;
     using System.Xml.XPath;
     using HtmlAgilityPack;
+    using Queue;
 
     /// <summary>
     /// Metadata extractor using extended xpath expressions.
@@ -23,15 +24,15 @@ namespace CrawlerLib.Metadata
         /// Initializes a new instance of the <see cref="XPathMetadataExtractor" /> class.
         /// </summary>
         /// <param name="xpaths">Collection of pairs of xpath expressions and field names.</param>
-        public XPathMetadataExtractor(IEnumerable<KeyValuePair<string, string>> xpaths)
+        public XPathMetadataExtractor(IEnumerable<XPathCustomFields> xpaths)
         {
             var expressions = new List<KeyValuePair<XPathExpression, string>>();
             foreach (var pair in xpaths)
             {
-                var exp = XPathExpression.Compile(pair.Key);
+                var exp = XPathExpression.Compile(pair.XPath);
                 exp.SetContext(context);
 
-                expressions.Add(new KeyValuePair<XPathExpression, string>(exp, pair.Value));
+                expressions.Add(new KeyValuePair<XPathExpression, string>(exp, pair.Name));
             }
 
             this.xpaths = expressions;

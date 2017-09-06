@@ -9,6 +9,7 @@ namespace CrawlerLib.Tests.XPath
     using FluentAssertions;
     using HtmlAgilityPack;
     using Metadata;
+    using Queue;
     using Xunit;
 
     public class XPathMetadataExtractorTests
@@ -21,7 +22,7 @@ namespace CrawlerLib.Tests.XPath
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(doccontent);
-            var extractor = new XPathMetadataExtractor(new[] { new KeyValuePair<string, string>(xpath, "field") });
+            var extractor = new XPathMetadataExtractor(new[] { new XPathCustomFields { XPath = xpath, Name = "field" } });
             var meta = extractor.ExtractMetadata(doc);
             meta.Select(m => m.Value).ShouldBeEquivalentTo(result);
         }

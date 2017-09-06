@@ -76,7 +76,7 @@ namespace CrawlerApi.Models
             string parserId = null,
             bool? useRdFa = null,
             bool? useMicrodata = null,
-            List<ParserParametersCustomFields> customFields = null)
+            List<ParserParametersXPathCustomFields> customFields = null)
             : base(ownerId, parserId)
         {
             // to ensure "OwnerId" is required (not null)
@@ -109,7 +109,7 @@ namespace CrawlerApi.Models
         /// Gets or sets CustomFields
         /// </summary>
         [DataMember(Name = "customFields")]
-        public List<ParserParametersCustomFields> CustomFields { get; set; }
+        public List<ParserParametersXPathCustomFields> CustomFields { get; set; }
 
         /// <summary>
         /// Gets or sets owner id

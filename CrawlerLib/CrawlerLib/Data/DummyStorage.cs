@@ -110,7 +110,7 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task UpdateSessionUri(string sessionId, string uri, int statusCode)
+        public Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null)
         {
             throw new NotImplementedException();
         }

@@ -57,5 +57,11 @@ namespace CrawlerLib.Queue
         /// </summary>
         [DataMember(Name = "uri")]
         Uri Uri { get; }
+
+        /// <summary>
+        /// Gets partser parameters.
+        /// </summary>
+        [DataMember(Name = "parserParameters")]
+        ParserParameters ParserParameters { get;  }
     }
 }

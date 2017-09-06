@@ -157,8 +157,9 @@ namespace CrawlerLib.Data
         /// <param name="sessionId">Crawling session id.</param>
         /// <param name="uri">Page URI.</param>
         /// <param name="statusCode">Crawling Http status code.</param>
+        /// <param name="message">Error message.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task UpdateSessionUri(string sessionId, string uri, int statusCode);
+        Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null);
 
         /// <summary>
         /// Gets metadata parsed from URI

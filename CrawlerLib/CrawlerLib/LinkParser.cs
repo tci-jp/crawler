@@ -14,7 +14,7 @@ namespace CrawlerLib
         /// <inheritdoc />
         public IEnumerable<string> ParseLinks(HtmlDocument doc)
         {
-            return doc.DocumentNode.SelectNodes("//a")
+            return doc.DocumentNode.SelectNodes("//a|//link[@rel='next' or @rel='prev' or @rel='search']")
                       ?.Select(l => l.Attributes["href"]).Where(l => l != null)
                       .Select(l => l.Value)
                       .Where(l => !string.IsNullOrWhiteSpace(l)) ?? new List<string>();

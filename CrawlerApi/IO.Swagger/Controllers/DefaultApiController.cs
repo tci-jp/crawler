@@ -36,10 +36,12 @@ namespace CrawlerApi.Controllers
     using Azure.Storage;
     using CrawlerLib;
     using CrawlerLib.Data;
+    using CrawlerLib.Queue;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Models;
     using Swashbuckle.SwaggerGen.Annotations;
+    using ParserParameters = Models.ParserParameters;
     using SessionState = Models.SessionState;
 
     /// <summary>
@@ -251,9 +253,25 @@ namespace CrawlerApi.Controllers
         [SwaggerResponse(200, type: typeof(string))]
         public async Task<IActionResult> Incite([FromBody] [Required] CrawlerConfiguration configuration)
         {
+            CrawlerLib.Queue.ParserParameters param = null;
+            if (configuration.ParserId != null)
+            {
+                var pp = await storage.RetreiveAsync(
+                             new ParserParameters(configuration.OwnerId, configuration.ParserId));
+
+                param = new CrawlerLib.Queue.ParserParameters
+                {
+                    UseRdFa = pp.UseRdFa ?? false,
+                    UseMicrodata = pp.UseMicrodata ?? false,
+                    XPathCustomFields = pp.CustomFields?.Select(c => new XPathCustomFields { Name = c.Name, XPath = c.XPath }).ToList()
+                };
+            }
+
             var session = await crawler.InciteStart(
                               configuration.OwnerId,
-                              configuration.Uris.Select(u => new Uri(u)));
+                              configuration.Uris,
+                              param);
+            crawler.RunParserWorkers(1); // TODO Make as WebJob
 
             return new ObjectResult(session);
         }

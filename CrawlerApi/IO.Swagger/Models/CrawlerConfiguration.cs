@@ -33,6 +33,7 @@ namespace CrawlerApi.Models
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
+    using CrawlerLib.Data;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -47,25 +48,21 @@ namespace CrawlerApi.Models
         /// <param name="ownerId">id used to keep history of requests and blobs collection (required).</param>
         /// <param name="parserId">Custom parser Id</param>
         /// <param name="uris">array of URIs to crawl (required).</param>
-        public CrawlerConfiguration(string ownerId = null, string parserId = null, List<string> uris = null)
+        public CrawlerConfiguration(string ownerId = null, string parserId = null, List<UriParameter> uris = null)
         {
             ParserId = parserId;
 
             // to ensure "OwnerId" is required (not null)
             OwnerId =
-                ownerId ?? throw new InvalidDataException(
+                ownerId ??
+                throw new InvalidDataException(
                     "OwnerId is a required property for CrawlerConfiguration and cannot be null");
 
             // to ensure "Uris" is required (not null)
-            Uris = uris ?? throw new InvalidDataException(
+            Uris = uris ??
+                   throw new InvalidDataException(
                        "Uris is a required property for CrawlerConfiguration and cannot be null");
         }
-
-        /// <summary>
-        /// Gets or Sets ParserId for parsing settings
-        /// </summary>
-        [DataMember(Name = "parserId")]
-        public string ParserId { get; }
 
         /// <summary>
         /// Gets id used to keep history of requests and blobs collection
@@ -75,11 +72,17 @@ namespace CrawlerApi.Models
         public string OwnerId { get; }
 
         /// <summary>
+        /// Gets or Sets ParserId for parsing settings
+        /// </summary>
+        [DataMember(Name = "parserId")]
+        public string ParserId { get; }
+
+        /// <summary>
         /// Gets array of URIs to crawl
         /// </summary>
         [DataMember(Name = "uris")]
         [Required]
-        public List<string> Uris { get; }
+        public List<UriParameter> Uris { get; }
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>

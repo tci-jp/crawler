@@ -141,6 +141,8 @@ namespace CrawlerLib.Azure
 
             public Uri Uri => job.Uri;
 
+            public ParserParameters ParserParameters => job.ParserParameters;
+
             public async Task Commit(CancellationToken canncellation, int status, string errorMessage)
             {
                 await storage.ReplaceAsync(new SessionUri(job.SessionId, job.Uri.ToString(), status, errorMessage));

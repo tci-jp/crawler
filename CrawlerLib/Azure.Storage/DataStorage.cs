@@ -91,10 +91,17 @@ namespace Azure.Storage
             where TEntity : TableEntity
         {
             var retrieveOperation = TableOperation.Delete(entity);
-            var retrievedResult = await GetTable<TEntity>()
-                                      .ExecuteAsync(retrieveOperation)
-                                      .ConfigureAwait(false);
-            return retrievedResult.HttpStatusCode == 200;
+            try
+            {
+                var retrievedResult = await GetTable<TEntity>()
+                                          .ExecuteAsync(retrieveOperation)
+                                          .ConfigureAwait(false);
+                return retrievedResult.HttpStatusCode == 200;
+            }
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.NotFound)
+            {
+                return false;
+            }
         }
 
         /// <inheritdoc />

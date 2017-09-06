@@ -71,7 +71,7 @@ namespace CrawlerLib.Tests
             crawlerConfig.HostDepth = 0;
             crawlerConfig.Depth = 0;
 
-            var session = await Crawler.InciteStart(Owner, new[] { new Uri(url) });
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url) });
 
             var sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session });
             sesspage.Items.Count().Should().Be(1);
@@ -112,10 +112,9 @@ namespace CrawlerLib.Tests
         {
             crawlerConfig.HostDepth = 0;
             crawlerConfig.Depth = 0;
-            var extractor = new XPathMetadataExtractor(new[] { new KeyValuePair<string, string>(xpath, "field") });
-            crawlerConfig.MetadataExtractors = new[] { extractor };
+            var parameters = new ParserParameters { XPathCustomFields = new[] { new XPathCustomFields { XPath = xpath, Name = "field" } } };
 
-            var session = await Crawler.InciteStart(Owner, new[] { new Uri(url) });
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url) }, parameters);
 
             var sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session });
             sesspage.Items.Count().Should().Be(1);
@@ -160,7 +159,7 @@ namespace CrawlerLib.Tests
             crawlerConfig.HostDepth = hostDepth;
             crawlerConfig.Depth = depth;
 
-            var session = await Crawler.InciteStart(Owner, new[] { new Uri(url) });
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url, depth, hostDepth) });
 
             await queue.WaitForSession(session, crawlerConfig.CancellationToken);
 

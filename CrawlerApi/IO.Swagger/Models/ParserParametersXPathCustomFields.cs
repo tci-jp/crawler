@@ -1,4 +1,4 @@
-// <copyright file="ParserParametersCustomFields.cs" company="DECTech.Tokyo">
+// <copyright file="ParserParametersXPathCustomFields.cs" company="DECTech.Tokyo">
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
@@ -38,24 +38,24 @@ namespace CrawlerApi.Models
     /// </summary>
     [DataContract]
     [UsedImplicitly]
-    public class ParserParametersCustomFields : IEquatable<ParserParametersCustomFields>
+    public class ParserParametersXPathCustomFields : IEquatable<ParserParametersXPathCustomFields>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParserParametersCustomFields" /> class.
+        /// Initializes a new instance of the <see cref="ParserParametersXPathCustomFields" /> class.
         /// </summary>
         /// <param name="name">name of schema.org or decode property in URI format (required).</param>
         /// <param name="xpath">
         /// XPath expression to extract metadata field from HTML DOM. May include decads:replace function for
         /// regular expressions. (required).
         /// </param>
-        public ParserParametersCustomFields(string name = null, string xpath = null)
+        public ParserParametersXPathCustomFields(string name = null, string xpath = null)
         {
             // to ensure "Name" is required (not null)
             Name = name ?? throw new InvalidDataException(
                        "Name is a required property for ParserParametersCustomFields and cannot be null");
 
             // to ensure "Xpath" is required (not null)
-            Xpath =
+            XPath =
                 xpath ?? throw new InvalidDataException(
                     "Xpath is a required property for ParserParametersCustomFields and cannot be null");
         }
@@ -71,12 +71,12 @@ namespace CrawlerApi.Models
         /// expressions.
         /// </summary>
         [DataMember(Name = "xpath")]
-        public string Xpath { get; set; }
+        public string XPath { get; set; }
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>
         /// <param name="right">Right part of expression.</param>
-        public static bool operator ==(ParserParametersCustomFields left, ParserParametersCustomFields right)
+        public static bool operator ==(ParserParametersXPathCustomFields left, ParserParametersXPathCustomFields right)
         {
             return Equals(left, right);
         }
@@ -84,7 +84,7 @@ namespace CrawlerApi.Models
         /// <summary>Compare objects unequality</summary>
         /// <param name="left">Left part of expression.</param>
         /// <param name="right">Right part of expression.</param>
-        public static bool operator !=(ParserParametersCustomFields left, ParserParametersCustomFields right)
+        public static bool operator !=(ParserParametersXPathCustomFields left, ParserParametersXPathCustomFields right)
         {
             return !Equals(left, right);
         }
@@ -111,7 +111,7 @@ namespace CrawlerApi.Models
                 return false;
             }
 
-            return Equals((ParserParametersCustomFields)obj);
+            return Equals((ParserParametersXPathCustomFields)obj);
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace CrawlerApi.Models
         /// </summary>
         /// <param name="other">Instance of ParserParametersCustomFields to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(ParserParametersCustomFields other)
+        public bool Equals(ParserParametersXPathCustomFields other)
         {
             if (ReferenceEquals(null, other))
             {
@@ -137,9 +137,9 @@ namespace CrawlerApi.Models
                     ((Name != null) &&
                      Name.Equals(other.Name))) &&
                 (
-                    (Xpath == other.Xpath) ||
-                    ((Xpath != null) &&
-                     Xpath.Equals(other.Xpath)));
+                    (XPath == other.XPath) ||
+                    ((XPath != null) &&
+                     XPath.Equals(other.XPath)));
         }
 
         /// <summary>
@@ -159,9 +159,9 @@ namespace CrawlerApi.Models
                     hash = (hash * 59) + Name.GetHashCode();
                 }
 
-                if (Xpath != null)
+                if (XPath != null)
                 {
-                    hash = (hash * 59) + Xpath.GetHashCode();
+                    hash = (hash * 59) + XPath.GetHashCode();
                 }
 
                 return hash;
@@ -186,7 +186,7 @@ namespace CrawlerApi.Models
             var sb = new StringBuilder();
             sb.Append("class ParserParametersCustomFields {\n");
             sb.Append("  Name: ").Append(Name).Append("\n");
-            sb.Append("  Xpath: ").Append(Xpath).Append("\n");
+            sb.Append("  Xpath: ").Append(XPath).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }

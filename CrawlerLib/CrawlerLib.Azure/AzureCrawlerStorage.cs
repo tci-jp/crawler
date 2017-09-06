@@ -259,9 +259,9 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task UpdateSessionUri(string sessionId, string uri, int statusCode)
+        public async Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null)
         {
-            await storage.ReplaceAsync(new SessionUri(sessionId, uri, statusCode));
+            await storage.ReplaceAsync(new SessionUri(sessionId, uri, statusCode, message));
         }
 
         private static string EscapeMetadataName(string key)

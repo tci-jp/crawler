@@ -41,7 +41,7 @@ namespace CrawlerLib.Tests
                 .AddEnvironmentVariables();
             var configuration = builder.Build();
 
-            crawlerConfig.HttpGrabber = new WebDriverHttpGrabber(crawlerConfig);
+            crawlerConfig.HttpGrabber = new FileGrabber(crawlerConfig);
             var storage = new DataStorage(configuration["CrawlerStorageConnectionString"]);
             var searcher = new AzureIndexedSearch(
                 storage,

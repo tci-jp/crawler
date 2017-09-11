@@ -6,6 +6,7 @@ namespace CrawlerLib
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data;
     using Queue;
@@ -34,5 +35,13 @@ namespace CrawlerLib
         /// </summary>
         /// <param name="workers">Number of workers</param>
         void RunParserWorkers(int workers);
+
+        /// <summary>
+        /// Run one job
+        /// </summary>
+        /// <param name="job">Job to crawl</param>
+        /// <param name="cancellation">Job cancellation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task InciteJob(ICommitableParserJob job, CancellationToken cancellation);
     }
 }

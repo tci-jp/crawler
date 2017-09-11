@@ -36,7 +36,7 @@ namespace CrawlerLib.Logger
         public override string ToString()
         {
             var str = new StringBuilder();
-            str.Append(Severity);
+            str.Append(Severity).Append(": ");
 
             if (Object != null)
             {

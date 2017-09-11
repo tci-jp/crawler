@@ -271,7 +271,6 @@ namespace CrawlerApi.Controllers
                               configuration.OwnerId,
                               configuration.Uris,
                               param);
-            crawler.RunParserWorkers(1); // TODO Make as WebJob
 
             return new ObjectResult(session);
         }

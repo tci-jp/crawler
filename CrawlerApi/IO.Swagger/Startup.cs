@@ -126,7 +126,7 @@ namespace CrawlerApi
 
             var crawlerStorage = new AzureCrawlerStorage(storage, azureIndexedSearch);
 
-            var queue = new MemoryParserJobsQueue(crawlerStorage);
+            var queue = new AzureParserJobsQueue(storage, Configuration["CrawlerJobsQueueName"], TimeSpan.FromMinutes(10));
 
             services.AddSingleton<IParserJobsQueue>(queue);
             services.AddSingleton<IDataStorage>(storage);
@@ -150,7 +150,6 @@ namespace CrawlerApi
             config.HttpGrabber = new WebDriverHttpGrabber(config);
 
             var crawler = new Crawler(config);
-            crawler.RunParserWorkers(Configuration.GetValue<int?>("CrawlerWorkers") ?? 4);
 
             services.AddSingleton<ICrawler>(crawler);
 

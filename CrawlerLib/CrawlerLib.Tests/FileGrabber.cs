@@ -20,33 +20,20 @@ namespace CrawlerLib.Tests
         /// <inheritdoc />
         public override async Task<GrabResult> Grab(Uri uri, Uri referer)
         {
-            var uriPath = uri.LocalPath;
-            var filePath = Directory.GetCurrentDirectory() + uriPath;
-            if (!uri.AbsoluteUri.StartsWith("file://"))
+            var filePath = "index.html";
+            if (uri.PathAndQuery != "/")
             {
-                filePath = Directory.GetCurrentDirectory() + uri.AbsoluteUri.Replace("http://", "\\").Replace("/", "\\");
-                if (uri.AbsoluteUri.Replace("http://", "\\").Replace("/", "\\").LastOrDefault() == '\\')
-                {
-                    filePath += "index.html";
-                }
-                else
-                {
-                    filePath += "\\index.html";
-                }
+                filePath = uri.LocalPath.Trim('/');
             }
 
-            GrabResult grabResult = null;
+            filePath = Path.Combine(Directory.GetCurrentDirectory(), uri.Host, filePath);
             if (File.Exists(filePath))
             {
-                string content = await File.ReadAllTextAsync(filePath);
-                grabResult = new GrabResult { Status = HttpStatusCode.OK, Content = content };
-            }
-            else
-            {
-                grabResult = new GrabResult { Status = HttpStatusCode.NotFound, Content = null };
+                var content = await File.ReadAllTextAsync(filePath);
+                return new GrabResult { Status = HttpStatusCode.OK, Content = content };
             }
 
-            return grabResult;
+            return new GrabResult { Status = HttpStatusCode.NotFound, Content = string.Empty };
         }
     }
 }

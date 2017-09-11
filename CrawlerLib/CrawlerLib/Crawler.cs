@@ -49,9 +49,9 @@ namespace CrawlerLib
             config = new Configuration(conf);
 
             client = new HttpClient
-                     {
-                         Timeout = config.RequestTimeout
-                     };
+            {
+                Timeout = config.RequestTimeout
+            };
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
@@ -105,19 +105,103 @@ namespace CrawlerLib
             foreach (var uri in urisList)
             {
                 var newjob = new ParserJob
-                             {
-                                 OwnerId = ownerId,
-                                 SessionId = sessionid,
-                                 Uri = uri,
-                                 Depth = config.Depth,
-                                 HostDepth = config.HostDepth
-                             };
+                {
+                    OwnerId = ownerId,
+                    SessionId = sessionid,
+                    Uri = uri,
+                    Depth = config.Depth,
+                    HostDepth = config.HostDepth
+                };
 
                 await EnqueueAsync(newjob);
             }
 
             await config.Queue.WaitForSession(sessionid, config.CancellationToken);
             return sessionid;
+        }
+
+        /// <inheritdoc />
+        public async Task InciteJob(ICommitableParserJob job, CancellationToken cancellation)
+        {
+            try
+            {
+                await storage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), 1);
+                var lastCode = HttpStatusCode.OK;
+
+                string page = null;
+                try
+                {
+                    await totalRequestsSemaphore.WaitAsync(cancellation);
+                    cancellation.ThrowIfCancellationRequested();
+
+                    for (var retry = 0; retry < config.RetriesNumber; retry++)
+                    {
+                        var result = await config.HttpGrabber.Grab(job.Uri, job.Referrer);
+
+                        lastCode = result.Status;
+                        if (config.RetryErrors.Contains(lastCode) || (result.Content == null))
+                        {
+                            await Task.Delay(config.RequestErrorRetryDelay, cancellation);
+                            continue;
+                        }
+
+                        page = result.Content;
+                        break;
+                    }
+                }
+                finally
+                {
+                    totalRequestsSemaphore.Release();
+                }
+
+                var html = new HtmlDocument();
+                html.LoadHtml(page);
+
+                CheckNofollowNoindex(html, out var nofollow, out var noindex);
+
+                var trace = new StringBuilder(job.Uri.ToString()).Append(" -");
+
+                if (!noindex)
+                {
+                    var metadata = ExtractMetadata(html, job);
+                    await storage.DumpUriContent(
+                        job.OwnerId,
+                        job.SessionId,
+                        job.Uri.ToString(),
+                        new MemoryStream(Encoding.UTF8.GetBytes(page)),
+                        cancellation,
+                        metadata);
+                }
+                else
+                {
+                    trace.Append(" NOFOLLOW is in force: Skip Indexing.");
+                }
+
+                UriCrawled?.Invoke(this, job.Uri.ToString());
+
+                if (!nofollow)
+                {
+                    await ParseLinks(job, html);
+                }
+                else
+                {
+                    trace.Append(" NOINDEX is in force: Skip Indexing.");
+                }
+
+                if (!nofollow && !noindex)
+                {
+                    trace.Append(" OK");
+                }
+
+                config.Logger.Trace(trace.ToString());
+
+                await job.Commit(cancellation, (int)lastCode);
+            }
+            catch (Exception ex)
+            {
+                config.Logger.Error($"{job.Uri} - Failed : ", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -147,14 +231,14 @@ namespace CrawlerLib
                     try
                     {
                         var newjob = new ParserJob
-                                     {
-                                         OwnerId = ownerId,
-                                         SessionId = sessionid,
-                                         Uri = new Uri(uri.Uri),
-                                         Depth = uri.Depth ?? config.Depth,
-                                         HostDepth = uri.HostDepth ?? config.HostDepth,
-                                         ParserParameters = parserParameters
-                                     };
+                        {
+                            OwnerId = ownerId,
+                            SessionId = sessionid,
+                            Uri = new Uri(uri.Uri),
+                            Depth = uri.Depth ?? config.Depth,
+                            HostDepth = uri.HostDepth ?? config.HostDepth,
+                            ParserParameters = parserParameters
+                        };
                         await EnqueueAsync(newjob);
                     }
                     catch (Exception ex)
@@ -221,14 +305,14 @@ namespace CrawlerLib
             }
 
             var newjob = new ParserJob
-                         {
-                             OwnerId = parent.OwnerId,
-                             SessionId = parent.SessionId,
-                             Uri = newUri,
-                             Depth = parent.Depth - 1,
-                             HostDepth = parent.HostDepth,
-                             Referrer = parent.Uri
-                         };
+            {
+                OwnerId = parent.OwnerId,
+                SessionId = parent.SessionId,
+                Uri = newUri,
+                Depth = parent.Depth - 1,
+                HostDepth = parent.HostDepth,
+                Referrer = parent.Uri
+            };
 
             if (parent.Host != newjob.Host)
             {
@@ -297,125 +381,6 @@ namespace CrawlerLib
                 });
         }
 
-        private async Task InternalIncite(ICommitableParserJob job, CancellationToken cancellation)
-        {
-            try
-            {
-                await storage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), 1);
-                Exception lastException = null;
-                var lastCode = HttpStatusCode.OK;
-
-                for (var trycount = 0; trycount < config.RetriesNumber; trycount++)
-                {
-                    try
-                    {
-                        string page;
-                        try
-                        {
-                            await totalRequestsSemaphore.WaitAsync(cancellation);
-                            if (cancellation.IsCancellationRequested)
-                            {
-                                break;
-                            }
-
-                            var result = await config.HttpGrabber.Grab(job.Uri, job.Referrer);
-
-                            lastCode = result.Status;
-                            if (config.RetryErrors.Contains(lastCode) || (result.Content == null))
-                            {
-                                await Task.Delay(config.RequestErrorRetryDelay, cancellation);
-                                continue;
-                            }
-
-                            page = result.Content;
-                        }
-                        finally
-                        {
-                            totalRequestsSemaphore.Release();
-                        }
-
-                        var html = new HtmlDocument();
-                        html.LoadHtml(page);
-
-                        CheckNofollowNoindex(html, out var nofollow, out var noindex);
-
-                        var trace = new StringBuilder(job.Uri.ToString()).Append(" -");
-
-                        if (!noindex)
-                        {
-                            var metadata = ExtractMetadata(html, job);
-                            await storage.DumpUriContent(
-                                job.OwnerId,
-                                job.SessionId,
-                                job.Uri.ToString(),
-                                new MemoryStream(Encoding.UTF8.GetBytes(page)),
-                                cancellation,
-                                metadata);
-                        }
-                        else
-                        {
-                            trace.Append(" NOFOLLOW is in force: Skip Indexing.");
-                        }
-
-                        UriCrawled?.Invoke(this, job.Uri.ToString());
-
-                        if (!nofollow)
-                        {
-                            await ParseLinks(job, html);
-                        }
-                        else
-                        {
-                            trace.Append(" NOINDEX is in force: Skip Indexing.");
-                        }
-
-                        if (!nofollow && !noindex)
-                        {
-                            trace.Append(" OK");
-                        }
-
-                        config.Logger.Trace(trace.ToString());
-
-                        lastException = null;
-
-                        break;
-                    }
-                    catch (TaskCanceledException ex)
-                    {
-                        config.Logger.Error($"{job.Uri} - Retry {trycount} - Timeout");
-                        if (cancellation.IsCancellationRequested)
-                        {
-                            return;
-                        }
-
-                        lastException = ex;
-                    }
-                    catch (Exception ex)
-                    {
-                        config.Logger.Error($"{job.Uri} - Retry {trycount} - Failed : ", ex);
-                        lastException = ex;
-                        await Task.Delay(config.RequestErrorRetryDelay, cancellation);
-                    }
-                }
-
-                if (lastException != null)
-                {
-                    await job.Commit(cancellation, -1, lastException.ToString());
-
-                    throw lastException;
-                }
-
-                await job.Commit(cancellation, (int)lastCode);
-            }
-            catch (TaskCanceledException)
-            {
-                config.Logger.Error($"{job.Uri} - Timeout");
-            }
-            catch (Exception ex)
-            {
-                config.Logger.Error($"{job.Uri} - Failed : ", ex);
-            }
-        }
-
         private async Task InternalRunParsersJobs()
         {
             while (!config.CancellationToken.IsCancellationRequested)
@@ -427,7 +392,7 @@ namespace CrawlerLib
                         CancellationTokenSource.CreateLinkedTokenSource(config.CancellationToken, timeout.Token))
                     {
                         var job = await config.Queue.DequeueAsync(cancellation.Token);
-                        await InternalIncite(job, cancellation.Token);
+                        await InciteJob(job, cancellation.Token);
                     }
                 }
                 catch (OperationCanceledException) when (config.CancellationToken.IsCancellationRequested)

@@ -51,24 +51,15 @@ namespace CrawlerLib.Queue
         /// <inheritdoc />
         public async Task EnqueueAsync(IParserJob job, CancellationToken cancellation)
         {
-            jobs.Enqueue(job);
-
-            Session sess;
-            while (!sessions.TryGetValue(job.SessionId, out sess))
-            {
-                sess = new Session();
-                var added = sessions.TryAdd(job.SessionId, sess);
-                if (added)
-                {
-                    break;
-                }
-            }
+            var sess = sessions.GetOrAdd(job.SessionId, new Session());
 
             var inserted = await crawlerStorage.EnqueSessionUri(job.SessionId, job.Uri.ToString());
             if (!inserted)
             {
                 return;
             }
+
+            jobs.Enqueue(job);
 
             sess.Increment();
 

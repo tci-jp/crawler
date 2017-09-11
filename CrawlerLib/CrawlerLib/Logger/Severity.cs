@@ -12,16 +12,21 @@ namespace CrawlerLib.Logger
         /// <summary>
         /// For debug records.
         /// </summary>
-        Debug,
+        Debug = 2,
 
         /// <summary>
         /// For trace records.
         /// </summary>
-        Trace,
+        Trace = 3,
 
         /// <summary>
         /// For error records.
         /// </summary>
-        Error
+        Error = 0,
+
+        /// <summary>
+        /// For warning records.
+        /// </summary>
+        Warning = 1
     }
 }

@@ -12,7 +12,7 @@ Open http://crawlerapi-crawlerapi-dev.azurewebsites.net.
 1. Copy value in **Response Body** without quotas.
 1. Go to **GET /CrawlerApi/1.0.0/incite**
 1. Paste value to *sessionIds*.
-1. Set the same ownerId as in *step 5*
+1. Set the same ownerId as in *step 4*
 1. Click **Try it out!**.
 1. If top *state* is still *inProcess* wait for few seconds and repeat *step 12*
 1. Switch *getMetadata* to true.
@@ -38,7 +38,7 @@ Open http://crawlerapi-crawlerapi-dev.azurewebsites.net.
 1. Copy value in **Response Body** without quotas.
 1. Go to **GET /CrawlerApi/1.0.0/incite**
 1. Paste value to *sessionIds*.
-1. Set the same ownerId as in *step 5*
+1. Set the same ownerId as in *step 4*
 1. Click **Try it out!**.
 1. If top *state* is still *inProcess* wait for few seconds and repeat *step 12*
 1. Switch *getMetadata* to true.

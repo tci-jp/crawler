@@ -13,10 +13,7 @@
     <ApplicationInsightsAnnotationResourceId>/subscriptions/19b6e578-3b47-4e96-ba3e-315872e5a607/resourcegroups/grp_zakhar_amirov/providers/microsoft.insights/components/CrawlerApi</ApplicationInsightsAnnotationResourceId>
     <Company>DECTech.Tokyo</Company>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;1705;NU1701</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup>
     <NoWarn>1701;1702;1705;NU1701</NoWarn>
   </PropertyGroup>
 
@@ -32,10 +29,11 @@
   </ItemGroup>
   <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">
     <ItemGroup>
-      <ExeFile Include="bin\$(Configuration)\$(TargetFramework)\*.exe" />
+      <PhantomJsExeFile Include="bin\$(Configuration)\$(TargetFramework)\phantomjs.exe" />
     </ItemGroup>
-    <Copy SourceFiles="@(ExeFile)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(PhantomJsExeFile)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="false" />
   </Target>
+  
   
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.1.1" />
@@ -65,6 +63,7 @@
     <ProjectReference Include="..\..\CrawlerLib\Azure.Storage\Azure.Storage.csproj" />
     <ProjectReference Include="..\..\CrawlerLib\CrawlerLib.Azure\CrawlerLib.Azure.csproj" />
     <ProjectReference Include="..\..\CrawlerLib\CrawlerLib\CrawlerLib.csproj" />
+    <ProjectReference Include="..\CrawlerWebJob\CrawlerWebJob.csproj" />
   </ItemGroup>
 
   <ItemGroup>

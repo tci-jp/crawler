@@ -25,7 +25,7 @@ namespace CrawlerLib.Queue
         /// <summary>
         /// Gets uri host part
         /// </summary>
-        [DataMember(Name = "host")]
+        [IgnoreDataMember]
         public Uri Host { get; private set; }
 
         /// <summary>

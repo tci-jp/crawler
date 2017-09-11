@@ -33,7 +33,7 @@
     <None Update="config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="FileGrabbersample.txt">
+    <None Update="filegrabber\sample.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Robotstxt\Robots1.txt">
@@ -54,28 +54,28 @@
     <None Update="Schema\metadata-2.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\blog\Index.html">
+    <None Update="www.dectech.tokyo\blog\Index">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\aboutus.html">
+    <None Update="www.dectech.tokyo\Home\C\aboutus.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\c-sharp-engineer.html">
+    <None Update="www.dectech.tokyo\Home\C\c-sharp-engineer.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\data-communication-scientist.html">
+    <None Update="www.dectech.tokyo\Home\C\data-communication-scientist.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\fastlane.html">
+    <None Update="www.dectech.tokyo\Home\C\fastlane.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\fusions.html">
+    <None Update="www.dectech.tokyo\Home\C\fusions.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\privacypolicy.html">
+    <None Update="www.dectech.tokyo\Home\C\privacypolicy.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="www.dectech.tokyo\C\ui-ux-engineer.html">
+    <None Update="www.dectech.tokyo\Home\C\ui-ux-engineer.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="www.dectech.tokyo\index.html">

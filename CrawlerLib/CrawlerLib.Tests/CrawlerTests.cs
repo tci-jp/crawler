@@ -25,7 +25,7 @@ namespace CrawlerLib.Tests
     public class CrawlerTests : IDisposable
     {
         private const string Owner = "unittest";
-        private readonly CancellationTokenSource cancel = new CancellationTokenSource();
+        private readonly CancellationTokenSource cancel = new CancellationTokenSource(TimeSpan.FromMinutes(5));
         private readonly Configuration crawlerConfig = new Configuration();
         private readonly ITestOutputHelper output;
         private readonly MemoryParserJobsQueue queue;

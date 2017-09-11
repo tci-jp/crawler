@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AFF6BF88-8A7D-4736-AF81-31BCE86B19BD}"
 EndProject
@@ -17,7 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrawlerApi", "IO.Swagger\Cr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Storage.Tests", "Azure.Storage.Tests\Azure.Storage.Tests.csproj", "{657C963A-8936-475B-AFF3-B08FF633E1DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlerLib.Azure.Tests", "CrawlerLib.Azure.Tests\CrawlerLib.Azure.Tests.csproj", "{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrawlerLib.Azure.Tests", "CrawlerLib.Azure.Tests\CrawlerLib.Azure.Tests.csproj", "{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrawlerWebJob", "CrawlerWebJob\CrawlerWebJob.csproj", "{C8D41E1C-C5D4-4E0F-A4F9-FABAD65AC37A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{CDE6DFF4-AA39-42F5-9EEF-864BE0C33697}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{69C9FE04-20E7-4E63-9CD8-D847995DFEDC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,9 +59,21 @@ Global
 		{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8D41E1C-C5D4-4E0F-A4F9-FABAD65AC37A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8D41E1C-C5D4-4E0F-A4F9-FABAD65AC37A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8D41E1C-C5D4-4E0F-A4F9-FABAD65AC37A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8D41E1C-C5D4-4E0F-A4F9-FABAD65AC37A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F650E9EE-9458-47AC-ABD1-9A963C095DD0} = {CDE6DFF4-AA39-42F5-9EEF-864BE0C33697}
+		{D0364C21-63E5-4750-B659-F2CDA3757D7F} = {CDE6DFF4-AA39-42F5-9EEF-864BE0C33697}
+		{7D3DEA47-878B-4AD9-81B1-0F75889BAAF4} = {CDE6DFF4-AA39-42F5-9EEF-864BE0C33697}
+		{34494E96-5F42-4352-BD67-A51297F40793} = {69C9FE04-20E7-4E63-9CD8-D847995DFEDC}
+		{657C963A-8936-475B-AFF3-B08FF633E1DD} = {69C9FE04-20E7-4E63-9CD8-D847995DFEDC}
+		{E4CA3CE8-FF3C-4ECC-99F4-2B4E105B6130} = {69C9FE04-20E7-4E63-9CD8-D847995DFEDC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0A3A7953-221C-4A52-8030-3D2CB6033A44}

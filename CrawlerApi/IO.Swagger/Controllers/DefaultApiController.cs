@@ -261,6 +261,7 @@ namespace CrawlerApi.Controllers
 
                 param = new CrawlerLib.Queue.ParserParameters
                 {
+                    UseJson = pp.UseJson ?? false,
                     UseRdFa = pp.UseRdFa ?? false,
                     UseMicrodata = pp.UseMicrodata ?? false,
                     XPathCustomFields = pp.CustomFields?.Select(c => new XPathCustomFields { Name = c.Name, XPath = c.XPath }).ToList()

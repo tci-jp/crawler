@@ -34,7 +34,6 @@ namespace CrawlerApi.Models
     using System.Runtime.Serialization;
     using System.Text;
     using Azure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -70,12 +69,14 @@ namespace CrawlerApi.Models
         /// <param name="parserId">parser id in free text unique for specified owner (required).</param>
         /// <param name="useRdFa">use RDFa attributes for parsing metadata. (default to true).</param>
         /// <param name="useMicrodata">use Microdata attributes for parsing metadata (default to true).</param>
+        /// <param name="useJson">Use ld+json metadata (default to true).</param>
         /// <param name="customFields">CustomFields (required).</param>
         public ParserParameters(
             string ownerId = null,
             string parserId = null,
             bool? useRdFa = null,
             bool? useMicrodata = null,
+            bool? useJson = null,
             List<ParserParametersXPathCustomFields> customFields = null)
             : base(ownerId, parserId)
         {
@@ -103,6 +104,9 @@ namespace CrawlerApi.Models
 
             // use default value if no "UseMicrodata" provided
             UseMicrodata = useMicrodata ?? true;
+
+            // use default value if no "UseMicrodata" provided
+            UseJson = useJson ?? true;
         }
 
         /// <summary>
@@ -133,6 +137,12 @@ namespace CrawlerApi.Models
             get => RowKey;
             set => RowKey = value;
         }
+
+        /// <summary>
+        /// Gets or sets use ld+json metadata
+        /// </summary>
+        [DataMember(Name = "useJson")]
+        public bool? UseJson { get; set; }
 
         /// <summary>
         /// Gets or sets use Microdata attributes for parsing metadata

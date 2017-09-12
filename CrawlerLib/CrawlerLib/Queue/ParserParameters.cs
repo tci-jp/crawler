@@ -33,11 +33,22 @@ namespace CrawlerLib.Queue
         public IList<XPathCustomFields> XPathCustomFields { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether parser should use ld+json metadata.
+        /// </summary>
+        [DataMember(Name = "useJson")]
+        public bool UseJson { get; set; }
+
+        /// <summary>
         /// Build enumeration with extractors.
         /// </summary>
         /// <returns>Extractors.</returns>
         public IEnumerable<IMetadataExtractor> GetExtractors()
         {
+            if (UseJson)
+            {
+                yield return new JsonMetadataExtractor();
+            }
+
             if (UseRdFa)
             {
                 yield return new RdfaMetadataExtractor();

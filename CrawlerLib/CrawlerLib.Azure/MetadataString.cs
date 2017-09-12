@@ -26,16 +26,23 @@ namespace CrawlerLib.Azure
         /// Initializes a new instance of the <see cref="MetadataString"/> class.
         /// </summary>
         /// <param name="ownerid">Blob owner Id.</param>
-        /// <param name="blobname">Name of the blob.</param>
+        /// <param name="pageUri">Page URI.</param>
+        /// <param name="pageBlobname">Name of blob with content.</param>
         /// <param name="metaname">Metadata name.</param>
         /// <param name="metavalue">Metadata value.</param>
-        public MetadataString(string ownerid, string blobname, string metaname, string metavalue)
-            : base(ownerid, Codec.HashString(blobname + metaname + metavalue))
+        public MetadataString(string ownerid, string pageUri, string pageBlobname, string metaname, string metavalue)
+            : base(ownerid, Codec.HashString(pageBlobname + metaname + metavalue))
         {
-            BlobName = blobname;
+            PageUri = pageUri;
+            BlobName = pageBlobname;
             Name = metaname;
             Value = metavalue;
         }
+
+        /// <summary>
+        /// Gets or sets page uri having metadata.
+        /// </summary>
+        public string PageUri { get; set; }
 
         /// <summary>
         /// Gets or sets name of Blob containing this metadata.

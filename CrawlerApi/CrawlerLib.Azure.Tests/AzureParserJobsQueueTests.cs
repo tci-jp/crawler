@@ -32,7 +32,11 @@ namespace CrawlerLib.Azure.Tests
             Uri = new Uri("http://dectech.tokyo"),
             OwnerId = OwnerId,
             Referrer = new Uri("http://localhost"),
-            SessionId = "asfsgfh"
+            SessionId = "asfsgfh",
+            ParserParameters = new ParserParameters
+            {
+                UseJson = true
+            }
         };
 
         private readonly AzureCrawlerStorage crawlerStorage;

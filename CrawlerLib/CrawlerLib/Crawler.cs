@@ -199,6 +199,7 @@ namespace CrawlerLib
             }
             catch (Exception ex)
             {
+                await job.Commit(cancellation, -1, ex.ToString());
                 config.Logger.Error($"{job.Uri} - Failed : ", ex);
                 throw;
             }

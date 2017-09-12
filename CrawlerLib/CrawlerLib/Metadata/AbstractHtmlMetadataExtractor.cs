@@ -75,7 +75,7 @@ namespace CrawlerLib.Metadata
         /// <returns>Metadata scope and type. Example value: http://schema.org/Thing </returns>
         protected abstract string GetScopeType(HtmlNode scope);
 
-        private object GetFullPropName(
+        private string GetFullPropName(
             HtmlNode root,
             HtmlNode prop,
             string lastitemprop)

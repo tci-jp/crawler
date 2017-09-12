@@ -93,7 +93,8 @@ namespace CrawlerLib
         public IList<IMetadataExtractor> MetadataExtractors { get; set; } = new IMetadataExtractor[]
                                                                             {
                                                                                 new MicrodataMetadataExtractor(),
-                                                                                new RdfaMetadataExtractor()
+                                                                                new RdfaMetadataExtractor(),
+                                                                                new JsonMetadataExtractor()
                                                                             };
 
         /// <summary>

@@ -107,7 +107,7 @@ namespace CrawlerLib.Azure
 
                     var pairkey = EscapeMetadataName(pair.Key);
                     await storage.InsertAsync(
-                        new MetadataString(ownerId, record.BlobName, pair.Key, pair.Value));
+                        new MetadataString(ownerId, uri, record.BlobName, pair.Key, pair.Value));
                     var metaname = pairkey;
                     for (var index = 1; blobMeta.ContainsKey(metaname); index++)
                     {
@@ -117,10 +117,13 @@ namespace CrawlerLib.Azure
                     blobMeta[metaname] = pair.Value;
                 }
 
-                await storage.InsertOrReplaceAsync(new BlobMetadataDictionary(
-                                                       ownerId,
-                                                       record.BlobName,
-                                                       blobMeta));
+                if (blobMeta.Count > 0)
+                {
+                    await storage.InsertOrReplaceAsync(new BlobMetadataDictionary(
+                                                           ownerId,
+                                                           record.BlobName,
+                                                           blobMeta));
+                }
             }
 
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, 200));

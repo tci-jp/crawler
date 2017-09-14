@@ -7,7 +7,7 @@ namespace CrawlerLib
     /// <summary>
     /// Checks if path is allowed for crawling by web site's robots.txt
     /// </summary>
-    public class Robots
+    public class Robots : IRobots
     {
         private readonly string userAgent;
         private readonly RobotsTxt.Robots robotstxt;
@@ -23,11 +23,7 @@ namespace CrawlerLib
             this.robotstxt = new RobotsTxt.Robots(robotstxt);
         }
 
-        /// <summary>
-        /// Checks if path is allowed for crawling.
-        /// </summary>
-        /// <param name="uriPathAndQuery">Path to check.</param>
-        /// <returns>True if allowed.</returns>
+        /// <inheritdoc />
         public bool IsPathAllowed(string uriPathAndQuery)
         {
             return robotstxt.IsPathAllowed(userAgent, uriPathAndQuery);

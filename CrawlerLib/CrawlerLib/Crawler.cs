@@ -26,13 +26,11 @@ namespace CrawlerLib
     /// </summary>
     public sealed class Crawler : ICrawler
     {
-        private readonly HttpClient client;
-
         private readonly Configuration config;
 
         private readonly ILinkParser linkParser = new LinkParser();
 
-        private readonly ConcurrentDictionary<Uri, Task<Robots>> robots;
+        private readonly ConcurrentDictionary<Uri, Task<IRobots>> robots;
         private readonly ICrawlerStorage storage;
 
         private readonly SemaphoreSlim totalRequestsSemaphore;
@@ -47,16 +45,9 @@ namespace CrawlerLib
         {
             // EncodingRedirector.RegisterEncodings();
             config = new Configuration(conf);
-
-            client = new HttpClient
-            {
-                Timeout = config.RequestTimeout
-            };
-
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(config.UserAgent);
             storage = config.Storage;
 
-            robots = new ConcurrentDictionary<Uri, Task<Robots>>();
+            robots = new ConcurrentDictionary<Uri, Task<IRobots>>();
             visited = new HashSet<string>();
 
             totalRequestsSemaphore = new SemaphoreSlim(config.NumberOfSimulataneousRequests);
@@ -71,7 +62,7 @@ namespace CrawlerLib
         /// <inheritdoc />
         public void Dispose()
         {
-            client?.Dispose();
+            // client?.Dispose();
         }
 
         /// <summary>
@@ -364,7 +355,7 @@ namespace CrawlerLib
             return job.ParserParameters.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html));
         }
 
-        private Task<Robots> GetRobotsTxt(Uri host)
+        private Task<IRobots> GetRobotsTxt(Uri host)
         {
             return robots.GetOrAdd(
                 host,
@@ -372,8 +363,7 @@ namespace CrawlerLib
                 {
                     try
                     {
-                        var robotstxt = await client.GetStringAsync(roburi + "/robots.txt");
-                        return new Robots(config.UserAgent, robotstxt);
+                        return await config.RobotstxtFactory.RetrieveAsync(new Uri(roburi + "/robots.txt"));
                     }
                     catch (HttpRequestException)
                     {

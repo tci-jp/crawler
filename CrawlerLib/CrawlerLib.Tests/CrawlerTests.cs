@@ -55,6 +55,8 @@ namespace CrawlerLib.Tests
             queue = new MemoryParserJobsQueue(crawlerStorage);
             crawlerConfig.Queue = queue;
             crawlerConfig.CancellationToken = cancel.Token;
+            var fakeRobotTxt = new FakeRobotstxtFactory();
+            crawlerConfig.RobotstxtFactory = fakeRobotTxt;
         }
 
         private Crawler Crawler => crawler ?? GetCrawler();

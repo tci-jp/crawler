@@ -42,13 +42,15 @@ namespace CrawlerApi.Models
     [DataContract]
     public class CrawlerConfiguration : IEquatable<CrawlerConfiguration>
     {
+        private const int DefaultCancellationTime = 30 * 60;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CrawlerConfiguration" /> class.
         /// </summary>
         /// <param name="ownerId">id used to keep history of requests and blobs collection (required).</param>
         /// <param name="parserId">Custom parser Id</param>
         /// <param name="uris">array of URIs to crawl (required).</param>
-        /// <param name="cancellationTime">Time in seconds after which session processing should be stopped. Default is UTC 30 min if null or empty.</param>
+        /// <param name="cancellationTime">Time in seconds after which session processing should be stopped. Default is 30 min if null or empty.</param>
         public CrawlerConfiguration(string ownerId = null, string parserId = null, List<UriParameter> uris = null, long? cancellationTime = null)
         {
             ParserId = parserId;
@@ -64,11 +66,15 @@ namespace CrawlerApi.Models
                    throw new InvalidDataException(
                        "Uris is a required property for CrawlerConfiguration and cannot be null");
 
-            CancellationTime = cancellationTime ?? 30 * 60;
+            CancellationTime = cancellationTime ?? DefaultCancellationTime;
+            if (CancellationTime == 0)
+            {
+                CancellationTime = DefaultCancellationTime;
+            }
         }
 
         /// <summary>
-        /// Gets cancellation time interval in seconds after which session should stop. Unlimited if null.
+        /// Gets cancellation time interval in seconds after which session should stop. If null, empty or zero set to 30 minutes.
         /// </summary>
         [DataMember(Name = "cancellationTime")]
         public long? CancellationTime { get; }

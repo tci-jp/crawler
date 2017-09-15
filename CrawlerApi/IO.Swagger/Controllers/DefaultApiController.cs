@@ -353,6 +353,8 @@ namespace CrawlerApi.Controllers
                     return SessionState.InProcess;
                 case CrawlerLib.Data.SessionState.Done:
                     return SessionState.Done;
+                case CrawlerLib.Data.SessionState.Cancelled:
+                    return SessionState.Cancelled;
                 case CrawlerLib.Data.SessionState.Error:
                     return SessionState.Error;
                 default:

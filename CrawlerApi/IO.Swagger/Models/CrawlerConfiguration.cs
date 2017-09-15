@@ -70,6 +70,7 @@ namespace CrawlerApi.Models
         /// <summary>
         /// Gets cancellation time interval in seconds after which session should stop. Unlimited if null.
         /// </summary>
+        [DataMember(Name = "cancellationTime")]
         public long? CancellationTime { get; }
 
         /// <summary>

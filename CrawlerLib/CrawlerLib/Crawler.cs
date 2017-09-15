@@ -72,6 +72,7 @@ namespace CrawlerLib
         /// <param name="uri">URI to crawl.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
+        [Obsolete("Use InciteStart instead. May not work properly.")]
         public Task<string> Incite(string ownerId, Uri uri)
         {
             return Incite(ownerId, new[] { uri });
@@ -84,6 +85,7 @@ namespace CrawlerLib
         /// <param name="uris">URIs to crawl.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
         [UsedImplicitly]
+        [Obsolete("Use InciteStart instead. May not work properly.")]
         public async Task<string> Incite(string ownerId, IEnumerable<Uri> uris)
         {
             var urisList = new List<Uri>(uris);
@@ -116,7 +118,15 @@ namespace CrawlerLib
         {
             try
             {
-                await storage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), 1);
+                var sessionInfo = await storage.GetSingleSession(job.OwnerId, job.SessionId);
+                if ((sessionInfo.State == SessionState.Cancelled) || ((sessionInfo.CancellationTime != null) && (DateTime.UtcNow > sessionInfo.CancellationTime)))
+                {
+                    await storage.UpdateSessionState(job.OwnerId, job.SessionId, SessionState.Cancelled);
+                    await job.Commit(cancellation, (int)SessionState.Cancelled);
+                    return;
+                }
+
+                await storage.UpdateSessionUri(job.SessionId, job.Uri.ToString(), (int)SessionState.InProcess);
                 var lastCode = HttpStatusCode.OK;
 
                 string page = null;
@@ -196,17 +206,12 @@ namespace CrawlerLib
             }
         }
 
-        /// <summary>
-        /// Starts crawling by collection of URIs
-        /// </summary>
-        /// <param name="ownerId">Session owner id.</param>
-        /// <param name="uris">URIs to crawl.</param>
-        /// <param name="parserParameters">Parsing parameters.</param>
-        /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
+        /// <inheritdoc />
         [UsedImplicitly]
         public async Task<string> InciteStart(
             string ownerId,
             IEnumerable<UriParameter> uris,
+            DateTime? cancellationTime = null,
             ParserParameters parserParameters = null)
         {
             var urisList = new List<UriParameter>(uris);
@@ -215,7 +220,7 @@ namespace CrawlerLib
                 return null;
             }
 
-            var sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()));
+            var sessionid = await storage.CreateSession(ownerId, urisList.Select(u => u.ToString()), cancellationTime);
             try
             {
                 foreach (var uri in urisList)

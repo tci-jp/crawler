@@ -308,12 +308,20 @@ namespace Azure.Storage
 
         /// <inheritdoc />
         [UsedImplicitly]
-        public async Task ReplaceAsync<TEntity>(TEntity entity)
+        public async Task<bool> ReplaceAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity
         {
             PrepareEntity(entity);
             entity.ETag = "*";
-            ProcessResult(await (await GetOrCreateTableAsync<TEntity>()).ExecuteAsync(TableOperation.Replace(entity)));
+            var tableResult = await (await GetOrCreateTableAsync<TEntity>()).ExecuteAsync(TableOperation.Replace(entity));
+
+            if (tableResult.HttpStatusCode == 404)
+            {
+                return false;
+            }
+
+            ProcessResult(tableResult);
+            return true;
         }
 
         /// <inheritdoc />

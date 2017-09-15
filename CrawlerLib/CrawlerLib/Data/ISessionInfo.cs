@@ -41,5 +41,10 @@ namespace CrawlerLib.Data
         /// </summary>
         [UsedImplicitly]
         SessionState State { get; }
+
+        /// <summary>
+        /// Gets UTC time after which session processing should be stopped. Unlimited if null.
+        /// </summary>
+        DateTime? CancellationTime { get; }
     }
 }

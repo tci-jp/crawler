@@ -70,6 +70,9 @@ namespace CrawlerLib.Azure
         [IgnoreProperty]
         public SessionState State { get; set; }
 
+        /// <inheritdoc />
+        public DateTime? CancellationTime { get; set; }
+
         /// <summary>
         /// Gets or sets string representation for State
         /// </summary>

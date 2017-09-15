@@ -152,8 +152,8 @@ namespace Azure.Storage
         /// </summary>
         /// <param name="entity">Entity to replace.</param>
         /// <typeparam name="TEntity">Type of Entity.</typeparam>
-        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task ReplaceAsync<TEntity>(TEntity entity)
+        /// <returns>Returns true, if replace was successfull. Otherwise false if item was not found.</returns>
+        Task<bool> ReplaceAsync<TEntity>(TEntity entity)
             where TEntity : TableEntity;
 
         /// <summary>

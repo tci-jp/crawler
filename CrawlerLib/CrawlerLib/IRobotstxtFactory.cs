@@ -7,15 +7,15 @@ namespace CrawlerLib
     using System.Threading.Tasks;
 
     /// <summary>
-    /// interface IRobotstxtFactory
+    /// Factory to download robots.txt by URL and process it.
     /// </summary>
     public interface IRobotstxtFactory
     {
         /// <summary>
-        ///  Retrieve
+        ///  Retrieve Robots object.
         /// </summary>
         /// <param name="uri">uri</param>
-        /// <returns>IRobots</returns>
+        /// <returns><see cref="Robots"/> instance if file is found. Or if not found instance of <see cref="NotFoundRobots"/>/></returns>
          Task<IRobots> RetrieveAsync(Uri uri);
     }
 }

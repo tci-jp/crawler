@@ -35,23 +35,17 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
+        public Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris, DateTime? cancellationTime)
         {
             var sess = new SessionInfo
-            {
-                Id = Guid.NewGuid().ToString(),
-                RootUris = new List<string>(rootUris),
-                Timestamp = DateTime.UtcNow
-            };
+                       {
+                           Id = Guid.NewGuid().ToString(),
+                           RootUris = new List<string>(rootUris),
+                           Timestamp = DateTime.UtcNow
+                       };
 
             sessions.TryAdd(sess.Id, sess);
             return Task.FromResult(sess.Id);
-        }
-
-        /// <inheritdoc />
-        public Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
-        {
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -66,6 +60,12 @@ namespace CrawlerLib.Data
             var mem = new MemoryStream();
             await stream.CopyToAsync(mem);
             dumpedPages.AddOrUpdate(uri, mem.ToArray(), (key, value) => value);
+        }
+
+        /// <inheritdoc />
+        public Task<bool> EnqueSessionUri(string sessionId, string uri)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -96,23 +96,26 @@ namespace CrawlerLib.Data
         public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
         {
             return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState
-            {
-                Uri = k,
-                State = 200
-            })
+                                                                            {
+                                                                                Uri = k,
+                                                                                State = 200
+                                                                            })
                                       .ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
-        public Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation = default(CancellationToken))
+        public Task<ISessionInfo> GetSingleSession(string ownerId, string sessionId)
         {
-             return Task.FromResult<Stream>(new MemoryStream(dumpedPages[uri]));
+            return Task.FromResult<ISessionInfo>(sessions[sessionId]);
         }
 
         /// <inheritdoc />
-        public Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null)
+        public Task<Stream> GetUriContent(
+            string ownerId,
+            string uri,
+            CancellationToken cancellation = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            return Task.FromResult<Stream>(new MemoryStream(dumpedPages[uri]));
         }
 
         /// <inheritdoc />
@@ -157,13 +160,29 @@ namespace CrawlerLib.Data
         }
 
         /// <inheritdoc />
-        public Task<bool> EnqueSessionUri(string sessionId, string uri)
+        public Task UpdateSessionCancellation(string ownerId, string sessionId, DateTime? cancellation)
+        {
+            sessions[sessionId].CancellationTime = cancellation;
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
+        {
+            sessions[sessionId].State = state;
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null)
         {
             throw new NotImplementedException();
         }
 
         private class SessionInfo : ISessionInfo
         {
+            public DateTime? CancellationTime { get; set; }
+
             public string Id { get; set; }
 
             public string OwnerId { get; set; }

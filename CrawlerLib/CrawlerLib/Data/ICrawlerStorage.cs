@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Data
 {
+    using System;
     using System.Collections.Async;
     using System.Collections.Generic;
     using System.IO;
@@ -27,21 +28,13 @@ namespace CrawlerLib.Data
         Task AddPageReferer(string sessionId, string uri, string referer);
 
         /// <summary>
-        /// Create new crawling session.
+        /// Createsnew crawling session.
         /// </summary>
         /// <param name="ownerId">Id of session owner.</param>
         /// <param name="rootUris">URIs used to start crawling.</param>
+        /// <param name="cancellationTime">Time after which crawling session should be stopped.</param>
         /// <returns>New session Id.</returns>
-        Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris);
-
-        /// <summary>
-        /// Create new crawling session.
-        /// </summary>
-        /// <param name="ownerId">Id of session owner.</param>
-        /// <param name="sessionId">Crawling session Id.</param>
-        /// <param name="state">Session state.</param>
-        /// <returns>New session Id.</returns>
-        Task UpdateSessionState(string ownerId, string sessionId, SessionState state);
+        Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris, DateTime? cancellationTime = null);
 
         /// <summary>
         /// Stores page content.
@@ -60,6 +53,14 @@ namespace CrawlerLib.Data
             Stream content,
             CancellationToken cancellation,
             IEnumerable<KeyValuePair<string, string>> metadata = null);
+
+        /// <summary>
+        /// Puts uri to sesion queue for crawling
+        /// </summary>
+        /// <param name="sessionId">Crawling session id.</param>
+        /// <param name="uri">Page URI.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task<bool> EnqueSessionUri(string sessionId, string uri);
 
         /// <summary>
         /// Gets collection of metadata names used in indexed documents.
@@ -106,6 +107,14 @@ namespace CrawlerLib.Data
         IAsyncEnumerable<IUriState> GetSessionUris(string sessionId);
 
         /// <summary>
+        /// Get info about single session.
+        /// </summary>
+        /// <param name="ownerId">Id of session owner.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <returns>Session information.</returns>
+        Task<ISessionInfo> GetSingleSession(string ownerId, string sessionId);
+
+        /// <summary>
         /// Returns content of crawled URI.
         /// </summary>
         /// <param name="ownerId">Blob owner Id.</param>
@@ -113,7 +122,22 @@ namespace CrawlerLib.Data
         /// <param name="cancellation">Download cancellation</param>
         /// <returns>Stream with content.</returns>
         [UsedImplicitly]
-        Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation = default(CancellationToken));
+        Task<Stream> GetUriContent(
+            string ownerId,
+            string uri,
+            CancellationToken cancellation = default(CancellationToken));
+
+        /// <summary>
+        /// Gets metadata parsed from URI
+        /// </summary>
+        /// <param name="ownerId">Blob owner id.</param>
+        /// <param name="uri">Page uri.</param>
+        /// <param name="cancellation">Cancellation.</param>
+        /// <returns>Async collection of key-value pairs of metadata field name and value.</returns>
+        IAsyncEnumerable<KeyValuePair<string, string>> GetUriMetadata(
+            string ownerId,
+            string uri,
+            CancellationToken cancellation = default(CancellationToken));
 
         /// <summary>
         /// Search blobs by metadata
@@ -122,7 +146,9 @@ namespace CrawlerLib.Data
         /// <param name="cancellation">Search cancellation.</param>
         /// <returns>Collection of URIs which metadata has that values.</returns>
         [UsedImplicitly]
-        IAsyncEnumerable<string> SearchByMeta(IEnumerable<SearchCondition> query, CancellationToken cancellation = default(CancellationToken));
+        IAsyncEnumerable<string> SearchByMeta(
+            IEnumerable<SearchCondition> query,
+            CancellationToken cancellation = default(CancellationToken));
 
         /// <summary>
         /// Search URLs content by free text
@@ -144,12 +170,25 @@ namespace CrawlerLib.Data
         Task StorePageError(string ownerId, string sessionId, string uri, HttpStatusCode code);
 
         /// <summary>
-        /// Puts uri to sesion queue for crawling
+        /// Updates Session Cancellation time. Can be set as current time to cancel as soon as possible.
         /// </summary>
-        /// <param name="sessionId">Crawling session id.</param>
-        /// <param name="uri">Page URI.</param>
+        /// <param name="ownerId">Id of session owner.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <param name="cancellation">
+        /// UTC time after which session procession should be stopped.
+        /// If null procession is not limited
+        /// </param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task<bool> EnqueSessionUri(string sessionId, string uri);
+        Task UpdateSessionCancellation(string ownerId, string sessionId, DateTime? cancellation);
+
+        /// <summary>
+        /// Createsnew crawling session.
+        /// </summary>
+        /// <param name="ownerId">Id of session owner.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <param name="state">Session state.</param>
+        /// <returns>New session Id.</returns>
+        Task UpdateSessionState(string ownerId, string sessionId, SessionState state);
 
         /// <summary>
         /// Updates uri crawling state
@@ -160,14 +199,5 @@ namespace CrawlerLib.Data
         /// <param name="message">Error message.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null);
-
-        /// <summary>
-        /// Gets metadata parsed from URI
-        /// </summary>
-        /// <param name="ownerId">Blob owner id.</param>
-        /// <param name="uri">Page uri.</param>
-        /// <param name="cancellation">Cancellation.</param>
-        /// <returns>Async collection of key-value pairs of metadata field name and value.</returns>
-        IAsyncEnumerable<KeyValuePair<string, string>> GetUriMetadata(string ownerId, string uri, CancellationToken cancellation = default(CancellationToken));
     }
 }

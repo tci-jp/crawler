@@ -116,7 +116,7 @@ namespace CrawlerLib.Tests
             crawlerConfig.Depth = 0;
             var parameters = new ParserParameters { XPathCustomFields = new[] { new XPathCustomFields { XPath = xpath, Name = "field" } } };
 
-            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url) }, parameters);
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url) }, null, parameters);
 
             var sesspage = await crawlerConfig.Storage.GetSessions(Owner, new[] { session });
             sesspage.Items.Count().Should().Be(1);
@@ -167,6 +167,19 @@ namespace CrawlerLib.Tests
 
             var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(result);
+        }
+
+        [Fact]
+        public async Task TestInciteCancellation()
+        {
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter("http://www.dectech.tokyo") }, DateTime.UtcNow);
+
+            await queue.WaitForSession(session, crawlerConfig.CancellationToken);
+
+            var info = await crawlerConfig.Storage.GetSingleSession(Owner, session);
+            info.State.Should().Be(SessionState.Cancelled);
+            var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
+            urls.Select(u => u.State).Should().BeEquivalentTo((int)SessionState.Cancelled);
         }
 
         private Crawler GetCrawler()

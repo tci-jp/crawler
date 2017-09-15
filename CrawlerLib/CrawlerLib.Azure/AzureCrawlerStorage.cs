@@ -53,12 +53,13 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
-        public async Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris)
+        public async Task<string> CreateSession(string ownerId, IEnumerable<string> rootUris, DateTime? cancellationTime = null)
         {
             var uris = rootUris.ToList();
             var session = new SessionInfo(ownerId, uris)
             {
-                State = SessionState.InProcess
+                State = SessionState.InProcess,
+                CancellationTime = cancellationTime
             };
             await storage.InsertOrReplaceAsync(session);
             return session.Id;
@@ -249,6 +250,19 @@ namespace CrawlerLib.Azure
         }
 
         /// <inheritdoc />
+        public async Task UpdateSessionCancellation(string ownerId, string sessionId, DateTime? cancellation)
+        {
+            var session = await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
+            if (session == null)
+            {
+                throw new InvalidOperationException("Session does not exist: " + sessionId);
+            }
+
+            session.CancellationTime = cancellation;
+            await storage.MergeAsync(session);
+        }
+
+        /// <inheritdoc />
         public async Task UpdateSessionState(string ownerId, string sessionId, SessionState state)
         {
             var session = await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
@@ -258,13 +272,19 @@ namespace CrawlerLib.Azure
             }
 
             session.State = state;
-            await storage.InsertOrReplaceAsync(session);
+            await storage.MergeAsync(session);
         }
 
         /// <inheritdoc />
         public async Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null)
         {
             await storage.ReplaceAsync(new SessionUri(sessionId, uri, statusCode, message));
+        }
+
+        /// <inheritdoc />
+        public async Task<ISessionInfo> GetSingleSession(string ownerId, string sessionId)
+        {
+            return await storage.RetreiveAsync(new SessionInfo(ownerId, sessionId));
         }
 
         private static string EscapeMetadataName(string key)

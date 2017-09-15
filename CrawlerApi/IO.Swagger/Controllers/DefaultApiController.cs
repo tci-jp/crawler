@@ -97,7 +97,7 @@ namespace CrawlerApi.Controllers
             await storage.InsertOrReplaceAsync(parserParameters);
         }
 
-        /// <summary>get list of crawling sessions information by list of ids</summary>
+        /// <summary>gets list of crawling sessions information by list of ids</summary>
         /// <param name="ownerId">Session owner id.</param>
         /// <param name="sessionIds">Collection of session ids.</param>
         /// <param name="getMetadata">Retrieve metadata if true.</param>
@@ -177,7 +177,7 @@ namespace CrawlerApi.Controllers
             return new ObjectResult(meta);
         }
 
-        /// <summary>download crawled page</summary>
+        /// <summary>downloads crawled page</summary>
         /// <param name="ownerId">Blob onwer id.</param>
         /// <param name="uri">Page URI.</param>
         /// <response code="200">responce with page content</response>
@@ -205,7 +205,7 @@ namespace CrawlerApi.Controllers
             return new FileStreamResult(stream, MediaTypeNames.Application.Octet);
         }
 
-        /// <summary>get metadata parsing parameters set</summary>
+        /// <summary>gets metadata parsing parameters set</summary>
         /// <param name="ownerId">Parsers owner Id.</param>
         /// <param name="parserIds">Custom parsers Ids.</param>
         /// <response code="200">parsers collection</response>
@@ -242,6 +242,23 @@ namespace CrawlerApi.Controllers
             }
         }
 
+        /// <summary>
+        /// cancels crawling
+        /// </summary>
+        /// <param name="ownerId">Parsers owner Id.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        [HttpDelete]
+        [Route("/CrawlerApi/1.0.0/incite")]
+        [SwaggerOperation("CancelIncite")]
+        [SwaggerResponse(200, type: typeof(string))]
+        public async Task CancelIncite(
+            [FromQuery] [Required] string ownerId,
+            [FromQuery] [Required] string sessionId)
+        {
+            await crawlerStorage.UpdateSessionCancellation(ownerId, sessionId, DateTime.UtcNow);
+        }
+
         /// <summary>starts crawling</summary>
         /// <param name="configuration">crawler configuration</param>
         /// <response code="200">crawling started</response>
@@ -264,13 +281,22 @@ namespace CrawlerApi.Controllers
                     UseJson = pp.UseJson ?? false,
                     UseRdFa = pp.UseRdFa ?? false,
                     UseMicrodata = pp.UseMicrodata ?? false,
-                    XPathCustomFields = pp.CustomFields?.Select(c => new XPathCustomFields { Name = c.Name, XPath = c.XPath }).ToList()
+                    XPathCustomFields =
+                                pp.CustomFields?.Select(c => new XPathCustomFields { Name = c.Name, XPath = c.XPath })
+                                  .ToList()
                 };
+            }
+
+            DateTime? cancellationTime = null;
+            if (configuration.CancellationTime != null)
+            {
+                cancellationTime = DateTime.UtcNow.AddSeconds((long)configuration.CancellationTime);
             }
 
             var session = await crawler.InciteStart(
                               configuration.OwnerId,
                               configuration.Uris,
+                              cancellationTime,
                               param);
 
             return new ObjectResult(session);
@@ -284,6 +310,8 @@ namespace CrawlerApi.Controllers
                     return SessionState.NotStarted;
                 case 1:
                     return SessionState.InProcess;
+                case 2:
+                    return SessionState.Cancelled;
                 case 200:
                     return SessionState.Done;
                 default:

@@ -27,6 +27,11 @@ namespace CrawlerLib.Data
         /// <summary>
         /// Session processing failed because of some server error.
         /// </summary>
-        Error = 4
+        Error = -1,
+
+        /// <summary>
+        /// Session or page processing is cancelled.
+        /// </summary>
+        Cancelled = 2
     }
 }

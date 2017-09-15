@@ -48,7 +48,8 @@ namespace CrawlerApi.Models
         /// <param name="ownerId">id used to keep history of requests and blobs collection (required).</param>
         /// <param name="parserId">Custom parser Id</param>
         /// <param name="uris">array of URIs to crawl (required).</param>
-        public CrawlerConfiguration(string ownerId = null, string parserId = null, List<UriParameter> uris = null)
+        /// <param name="cancellationTime">Time in seconds after which session processing should be stopped. Default is UTC 30 min if null or empty.</param>
+        public CrawlerConfiguration(string ownerId = null, string parserId = null, List<UriParameter> uris = null, long? cancellationTime = null)
         {
             ParserId = parserId;
 
@@ -62,7 +63,14 @@ namespace CrawlerApi.Models
             Uris = uris ??
                    throw new InvalidDataException(
                        "Uris is a required property for CrawlerConfiguration and cannot be null");
+
+            CancellationTime = cancellationTime ?? 30 * 60;
         }
+
+        /// <summary>
+        /// Gets cancellation time interval in seconds after which session should stop. Unlimited if null.
+        /// </summary>
+        public long? CancellationTime { get; }
 
         /// <summary>
         /// Gets id used to keep history of requests and blobs collection
@@ -159,23 +167,13 @@ namespace CrawlerApi.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            // credit: http://stackoverflow.com/a/263416/677735
             unchecked
             {
-                var hash = 41;
-
-                // Suitable nullity checks etc, of course :)
-                if (OwnerId != null)
-                {
-                    hash = (hash * 59) + OwnerId.GetHashCode();
-                }
-
-                if (Uris != null)
-                {
-                    hash = (hash * 59) + Uris.GetHashCode();
-                }
-
-                return hash;
+                var hashCode = CancellationTime.GetHashCode();
+                hashCode = (hashCode * 397) ^ (OwnerId != null ? OwnerId.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ParserId != null ? ParserId.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Uris != null ? Uris.GetHashCode() : 0);
+                return hashCode;
             }
         }
 

@@ -27,6 +27,13 @@ namespace CrawlerApi.Models
         InProcess = 1,
 
         /// <summary>
+        /// Session is cancelled.
+        /// </summary>
+        [EnumMember(Value = "cancelled")]
+        [DataMember(Name = "cancelled")]
+        Cancelled = 2,
+
+        /// <summary>
         /// Session is finished successfully.
         /// Should not be used in Azure tables anymore as calculated by SessionUri-s
         /// </summary>

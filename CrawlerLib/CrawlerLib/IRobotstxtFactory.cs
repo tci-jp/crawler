@@ -4,6 +4,7 @@
 namespace CrawlerLib
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -15,7 +16,8 @@ namespace CrawlerLib
         ///  Retrieve Robots object.
         /// </summary>
         /// <param name="uri">uri</param>
+        /// <param name="token">Cancellation for the operation.</param>
         /// <returns><see cref="Robots"/> instance if file is found. Or if not found instance of <see cref="NotFoundRobots"/>/></returns>
-         Task<IRobots> RetrieveAsync(Uri uri);
+        Task<IRobots> RetrieveAsync(Uri uri, CancellationToken token);
     }
 }

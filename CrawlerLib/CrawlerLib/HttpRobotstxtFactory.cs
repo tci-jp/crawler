@@ -7,6 +7,7 @@ namespace CrawlerLib
     using System.Collections.Concurrent;
     using System.Net;
     using System.Net.Http;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -36,13 +37,13 @@ namespace CrawlerLib
         }
 
         /// <inheritdoc/>
-        public async Task<IRobots> RetrieveAsync(Uri uri)
+        public async Task<IRobots> RetrieveAsync(Uri uri, CancellationToken cancellation)
         {
-            using (var result = await client.GetAsync(uri))
+            using (var result = await client.GetAsync(uri, cancellation))
             {
                 if (result.StatusCode != HttpStatusCode.NotFound)
                 {
-                    string content = await result.Content.ReadAsStringAsync();
+                    var content = await result.Content.ReadAsStringAsync();
                     return new Robots(agent, content);
                 }
             }

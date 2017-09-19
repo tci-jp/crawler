@@ -182,7 +182,7 @@ namespace CrawlerLib
 
                 if (!nofollow)
                 {
-                    await ParseLinks(job, html);
+                    await ParseLinks(job, html, cancellation);
                 }
                 else
                 {
@@ -294,7 +294,7 @@ namespace CrawlerLib
             }
         }
 
-        private async Task AddUrl(IParserJob parent, Uri newUri)
+        private async Task AddUrl(IParserJob parent, Uri newUri, CancellationToken cancellation)
         {
             if (parent.Depth <= 0)
             {
@@ -331,7 +331,7 @@ namespace CrawlerLib
                 }
             }
 
-            var robotstxt = await GetRobotsTxt(newjob.Host);
+            var robotstxt = await GetRobotsTxt(newjob.Host, cancellation);
             if (robotstxt?.IsPathAllowed(newjob.Uri.PathAndQuery) == false)
             {
                 return;
@@ -360,7 +360,7 @@ namespace CrawlerLib
             return job.ParserParameters.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html));
         }
 
-        private Task<IRobots> GetRobotsTxt(Uri host)
+        private Task<IRobots> GetRobotsTxt(Uri host, CancellationToken cancellation)
         {
             return robots.GetOrAdd(
                 host,
@@ -368,7 +368,7 @@ namespace CrawlerLib
                 {
                     try
                     {
-                        return await config.RobotstxtFactory.RetrieveAsync(new Uri(roburi + "/robots.txt"));
+                        return await config.RobotstxtFactory.RetrieveAsync(new Uri(roburi + "/robots.txt"), cancellation);
                     }
                     catch (HttpRequestException)
                     {
@@ -402,7 +402,7 @@ namespace CrawlerLib
             }
         }
 
-        private async Task ParseLinks(IParserJob state, HtmlDocument html)
+        private async Task ParseLinks(IParserJob state, HtmlDocument html, CancellationToken cancellation)
         {
             foreach (var link in linkParser.ParseLinks(html))
             {
@@ -423,7 +423,7 @@ namespace CrawlerLib
                                                   UriComponents.PathAndQuery,
                                                   UriFormat.UriEscaped)); // to remove address fragment
 
-                            await AddUrl(state, linkuri);
+                            await AddUrl(state, linkuri, cancellation);
                         }
                     }
                     else
@@ -436,7 +436,7 @@ namespace CrawlerLib
                                               UriFormat.UriEscaped)); // to remove address fragment
                     }
 
-                    await AddUrl(state, linkuri);
+                    await AddUrl(state, linkuri, cancellation);
                 }
             }
         }

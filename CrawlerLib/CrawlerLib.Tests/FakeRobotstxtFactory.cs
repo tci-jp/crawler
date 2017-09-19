@@ -5,6 +5,7 @@
 namespace CrawlerLib.Tests
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -15,7 +16,7 @@ namespace CrawlerLib.Tests
         private static readonly NotFoundRobots NotFoundRobots = new NotFoundRobots();
 
         /// <inheritdoc/>
-        public Task<IRobots> RetrieveAsync(Uri uri)
+        public Task<IRobots> RetrieveAsync(Uri uri, CancellationToken cancellation)
         {
             return Task.FromResult<IRobots>(NotFoundRobots);
         }

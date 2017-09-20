@@ -33,7 +33,6 @@ namespace CrawlerApi.Controllers
     using System.Linq;
     using System.Net.Mime;
     using System.Threading.Tasks;
-    using Azure.Storage;
     using CrawlerLib;
     using CrawlerLib.Data;
     using CrawlerLib.Queue;
@@ -41,7 +40,6 @@ namespace CrawlerApi.Controllers
     using Microsoft.Extensions.Logging;
     using Models;
     using Swashbuckle.SwaggerGen.Annotations;
-    using ParserParameters = Models.ParserParameters;
     using SessionState = Models.SessionState;
 
     /// <summary>
@@ -52,22 +50,18 @@ namespace CrawlerApi.Controllers
         private readonly ICrawler crawler;
         private readonly ICrawlerStorage crawlerStorage;
         private readonly ILogger<DefaultApiController> logger;
-        private readonly IDataStorage storage;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DefaultApiController" /> class.
         /// </summary>
-        /// <param name="storage">Azure storage helper class.</param>
         /// <param name="crawlerStorage">Crawler storage.</param>
         /// <param name="crawler">Crawler class.</param>
         /// <param name="logger">Logger</param>
         public DefaultApiController(
-            IDataStorage storage,
             ICrawlerStorage crawlerStorage,
             ICrawler crawler,
             ILogger<DefaultApiController> logger)
         {
-            this.storage = storage;
             this.crawlerStorage = crawlerStorage;
             this.crawler = crawler;
             this.logger = logger;
@@ -94,7 +88,24 @@ namespace CrawlerApi.Controllers
                 throw new ArgumentNullException(nameof(parserParameters.OwnerId));
             }
 
-            await storage.InsertOrReplaceAsync(parserParameters);
+            await crawlerStorage.StoreParserParametersAsync(parserParameters);
+        }
+
+        /// <summary>
+        /// cancels crawling
+        /// </summary>
+        /// <param name="ownerId">Parsers owner Id.</param>
+        /// <param name="sessionId">Crawling session Id.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        [HttpDelete]
+        [Route("/CrawlerApi/1.0.0/incite")]
+        [SwaggerOperation("CancelIncite")]
+        [SwaggerResponse(200, type: typeof(string))]
+        public async Task CancelIncite(
+            [FromQuery] [Required] string ownerId,
+            [FromQuery] [Required] string sessionId)
+        {
+            await crawlerStorage.UpdateSessionCancellation(ownerId, sessionId, DateTime.UtcNow);
         }
 
         /// <summary>gets list of crawling sessions information by list of ids</summary>
@@ -226,37 +237,22 @@ namespace CrawlerApi.Controllers
 
             if (parserIds?.Any() == true)
             {
-                var result = new List<ParserParameters>();
-                foreach (var id in parserIds)
+                var result = new List<IParserParameters>();
+                foreach (var parserId in parserIds)
                 {
-                    var pp = await storage.RetreiveAsync(new ParserParameters(ownerId, id));
-                    result.Add(pp);
+                    var pp = await crawlerStorage.RetreiveParserParametersAsync(ownerId, parserId);
+                    result.Add(new ParserParameters(pp));
                 }
 
                 return new ObjectResult(result);
             }
             else
             {
-                var result = await storage.QueryAsync<ParserParameters>(p => p.OwnerId == ownerId).ToListAsync();
+                var result = await crawlerStorage.RetreiveAllParserParametersAsync(ownerId)
+                                                 .Select(pp => new ParserParameters(pp))
+                                                 .ToListAsync();
                 return new ObjectResult(result);
             }
-        }
-
-        /// <summary>
-        /// cancels crawling
-        /// </summary>
-        /// <param name="ownerId">Parsers owner Id.</param>
-        /// <param name="sessionId">Crawling session Id.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        [HttpDelete]
-        [Route("/CrawlerApi/1.0.0/incite")]
-        [SwaggerOperation("CancelIncite")]
-        [SwaggerResponse(200, type: typeof(string))]
-        public async Task CancelIncite(
-            [FromQuery] [Required] string ownerId,
-            [FromQuery] [Required] string sessionId)
-        {
-            await crawlerStorage.UpdateSessionCancellation(ownerId, sessionId, DateTime.UtcNow);
         }
 
         /// <summary>starts crawling</summary>
@@ -270,21 +266,21 @@ namespace CrawlerApi.Controllers
         [SwaggerResponse(200, type: typeof(string))]
         public async Task<IActionResult> Incite([FromBody] [Required] CrawlerConfiguration configuration)
         {
-            CrawlerLib.Queue.ParserParameters param = null;
+            QueueParserParameters param = null;
             if (configuration.ParserId != null)
             {
-                var pp = await storage.RetreiveAsync(
-                             new ParserParameters(configuration.OwnerId, configuration.ParserId));
+                var pp = await crawlerStorage.RetreiveParserParametersAsync(
+                             configuration.OwnerId, configuration.ParserId);
 
-                param = new CrawlerLib.Queue.ParserParameters
-                {
-                    UseJson = pp.UseJson ?? false,
-                    UseRdFa = pp.UseRdFa ?? false,
-                    UseMicrodata = pp.UseMicrodata ?? false,
-                    XPathCustomFields =
+                param = new QueueParserParameters
+                        {
+                            UseJson = pp.UseJson ?? false,
+                            UseRdFa = pp.UseRdFa ?? false,
+                            UseMicrodata = pp.UseMicrodata ?? false,
+                            XPathCustomFields =
                                 pp.CustomFields?.Select(c => new XPathCustomFields { Name = c.Name, XPath = c.XPath })
                                   .ToList()
-                };
+                        };
             }
 
             DateTime? cancellationTime = null;

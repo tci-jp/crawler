@@ -95,12 +95,11 @@ namespace CrawlerLib.Data
         /// <inheritdoc />
         public IAsyncEnumerable<IUriState> GetSessionUris(string sessionId)
         {
-            return sessions[sessionId].Referers.Keys.Select(k => (IUriState)new UriState
-                                                                            {
-                                                                                Uri = k,
-                                                                                State = 200
-                                                                            })
-                                      .ToAsyncEnumerable();
+            return sessions[sessionId]
+                .Referers
+                .Keys
+                .Select(k => (IUriState)new UriState { Uri = k, State = 200 })
+                .ToAsyncEnumerable();
         }
 
         /// <inheritdoc />
@@ -123,6 +122,18 @@ namespace CrawlerLib.Data
             string ownerId,
             string uri,
             CancellationToken calncellation)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public IAsyncEnumerable<IParserParameters> RetreiveAllParserParametersAsync(string ownerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<IParserParameters> RetreiveParserParametersAsync(string ownerId, string parserId)
         {
             throw new NotImplementedException();
         }
@@ -157,6 +168,12 @@ namespace CrawlerLib.Data
         public Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task StoreParserParametersAsync(IParserParameters parserParameters)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />

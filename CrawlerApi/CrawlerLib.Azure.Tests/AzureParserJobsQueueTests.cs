@@ -33,7 +33,7 @@ namespace CrawlerLib.Azure.Tests
             OwnerId = OwnerId,
             Referrer = new Uri("http://localhost"),
             SessionId = "asfsgfh",
-            ParserParameters = new ParserParameters
+            ParserParameters = new QueueParserParameters
             {
                 UseJson = true
             }

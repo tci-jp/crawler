@@ -212,7 +212,7 @@ namespace CrawlerLib
             string ownerId,
             IEnumerable<UriParameter> uris,
             DateTime? cancellationTime = null,
-            ParserParameters parserParameters = null)
+            QueueParserParameters parserParameters = null)
         {
             var urisList = new List<UriParameter>(uris);
             if (urisList.Count == 0)

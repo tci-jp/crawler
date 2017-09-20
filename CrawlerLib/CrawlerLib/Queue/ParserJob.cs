@@ -46,7 +46,7 @@ namespace CrawlerLib.Queue
         /// Gets or sets partser parameters.
         /// </summary>
         [DataMember(Name = "parserParameters")]
-        public ParserParameters ParserParameters { get; set; }
+        public QueueParserParameters ParserParameters { get; set; }
 
         /// <summary>
         /// Gets or sets referer for URI.

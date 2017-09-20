@@ -114,7 +114,7 @@ namespace CrawlerLib.Tests
         {
             crawlerConfig.HostDepth = 0;
             crawlerConfig.Depth = 0;
-            var parameters = new ParserParameters { XPathCustomFields = new[] { new XPathCustomFields { XPath = xpath, Name = "field" } } };
+            var parameters = new QueueParserParameters { XPathCustomFields = new[] { new XPathCustomFields { XPath = xpath, Name = "field" } } };
 
             var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(url) }, null, parameters);
 

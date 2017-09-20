@@ -135,7 +135,7 @@ namespace CrawlerLib.Queue
 
             public string OwnerId => job.OwnerId;
 
-            public ParserParameters ParserParameters => job.ParserParameters;
+            public QueueParserParameters ParserParameters => job.ParserParameters;
 
             public Uri Referrer => job.Referrer;
 

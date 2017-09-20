@@ -29,7 +29,7 @@ namespace CrawlerLib
         /// <param name="cancellationTime">UTC time after which processing should be stopped. Unlimited if null.</param>
         /// <param name="parserParameters">Parsing parameters.</param>
         /// <returns>Session Id. A <see cref="Task" /> representing the asynchronous operation.</returns>
-        Task<string> InciteStart(string ownerId, IEnumerable<UriParameter> uris, DateTime? cancellationTime, ParserParameters parserParameters = null);
+        Task<string> InciteStart(string ownerId, IEnumerable<UriParameter> uris, DateTime? cancellationTime, QueueParserParameters parserParameters = null);
 
         /// <summary>
         /// Run workers to parse queue.

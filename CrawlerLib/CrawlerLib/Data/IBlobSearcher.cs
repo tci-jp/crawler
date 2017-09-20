@@ -2,12 +2,11 @@
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
-namespace CrawlerLib.Azure
+namespace CrawlerLib.Data
 {
     using System.Collections.Async;
     using System.Collections.Generic;
     using System.Threading;
-    using Data;
 
     /// <summary>
     /// Blob searching interface.

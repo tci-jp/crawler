@@ -33,35 +33,15 @@ namespace CrawlerApi.Models
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
-    using Azure.Storage;
+    using CrawlerLib.Data;
     using Newtonsoft.Json;
 
     /// <summary>
     /// Parameters for parsing pages.
     /// </summary>
     [DataContract]
-    [Table("parserParameters")]
-    public class ParserParameters : ComplexTableEntity, IEquatable<ParserParameters>
+    public class ParserParameters : IEquatable<ParserParameters>, IParserParameters
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ParserParameters" /> class.
-        /// </summary>
-        public ParserParameters()
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ParserParameters" /> class.
-        /// </summary>
-        /// <param name="ownerId">owner id (required).</param>
-        /// <param name="parserId">parser id in free text unique for specified owner (required).</param>
-        public ParserParameters(
-            string ownerId = null,
-            string parserId = null)
-            : base(ownerId, parserId)
-        {
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ParserParameters" /> class.
         /// </summary>
@@ -71,33 +51,25 @@ namespace CrawlerApi.Models
         /// <param name="useMicrodata">use Microdata attributes for parsing metadata (default to true).</param>
         /// <param name="useJson">Use ld+json metadata (default to true).</param>
         /// <param name="customFields">CustomFields (required).</param>
+        [JsonConstructor]
         public ParserParameters(
             string ownerId = null,
             string parserId = null,
             bool? useRdFa = null,
             bool? useMicrodata = null,
             bool? useJson = null,
-            List<ParserParametersXPathCustomFields> customFields = null)
-            : base(ownerId, parserId)
+            IEnumerable<ParserParametersXPathCustomFields> customFields = null)
         {
-            // to ensure "OwnerId" is required (not null)
-            if (OwnerId == null)
-            {
-                throw new InvalidDataException(
-                    "OwnerId is a required property for ParserParameters and cannot be null");
-            }
+            OwnerId = ownerId ??
+                      throw new InvalidDataException(
+                          "OwnerId is a required property for ParserParameters and cannot be null");
 
-            // to ensure "ParserId" is required (not null)
-            if (ParserId == null)
-            {
-                throw new InvalidDataException(
-                    "ParserId is a required property for ParserParameters and cannot be null");
-            }
+            ParserId = parserId ??
+                       throw new InvalidDataException(
+                           "ParserId is a required property for ParserParameters and cannot be null");
 
             // to ensure "CustomFields" is required (not null)
-            CustomFields = customFields ??
-                           throw new InvalidDataException(
-                               "CustomFields is a required property for ParserParameters and cannot be null");
+            CustomFields = customFields?.ToList();
 
             // use default value if no "UseRDFa" provided
             UseRdFa = useRdFa ?? true;
@@ -110,33 +82,44 @@ namespace CrawlerApi.Models
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="ParserParameters" /> class.
+        /// </summary>
+        /// <param name="param">Parameters to create from.</param>
+        public ParserParameters(IParserParameters param)
+        {
+            OwnerId = param.OwnerId ??
+                      throw new InvalidDataException(
+                          "OwnerId is a required property for ParserParameters and cannot be null");
+
+            ParserId = param.ParserId ??
+                       throw new InvalidDataException(
+                           "ParserId is a required property for ParserParameters and cannot be null");
+
+            UseMicrodata = param.UseMicrodata;
+            UseRdFa = param.UseRdFa;
+            UseJson = param.UseJson;
+            CustomFields = param.CustomFields?.Select(cf => new ParserParametersXPathCustomFields(cf.Name, cf.XPath)).ToList();
+        }
+
+        /// <summary>
         /// Gets or sets CustomFields
         /// </summary>
         [DataMember(Name = "customFields")]
-        public List<ParserParametersXPathCustomFields> CustomFields { get; set; }
+        public IList<ParserParametersXPathCustomFields> CustomFields { get; set; }
 
         /// <summary>
         /// Gets or sets owner id
         /// </summary>
         [DataMember(Name = "ownerId")]
         [Required]
-        [PartitionKey]
-        public string OwnerId
-        {
-            get => PartitionKey;
-            set => PartitionKey = value;
-        }
+        public string OwnerId { get; set; }
 
         /// <summary>
         /// Gets or sets parser id in free text unique for specified owner
         /// </summary>
         [DataMember(Name = "parserId")]
         [Required]
-        public string ParserId
-        {
-            get => RowKey;
-            set => RowKey = value;
-        }
+        public string ParserId { get; set; }
 
         /// <summary>
         /// Gets or sets use ld+json metadata
@@ -155,6 +138,9 @@ namespace CrawlerApi.Models
         /// </summary>
         [DataMember(Name = "useRDFa")]
         public bool? UseRdFa { get; set; }
+
+        /// <inheritdoc />
+        IEnumerable<IParserParametersXPathCustomFields> IParserParameters.CustomFields => CustomFields;
 
         /// <summary>Compare objects equality</summary>
         /// <param name="left">Left part of expression.</param>

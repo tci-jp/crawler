@@ -30,6 +30,7 @@ namespace CrawlerApi.Models
     using System.IO;
     using System.Runtime.Serialization;
     using System.Text;
+    using CrawlerLib.Data;
     using JetBrains.Annotations;
     using Newtonsoft.Json;
 
@@ -38,7 +39,7 @@ namespace CrawlerApi.Models
     /// </summary>
     [DataContract]
     [UsedImplicitly]
-    public class ParserParametersXPathCustomFields : IEquatable<ParserParametersXPathCustomFields>
+    public class ParserParametersXPathCustomFields : IEquatable<ParserParametersXPathCustomFields>, IParserParametersXPathCustomFields
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ParserParametersXPathCustomFields" /> class.

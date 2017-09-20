@@ -8,7 +8,7 @@ namespace CrawlerLib.Tests
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using CrawlerLib.Grabbers;
+    using Grabbers;
 
     public class FileGrabber : HttpGrabber
     {

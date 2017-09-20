@@ -140,6 +140,14 @@ namespace CrawlerLib.Data
             CancellationToken cancellation = default(CancellationToken));
 
         /// <summary>
+        /// Retreives single Parser Parameters
+        /// </summary>
+        /// <param name="ownerId">Parser Parameters ownerId</param>
+        /// <param name="parserId">Parser Parameters Id</param>
+        /// <returns>Parser Parameters object.</returns>
+        Task<IParserParameters> RetreiveParserParametersAsync(string ownerId, string parserId);
+
+        /// <summary>
         /// Search blobs by metadata
         /// </summary>
         /// <param name="query">Collection of operators combined together as AND.</param>
@@ -168,6 +176,13 @@ namespace CrawlerLib.Data
         /// <param name="code">Page status code.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task StorePageError(string ownerId, string sessionId, string uri, HttpStatusCode code);
+
+        /// <summary>
+        /// Store parser parameters. Using parserid and ownerid as unique key. Overwrite existing.
+        /// </summary>
+        /// <param name="parserParameters">Parser parameters</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task StoreParserParametersAsync(IParserParameters parserParameters);
 
         /// <summary>
         /// Updates Session Cancellation time. Can be set as current time to cancel as soon as possible.
@@ -199,5 +214,12 @@ namespace CrawlerLib.Data
         /// <param name="message">Error message.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task UpdateSessionUri(string sessionId, string uri, int statusCode, string message = null);
+
+        /// <summary>
+        /// Retreives all Parser Parameters
+        /// </summary>
+        /// <param name="ownerId">Parser Parameters ownerId</param>
+        /// <returns>Parser Parameters objects.</returns>
+        IAsyncEnumerable<IParserParameters> RetreiveAllParserParametersAsync(string ownerId);
     }
 }

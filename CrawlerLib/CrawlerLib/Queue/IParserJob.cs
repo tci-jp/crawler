@@ -62,6 +62,6 @@ namespace CrawlerLib.Queue
         /// Gets partser parameters.
         /// </summary>
         [DataMember(Name = "parserParameters")]
-        ParserParameters ParserParameters { get;  }
+        QueueParserParameters ParserParameters { get;  }
     }
 }

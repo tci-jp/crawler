@@ -1,4 +1,4 @@
-﻿// <copyright file="ParserParameters.cs" company="DECTech.Tokyo">
+﻿// <copyright file="QueueParserParameters.cs" company="DECTech.Tokyo">
 // Copyright (c) DECTech.Tokyo. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,7 @@ namespace CrawlerLib.Queue
     /// Parameters for parsing pages.
     /// </summary>
     [DataContract]
-    public class ParserParameters
+    public class QueueParserParameters
     {
         /// <summary>
         /// Gets or sets a value indicating whether parser should use Microdata attributes for parsing metadata

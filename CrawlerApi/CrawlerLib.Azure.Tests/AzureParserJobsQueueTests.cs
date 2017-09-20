@@ -32,7 +32,7 @@ namespace CrawlerLib.Azure.Tests
             Uri = new Uri("http://dectech.tokyo"),
             OwnerId = OwnerId,
             Referrer = new Uri("http://localhost"),
-            SessionId = "asfsgfh",
+            SessionId = "notset",
             ParserParameters = new QueueParserParameters
             {
                 UseJson = true
@@ -182,6 +182,44 @@ namespace CrawlerLib.Azure.Tests
             var job = await queue.DequeueAsync(cancellation.Token);
 
             job.ShouldBeEquivalentTo(testJob);
+        }
+
+        [Fact]
+        public async Task TestSameShouldNotEnqueue()
+        {
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+
+            await cloudqueue.FetchAttributesAsync();
+            cloudqueue.ApproximateMessageCount.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task TestSameShouldEnqueueForDifferentSessions()
+        {
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+
+            var newSessionId = await crawlerStorage.CreateSession(OwnerId, new[] { "http://dectech.tokyo" });
+
+            testJob.SessionId = newSessionId;
+
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+
+            await cloudqueue.FetchAttributesAsync();
+            cloudqueue.ApproximateMessageCount.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task TestSameShouldNotEnqueueEvenAfterDequeue()
+        {
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+            await queue.DequeueAsync(cancellation.Token);
+
+            await queue.EnqueueAsync(testJob, cancellation.Token);
+
+            await cloudqueue.FetchAttributesAsync();
+            cloudqueue.ApproximateMessageCount.Should().Be(1);
         }
 
         [Fact]

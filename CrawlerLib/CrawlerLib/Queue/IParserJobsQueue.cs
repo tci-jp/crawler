@@ -4,6 +4,7 @@
 
 namespace CrawlerLib.Queue
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -13,26 +14,30 @@ namespace CrawlerLib.Queue
     public interface IParserJobsQueue
     {
         /// <summary>
-        /// Enques parser job for future processing.
-        /// </summary>
-        /// <param name="job">Job for parsing.</param>
-        /// <param name="cancellation">Cancellation for enqueue.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task EnqueueAsync(IParserJob job, CancellationToken cancellation);
-
-        /// <summary>
         /// Dequeues parser job. Blocks till job get available or dequeue cancelled.
         /// </summary>
         /// <param name="cancellation">Cancellation for dequeue.</param>
         /// <returns>Job for parser.</returns>
+        /// <exception cref="OperationCanceledException">If cancelled.</exception>
         Task<ICommitableParserJob> DequeueAsync(CancellationToken cancellation);
+
+        /// <summary>
+        /// Enques parser job for future processing.
+        /// Same urls in the same session should not ignored and not enqueued more than once even after dequeue.
+        /// </summary>
+        /// <param name="job">Job for parsing.</param>
+        /// <param name="cancellation">Cancellation for enqueue.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        /// <exception cref="OperationCanceledException">If cancelled.</exception>
+        Task EnqueueAsync(IParserJob job, CancellationToken cancellation);
 
         /// <summary>
         /// Wait till queue get empty
         /// </summary>
         /// <param name="sessionid">Session Id.</param>
         /// <param name="cancellation">Wait cancellation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        /// <exception cref="OperationCanceledException">If cancelled.</exception>
         Task WaitForSession(string sessionid, CancellationToken cancellation);
     }
 }

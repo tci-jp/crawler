@@ -34,8 +34,6 @@ namespace CrawlerLib
         private readonly ICrawlerStorage storage;
 
         private readonly SemaphoreSlim totalRequestsSemaphore;
-        private readonly HashSet<string> visited;
-        private readonly object visitedLock = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Crawler" /> class.
@@ -48,7 +46,6 @@ namespace CrawlerLib
             storage = config.Storage;
 
             robots = new ConcurrentDictionary<Uri, Task<IRobots>>();
-            visited = new HashSet<string>();
 
             totalRequestsSemaphore = new SemaphoreSlim(config.NumberOfSimulataneousRequests);
         }
@@ -323,14 +320,6 @@ namespace CrawlerLib
 
             await config.Storage.AddPageReferer(parent.SessionId, newjob.Uri.ToString(), newjob.Referrer.ToString());
 
-            lock (visitedLock)
-            {
-                if (!visited.Add(newjob.Uri.ToString()))
-                {
-                    return;
-                }
-            }
-
             var robotstxt = await GetRobotsTxt(newjob.Host, cancellation);
             if (robotstxt?.IsPathAllowed(newjob.Uri.PathAndQuery) == false)
             {
@@ -342,22 +331,13 @@ namespace CrawlerLib
 
         private async Task EnqueueAsync(IParserJob newjob)
         {
-            lock (visitedLock)
-            {
-                visited.Add(newjob.Uri.ToString());
-            }
-
             await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
         }
 
         private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html, IParserJob job)
         {
-            if (job.ParserParameters == null)
-            {
-                return config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
-            }
-
-            return job.ParserParameters.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html));
+            return job.ParserParameters?.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html))
+                ?? config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
         }
 
         private Task<IRobots> GetRobotsTxt(Uri host, CancellationToken cancellation)

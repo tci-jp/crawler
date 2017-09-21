@@ -5,7 +5,6 @@
 namespace CrawlerLib
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -18,6 +17,7 @@ namespace CrawlerLib
     using HtmlAgilityPack;
     using JetBrains.Annotations;
     using Logger;
+    using Microsoft.Extensions.Caching.Memory;
     using Queue;
 
     /// <inheritdoc />
@@ -30,7 +30,7 @@ namespace CrawlerLib
 
         private readonly ILinkParser linkParser = new LinkParser();
 
-        private readonly ConcurrentDictionary<Uri, Task<IRobots>> robots;
+        private readonly IMemoryCache robots;
         private readonly ICrawlerStorage storage;
 
         private readonly SemaphoreSlim totalRequestsSemaphore;
@@ -45,7 +45,7 @@ namespace CrawlerLib
             config = new Configuration(conf);
             storage = config.Storage;
 
-            robots = new ConcurrentDictionary<Uri, Task<IRobots>>();
+            robots = new MemoryCache(new MemoryCacheOptions());
 
             totalRequestsSemaphore = new SemaphoreSlim(config.NumberOfSimulataneousRequests);
         }
@@ -116,7 +116,8 @@ namespace CrawlerLib
             try
             {
                 var sessionInfo = await storage.GetSingleSession(job.OwnerId, job.SessionId);
-                if ((sessionInfo.State == SessionState.Cancelled) || ((sessionInfo.CancellationTime != null) && (DateTime.UtcNow > sessionInfo.CancellationTime)))
+                if ((sessionInfo.State == SessionState.Cancelled) ||
+                    ((sessionInfo.CancellationTime != null) && (DateTime.UtcNow > sessionInfo.CancellationTime)))
                 {
                     await storage.UpdateSessionState(job.OwnerId, job.SessionId, SessionState.Cancelled);
                     await job.Commit(cancellation, (int)SessionState.Cancelled);
@@ -336,25 +337,31 @@ namespace CrawlerLib
 
         private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html, IParserJob job)
         {
-            return job.ParserParameters?.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html))
-                ?? config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
+            return job.ParserParameters?.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html)) ??
+                   config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
         }
 
-        private Task<IRobots> GetRobotsTxt(Uri host, CancellationToken cancellation)
+        private async Task<IRobots> GetRobotsTxt(Uri host, CancellationToken cancellation)
         {
-            return robots.GetOrAdd(
-                host,
-                async roburi =>
-                {
-                    try
-                    {
-                        return await config.RobotstxtFactory.RetrieveAsync(new Uri(roburi + "/robots.txt"), cancellation);
-                    }
-                    catch (HttpRequestException)
-                    {
-                        return null;
-                    }
-                });
+            return await robots.GetOrCreateAsync(
+                       host,
+                       async entry =>
+                       {
+                           entry.SetAbsoluteExpiration(TimeSpan.FromHours(6))
+                                .SetSlidingExpiration(TimeSpan.FromHours(0.5));
+
+                           var roburi = (Uri)entry.Key;
+                           try
+                           {
+                               var result = await config.RobotstxtFactory.RetrieveAsync(
+                                          new Uri(roburi, "/robots.txt"), cancellation);
+                               return result;
+                           }
+                           catch (HttpRequestException)
+                           {
+                               return null;
+                           }
+                       });
         }
 
         private async Task InternalRunParsersJobs()

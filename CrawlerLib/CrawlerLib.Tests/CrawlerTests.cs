@@ -18,6 +18,7 @@ namespace CrawlerLib.Tests
     using Grabbers;
     using Metadata;
     using Microsoft.Extensions.Configuration;
+    using Moq;
     using Queue;
     using Xunit;
     using Xunit.Abstractions;
@@ -167,6 +168,30 @@ namespace CrawlerLib.Tests
 
             var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
             urls.Select(u => u.Uri.ToString()).Should().BeEquivalentTo(result);
+        }
+
+        [Fact]
+        public async Task TestRobotsCache()
+        {
+            const string uri = "http://www.dectech.tokyo";
+
+            var robotsMoq = new Mock<IRobots>();
+            robotsMoq.Setup(i => i.IsPathAllowed(It.IsAny<string>())).Returns(true);
+
+            var roboFactoryMoq = new Mock<IRobotstxtFactory>();
+            roboFactoryMoq.Setup(i => i.RetrieveAsync(It.Is<Uri>(u => u.ToString() == uri + "/robots.txt"), It.IsAny<CancellationToken>()))
+                                  .Returns(Task.FromResult<IRobots>(robotsMoq.Object)).Verifiable();
+            crawlerConfig.RobotstxtFactory = roboFactoryMoq.Object;
+
+            var session = await Crawler.InciteStart(Owner, new[] { new UriParameter(uri, 1) });
+            await queue.WaitForSession(session, crawlerConfig.CancellationToken);
+
+            roboFactoryMoq.Verify(i => i.RetrieveAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            var urls = await crawlerConfig.Storage.GetSessionUris(session).ToListAsync();
+            urls.Count.Should().Be(9);
+
+            robotsMoq.Verify(i => i.IsPathAllowed(It.IsAny<string>()), Times.Exactly(11));
         }
 
         [Fact]

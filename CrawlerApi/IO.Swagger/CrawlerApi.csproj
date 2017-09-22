@@ -63,7 +63,6 @@
     <ProjectReference Include="..\..\CrawlerLib\Azure.Storage\Azure.Storage.csproj" />
     <ProjectReference Include="..\..\CrawlerLib\CrawlerLib.Azure\CrawlerLib.Azure.csproj" />
     <ProjectReference Include="..\..\CrawlerLib\CrawlerLib\CrawlerLib.csproj" />
-    <ProjectReference Include="..\CrawlerWebJob\CrawlerWebJob.csproj" />
   </ItemGroup>
 
   <ItemGroup>

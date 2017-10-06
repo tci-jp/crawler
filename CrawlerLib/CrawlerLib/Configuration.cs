@@ -136,7 +136,7 @@ namespace CrawlerLib
         /// <summary>
         /// Gets or sets storage used by crawler for dumping pages and keeping state.
         /// </summary>
-        public ICrawlerStorage Storage { get; set; } = new DummyStorage();
+        public ICrawlerStorage Storage { get; set; }
 
         /// <summary>
         /// Gets or sets user-Agent used by crawler.
@@ -148,5 +148,10 @@ namespace CrawlerLib
         /// Gets or sets RobotstxtFactory
         /// </summary>
         public IRobotstxtFactory RobotstxtFactory { get; set; } = new HttpRobotstxtFactory("Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19");
+
+        /// <summary>
+        /// Gets or sets collection of Metadata sorages.
+        /// </summary>
+        public IList<IMetadataStorage> MetadataStorages { get; set; }
     }
 }

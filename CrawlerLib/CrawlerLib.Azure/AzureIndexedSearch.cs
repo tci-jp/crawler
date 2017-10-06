@@ -77,7 +77,7 @@ namespace CrawlerLib.Azure
 
             var result = storage.ExecuteQueryAsync(tablequery);
 
-            return result.Select(i => i.BlobName);
+            return result.Select(i => i.Uri);
         }
 
         /// <inheritdoc />

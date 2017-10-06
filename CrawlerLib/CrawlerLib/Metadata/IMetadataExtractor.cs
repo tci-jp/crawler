@@ -5,6 +5,7 @@
 namespace CrawlerLib.Metadata
 {
     using System.Collections.Generic;
+    using System.Threading;
     using HtmlAgilityPack;
 
     /// <summary>
@@ -16,10 +17,11 @@ namespace CrawlerLib.Metadata
         /// Extracts Schema.org-like metadata
         /// </summary>
         /// <param name="doc">HTML to process.</param>
+        /// <param name="cancellation">Processing cancellation.</param>
         /// <returns>
         /// Collections of metadata name and value pairs.
         /// Can be more than one metadata value for same name.
         /// </returns>
-        IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc);
+        IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc, CancellationToken cancellation);
     }
 }

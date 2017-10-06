@@ -19,7 +19,7 @@ namespace CrawlerLib.Data
     /// <summary>
     /// In-memory implementation for Crawler Storage
     /// </summary>
-    public class DummyStorage : ICrawlerStorage
+    public class DummyStorage : ICrawlerStorage, IMetadataStorage, IDataSearch
     {
         private readonly ConcurrentDictionary<string, byte[]> dumpedPages =
             new ConcurrentDictionary<string, byte[]>();
@@ -54,12 +54,23 @@ namespace CrawlerLib.Data
             string sessionId,
             string uri,
             Stream stream,
-            CancellationToken cancellation,
-            IEnumerable<KeyValuePair<string, string>> meta = null)
+            CancellationToken cancellation)
         {
             var mem = new MemoryStream();
             await stream.CopyToAsync(mem);
             dumpedPages.AddOrUpdate(uri, mem.ToArray(), (key, value) => value);
+        }
+
+        /// <inheritdoc/>
+        public Task DumpUriMetadataAsync(
+            string ownerId,
+            string sessionId,
+            string uri,
+            IEnumerable<KeyValuePair<string, string>> metadata,
+            CancellationToken cancellation)
+        {
+            // throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />

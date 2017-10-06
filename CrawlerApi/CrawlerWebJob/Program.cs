@@ -11,6 +11,7 @@ namespace CrawlerWebJob
     using Azure.Storage;
     using CrawlerLib;
     using CrawlerLib.Azure;
+    using CrawlerLib.Data;
     using CrawlerLib.Grabbers;
     using CrawlerLib.Logger;
     using CrawlerLib.Metadata;
@@ -50,33 +51,35 @@ namespace CrawlerWebJob
                 configuration["MetaSearchIndexName"]);
 
             var crawlerStorage = new AzureCrawlerStorage(storage, azureIndexedSearch);
+            var dataLake = new DECAds.DataLakePlugin.Logger(configuration["DataLakeConnectionString"]);
 
             queue = new WebJobsQueue(storage, configuration["CrawlerJobsQueueName"], TimeSpan.FromMinutes(10));
 
             var config = new Configuration
-                         {
-                             Storage = crawlerStorage,
-                             Queue = queue,
-                             Logger = new ConsoleLogger(),
-                             Depth = 0,
-                             HostDepth = 0,
-                             MetadataExtractors = new IMetadataExtractor[]
+            {
+                Storage = crawlerStorage,
+                MetadataStorages = new IMetadataStorage[] { crawlerStorage, new DataLakeMetadataStorage(dataLake) },
+                Queue = queue,
+                Logger = new ConsoleLogger(),
+                Depth = 0,
+                HostDepth = 0,
+                MetadataExtractors = new IMetadataExtractor[]
                                                   {
                                                       new RdfaMetadataExtractor(),
                                                       new MicrodataMetadataExtractor()
                                                   }
-                         };
+            };
 
             config.HttpGrabber = new WebDriverHttpGrabber(config);
 
             crawler = new Crawler(config);
 
             var jobconfig = new JobHostConfiguration
-                            {
-                                DashboardConnectionString = configuration["CrawlerStorageConnectionString"],
-                                StorageConnectionString = configuration["CrawlerStorageConnectionString"],
-                                NameResolver = new QueueNameResolver(configuration)
-                            };
+            {
+                DashboardConnectionString = configuration["CrawlerStorageConnectionString"],
+                StorageConnectionString = configuration["CrawlerStorageConnectionString"],
+                NameResolver = new QueueNameResolver(configuration)
+            };
             jobconfig.Queues.MaxDequeueCount = configuration.GetValue("CrawlerJobsMaxDequeueCount", 5);
             jobconfig.Queues.MaxPollingInterval =
                 TimeSpan.FromSeconds(configuration.GetValue("CrawlerJobsMaxPollingInterval", 30));
@@ -86,7 +89,7 @@ namespace CrawlerWebJob
             }
         }
 
-        public class QueueNameResolver : INameResolver
+        private class QueueNameResolver : INameResolver
         {
             private readonly IConfiguration config;
 

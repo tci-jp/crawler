@@ -28,7 +28,7 @@ namespace CrawlerLib.Azure
     /// Crawler storage using Azure Storage.
     /// </summary>
     [UsedImplicitly]
-    public class AzureCrawlerStorage : ICrawlerStorage
+    public class AzureCrawlerStorage : ICrawlerStorage, IMetadataStorage, IDataSearch
     {
         private static readonly Regex WrongCharRegex = new Regex("[^\\w\\d_]+");
         private readonly ConcurrentDictionary<string, bool> metadataSet = new ConcurrentDictionary<string, bool>();
@@ -60,42 +60,29 @@ namespace CrawlerLib.Azure
         {
             var uris = rootUris.ToList();
             var session = new SessionInfo(ownerId, uris)
-                          {
-                              State = SessionState.InProcess,
-                              CancellationTime = cancellationTime
-                          };
+            {
+                State = SessionState.InProcess,
+                CancellationTime = cancellationTime
+            };
             await storage.InsertOrReplaceAsync(session);
             return session.Id;
         }
 
-        /// <inheritdoc />
-        public async Task DumpUriContent(
+        /// <inheritdoc/>
+        public async Task DumpUriMetadataAsync(
             string ownerId,
             string sessionId,
             string uri,
-            Stream content,
-            CancellationToken cancellation,
-            IEnumerable<KeyValuePair<string, string>> metadata = null)
+            IEnumerable<KeyValuePair<string, string>> metadata,
+            CancellationToken cancellation)
         {
-            var container = await storage.GetBlobContainerAsync("pages");
-
-            var record = new CrawlRecord(ownerId, uri)
-                         {
-                             Status = HttpStatusCode.OK.ToString()
-                         };
-
-            var blob = container.GetBlockBlobReference(record.BlobName);
-            await blob.UploadFromStreamAsync(
-                content,
-                new AccessCondition(),
-                new BlobRequestOptions(),
-                new OperationContext(),
-                cancellation);
-
             await storage
-                .QueryAsync<MetadataString>(m => (m.PartitionKey == ownerId) && (m.BlobName == record.BlobName))
+                .QueryAsync<MetadataString>(m => (m.PartitionKey == ownerId) && (m.PageUri == uri))
                 .ForEachAsync(
-                    async meta => { await storage.DeleteAsync(meta).ConfigureAwait(false); },
+                    async meta =>
+                    {
+                        await storage.DeleteAsync(meta).ConfigureAwait(false);
+                    },
                     cancellation);
 
             if (metadata != null)
@@ -111,7 +98,7 @@ namespace CrawlerLib.Azure
 
                     var pairkey = EscapeMetadataName(pair.Key);
                     await storage.InsertAsync(
-                        new MetadataString(ownerId, uri, record.BlobName, pair.Key, pair.Value));
+                        new MetadataString(ownerId, uri, pair.Key, pair.Value));
                     var metaname = pairkey;
                     for (var index = 1; blobMeta.ContainsKey(metaname); index++)
                     {
@@ -125,11 +112,34 @@ namespace CrawlerLib.Azure
                 {
                     await storage.InsertOrReplaceAsync(new BlobMetadataDictionary(
                                                            ownerId,
-                                                           record.BlobName,
+                                                           uri,
                                                            blobMeta));
                 }
             }
+        }
 
+        /// <inheritdoc />
+        public async Task DumpUriContent(
+            string ownerId,
+            string sessionId,
+            string uri,
+            Stream content,
+            CancellationToken cancellation)
+        {
+            var container = await storage.GetBlobContainerAsync("pages");
+
+            var record = new CrawlRecord(ownerId, uri)
+            {
+                Status = HttpStatusCode.OK.ToString()
+            };
+
+            var blob = container.GetBlockBlobReference(record.BlobName);
+            await blob.UploadFromStreamAsync(
+                content,
+                new AccessCondition(),
+                new BlobRequestOptions(),
+                new OperationContext(),
+                cancellation);
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, 200));
             await storage.InsertOrReplaceAsync(record);
         }
@@ -176,10 +186,10 @@ namespace CrawlerLib.Azure
             }
 
             var query = new TableQuery<SessionInfo>
-                        {
-                            FilterString = filter.ToString(),
-                            TakeCount = pageSize
-                        };
+            {
+                FilterString = filter.ToString(),
+                TakeCount = pageSize
+            };
 
             var token = requestId == null ? null : FromBase64<TableContinuationToken>(requestId);
             var segment = await storage.QuerySegmentedAsync(query, token, cancellation);
@@ -219,9 +229,8 @@ namespace CrawlerLib.Azure
             string uri,
             CancellationToken cancellation)
         {
-            var rec = new CrawlRecord(ownerId, uri);
             return storage
-                .QueryAsync<MetadataString>(m => (m.OwnerId == ownerId) && (m.BlobName == rec.BlobName), cancellation)
+                .QueryAsync<MetadataString>(m => (m.OwnerId == ownerId) && (m.PageUri == uri), cancellation)
                 .Select(m => new KeyValuePair<string, string>(m.Name, m.Value));
         }
 
@@ -244,11 +253,11 @@ namespace CrawlerLib.Azure
         {
             return searcher.SearchByMeta(
                 query.Select(c => new SearchCondition
-                                  {
-                                      Name = EscapeMetadataName(c.Name),
-                                      Op = c.Op,
-                                      Value = c.Value
-                                  }),
+                {
+                    Name = EscapeMetadataName(c.Name),
+                    Op = c.Op,
+                    Value = c.Value
+                }),
                 cancellation).Select(Codec.DecodeString);
         }
 
@@ -263,9 +272,9 @@ namespace CrawlerLib.Azure
         public async Task StorePageError(string ownerid, string sessionId, string uri, HttpStatusCode code)
         {
             await storage.InsertOrReplaceAsync(new CrawlRecord(ownerid, uri)
-                                               {
-                                                   Status = code.ToString()
-                                               });
+            {
+                Status = code.ToString()
+            });
 
             await storage.InsertOrReplaceAsync(new SessionUri(sessionId, uri, (int)code));
         }

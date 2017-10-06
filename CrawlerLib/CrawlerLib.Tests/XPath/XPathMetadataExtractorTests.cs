@@ -6,6 +6,7 @@ namespace CrawlerLib.Tests.XPath
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using FluentAssertions;
     using HtmlAgilityPack;
     using Metadata;
@@ -23,7 +24,7 @@ namespace CrawlerLib.Tests.XPath
             var doc = new HtmlDocument();
             doc.LoadHtml(doccontent);
             var extractor = new XPathMetadataExtractor(new[] { new XPathCustomFields { XPath = xpath, Name = "field" } });
-            var meta = extractor.ExtractMetadata(doc);
+            var meta = extractor.ExtractMetadata(doc, CancellationToken.None);
             meta.Select(m => m.Value).ShouldBeEquivalentTo(result);
         }
     }

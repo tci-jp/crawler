@@ -39,10 +39,44 @@ namespace CrawlerLib
         /// Initializes a new instance of the <see cref="Crawler" /> class.
         /// </summary>
         /// <param name="conf">Configuration for crawler.</param>
-        public Crawler(Configuration conf = null)
+        public Crawler(Configuration conf)
         {
-            // EncodingRedirector.RegisterEncodings();
+            if (conf == null)
+            {
+                throw new ArgumentNullException(nameof(conf));
+            }
+
             config = new Configuration(conf);
+            if (config.HttpGrabber == null)
+            {
+                throw new ArgumentNullException(nameof(config.HttpGrabber));
+            }
+
+            if (config.MetadataExtractors == null)
+            {
+                throw new ArgumentNullException(nameof(config.MetadataExtractors));
+            }
+
+            if (config.Queue == null)
+            {
+                throw new ArgumentNullException(nameof(config.Queue));
+            }
+
+            if (config.RobotstxtFactory == null)
+            {
+                throw new ArgumentNullException(nameof(config.RobotstxtFactory));
+            }
+
+            if (config.MetadataStorages == null)
+            {
+                throw new ArgumentNullException(nameof(config.MetadataStorages));
+            }
+
+            if (config.Storage == null)
+            {
+                throw new ArgumentNullException(nameof(config.Storage));
+            }
+
             storage = config.Storage;
 
             robots = new MemoryCache(new MemoryCacheOptions());
@@ -162,14 +196,15 @@ namespace CrawlerLib
 
                 if (!noindex)
                 {
-                    var metadata = ExtractMetadata(html, job);
+                    var metadata = ExtractMetadata(html, job, cancellation).ToList();
+                    await DumpMetadata(job, metadata, cancellation);
+
                     await storage.DumpUriContent(
                         job.OwnerId,
                         job.SessionId,
                         job.Uri.ToString(),
                         new MemoryStream(Encoding.UTF8.GetBytes(page)),
-                        cancellation,
-                        metadata);
+                        cancellation);
                 }
                 else
                 {
@@ -292,6 +327,14 @@ namespace CrawlerLib
             }
         }
 
+        private async Task DumpMetadata(ICommitableParserJob job, IEnumerable<KeyValuePair<string, string>> metadata, CancellationToken cancellation)
+        {
+            foreach (var storage in config.MetadataStorages)
+            {
+                await storage.DumpUriMetadataAsync(job.OwnerId, job.SessionId, job.Uri.ToString(), metadata, cancellation);
+            }
+        }
+
         private async Task AddUrl(IParserJob parent, Uri newUri, CancellationToken cancellation)
         {
             if (parent.Depth <= 0)
@@ -335,10 +378,10 @@ namespace CrawlerLib
             await config.Queue.EnqueueAsync(newjob, config.CancellationToken);
         }
 
-        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html, IParserJob job)
+        private IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument html, IParserJob job, CancellationToken cancellation)
         {
-            return job.ParserParameters?.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html)) ??
-                   config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html));
+            return job.ParserParameters?.GetExtractors().SelectMany(ex => ex.ExtractMetadata(html, cancellation)) ??
+                   config.MetadataExtractors.SelectMany(ex => ex.ExtractMetadata(html, cancellation));
         }
 
         private async Task<IRobots> GetRobotsTxt(Uri host, CancellationToken cancellation)

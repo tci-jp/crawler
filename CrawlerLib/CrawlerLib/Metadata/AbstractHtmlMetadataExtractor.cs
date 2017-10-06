@@ -6,6 +6,7 @@ namespace CrawlerLib.Metadata
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using HtmlAgilityPack;
 
     /// <inheritdoc />
@@ -25,18 +26,20 @@ namespace CrawlerLib.Metadata
         protected abstract string ScopeTagName { get; }
 
         /// <inheritdoc />
-        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc)
+        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc, CancellationToken cancellation)
         {
             var itempropXPath = $".//*[string(@{PropertyTagName}) and not(*)]";
             foreach (var scope in doc.DocumentNode.SelectNodes($"//*[string(@{ScopeTagName})]")
                                   ?? Enumerable.Empty<HtmlNode>())
             {
+                cancellation.ThrowIfCancellationRequested();
                 var itemtype = GetScopeType(scope);
                 if (!string.IsNullOrWhiteSpace(itemtype))
                 {
                     foreach (var prop in scope.SelectNodes(itempropXPath)
                                          ?? Enumerable.Empty<HtmlNode>())
                     {
+                        cancellation.ThrowIfCancellationRequested();
                         var itemprop = GetProperty(prop);
                         if (!string.IsNullOrWhiteSpace(itemprop))
                         {

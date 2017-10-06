@@ -6,6 +6,7 @@ namespace CrawlerLib.Metadata
 {
     using System.Collections;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Xml.XPath;
     using HtmlAgilityPack;
     using Queue;
@@ -39,17 +40,19 @@ namespace CrawlerLib.Metadata
         }
 
         /// <inheritdoc />
-        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc)
+        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc, CancellationToken cancellation)
         {
             var nav = doc.CreateNavigator();
             foreach (var pair in xpaths)
             {
+                cancellation.ThrowIfCancellationRequested();
                 var key = pair.Value;
                 var value = nav.Evaluate(pair.Key);
                 if (value is string strval)
                 {
                     foreach (var item in strval.Split('\0'))
                     {
+                        cancellation.ThrowIfCancellationRequested();
                         yield return new KeyValuePair<string, string>(key, item.ToString());
                     }
                 }

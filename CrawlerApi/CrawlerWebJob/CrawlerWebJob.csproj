@@ -36,6 +36,7 @@
   </Target>
   
   <ItemGroup>
+    <PackageReference Include="DataLakePlugin" Version="0.7.4" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta3" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="3.0.0-beta3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.0.0" />

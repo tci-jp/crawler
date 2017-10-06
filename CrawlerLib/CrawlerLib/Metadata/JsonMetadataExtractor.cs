@@ -7,6 +7,7 @@ namespace CrawlerLib.Metadata
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using HtmlAgilityPack;
     using Newtonsoft.Json.Linq;
 
@@ -16,24 +17,27 @@ namespace CrawlerLib.Metadata
     public class JsonMetadataExtractor : IMetadataExtractor
     {
         /// <inheritdoc />
-        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc)
+        public IEnumerable<KeyValuePair<string, string>> ExtractMetadata(HtmlDocument doc, CancellationToken cancellation)
         {
             var jsons = doc.DocumentNode.SelectNodes("//script[@type='application/ld+json']");
             if (jsons != null)
             {
                 foreach (var json in jsons)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     var root = JObject.Parse(json.InnerText);
                     var context = (root["@context"] as JValue)?.ToString();
                     if (context != null)
                     {
                         foreach (var node in root.SelectTokens("$..[?(@.@type)]").OfType<JObject>())
                         {
+                            cancellation.ThrowIfCancellationRequested();
                             var typ = node["@type"]?.ToString();
                             if (typ != null)
                             {
                                 foreach (var meta in Process(node, context + "/" + typ))
                                 {
+                                    cancellation.ThrowIfCancellationRequested();
                                     yield return meta;
                                 }
                             }

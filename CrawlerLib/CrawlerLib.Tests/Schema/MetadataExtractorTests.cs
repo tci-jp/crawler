@@ -5,6 +5,7 @@
 namespace CrawlerLib.Tests.Schema
 {
     using System.Linq;
+    using System.Threading;
     using FluentAssertions;
     using HtmlAgilityPack;
     using Metadata;
@@ -27,7 +28,7 @@ namespace CrawlerLib.Tests.Schema
             var html = new HtmlDocument();
             html.Load(filename);
             var extractor = new JsonMetadataExtractor();
-            var data = extractor.ExtractMetadata(html).Select(p => p.Key).ToList();
+            var data = extractor.ExtractMetadata(html, CancellationToken.None).Select(p => p.Key).ToList();
             data.ShouldBeEquivalentTo(keys);
         }
 
@@ -38,7 +39,7 @@ namespace CrawlerLib.Tests.Schema
             var html = new HtmlDocument();
             html.Load(filename);
             var extractor = new MicrodataMetadataExtractor();
-            var data = extractor.ExtractMetadata(html).ToList();
+            var data = extractor.ExtractMetadata(html, CancellationToken.None).ToList();
         }
 
         [Theory]
@@ -48,7 +49,7 @@ namespace CrawlerLib.Tests.Schema
             var html = new HtmlDocument();
             html.Load(filename);
             var extractor = new RdfaMetadataExtractor();
-            var data = extractor.ExtractMetadata(html).ToList();
+            var data = extractor.ExtractMetadata(html, CancellationToken.None).ToList();
         }
     }
 }

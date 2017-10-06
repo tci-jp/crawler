@@ -135,6 +135,7 @@ namespace CrawlerApi
 
             var config = new Configuration
             {
+                MetadataStorages = new IMetadataStorage[0],
                 Storage = crawlerStorage,
                 Queue = queue,
                 Logger = new AppInsLogger(new TelemetryClient(new TelemetryConfiguration(Configuration["ApplicationInsightsKey"]))),

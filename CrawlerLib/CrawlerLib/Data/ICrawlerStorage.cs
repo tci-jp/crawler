@@ -44,15 +44,13 @@ namespace CrawlerLib.Data
         /// <param name="uri">URI of page to store.</param>
         /// <param name="content">Stream for content to store.</param>
         /// <param name="cancellation">Operation cancellation.</param>
-        /// <param name="metadata">Metadata name and value pairs.</param>
         /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
         Task DumpUriContent(
             string ownerId,
             string sessionId,
             string uri,
             Stream content,
-            CancellationToken cancellation,
-            IEnumerable<KeyValuePair<string, string>> metadata = null);
+            CancellationToken cancellation);
 
         /// <summary>
         /// Puts uri to sesion queue for crawling
@@ -146,26 +144,6 @@ namespace CrawlerLib.Data
         /// <param name="parserId">Parser Parameters Id</param>
         /// <returns>Parser Parameters object.</returns>
         Task<IParserParameters> RetreiveParserParametersAsync(string ownerId, string parserId);
-
-        /// <summary>
-        /// Search blobs by metadata
-        /// </summary>
-        /// <param name="query">Collection of operators combined together as AND.</param>
-        /// <param name="cancellation">Search cancellation.</param>
-        /// <returns>Collection of URIs which metadata has that values.</returns>
-        [UsedImplicitly]
-        IAsyncEnumerable<string> SearchByMeta(
-            IEnumerable<SearchCondition> query,
-            CancellationToken cancellation = default(CancellationToken));
-
-        /// <summary>
-        /// Search URLs content by free text
-        /// </summary>
-        /// <param name="text">Text to search.</param>
-        /// <param name="cancellation">Search cancellation.</param>
-        /// <returns>Collection of URIs which content has that text.</returns>
-        [UsedImplicitly]
-        IAsyncEnumerable<string> SearchByText(string text, CancellationToken cancellation = default(CancellationToken));
 
         /// <summary>
         /// Store page crawling status code

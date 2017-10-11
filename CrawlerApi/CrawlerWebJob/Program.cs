@@ -66,7 +66,8 @@ namespace CrawlerWebJob
                 MetadataExtractors = new IMetadataExtractor[]
                                                   {
                                                       new RdfaMetadataExtractor(),
-                                                      new MicrodataMetadataExtractor()
+                                                      new MicrodataMetadataExtractor(),
+                                                      new JsonMetadataExtractor()
                                                   }
             };
 

@@ -8,6 +8,7 @@ namespace CrawlerLib.Grabbers
     using System.Diagnostics;
     using System.IO;
     using System.Reflection;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -70,7 +71,9 @@ namespace CrawlerLib.Grabbers
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     FileName = exePath,
-                    Arguments = $"--load-images=false \"{scriptPath}\" {uri}"
+                    Arguments = $"--load-images=false \"{scriptPath}\" {uri}",
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8,
                 },
                 EnableRaisingEvents = true
             };

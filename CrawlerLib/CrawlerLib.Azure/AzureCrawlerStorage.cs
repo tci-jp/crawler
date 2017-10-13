@@ -30,6 +30,7 @@ namespace CrawlerLib.Azure
     [UsedImplicitly]
     public class AzureCrawlerStorage : ICrawlerStorage, IMetadataStorage, IDataSearch
     {
+        private const string PageBlobContainer = "pages";
         private static readonly Regex WrongCharRegex = new Regex("[^\\w\\d_]+");
         private readonly ConcurrentDictionary<string, bool> metadataSet = new ConcurrentDictionary<string, bool>();
         private readonly IBlobSearcher searcher;
@@ -126,7 +127,7 @@ namespace CrawlerLib.Azure
             Stream content,
             CancellationToken cancellation)
         {
-            var container = await storage.GetBlobContainerAsync("pages");
+            var container = await storage.GetBlobContainerAsync(PageBlobContainer);
 
             var record = new CrawlRecord(ownerId, uri)
             {
@@ -214,7 +215,7 @@ namespace CrawlerLib.Azure
         public async Task<Stream> GetUriContent(string ownerId, string uri, CancellationToken cancellation)
         {
             var rec = new CrawlRecord(ownerId, uri);
-            var container = await storage.GetBlobContainerAsync("pages");
+            var container = await storage.GetBlobContainerAsync(PageBlobContainer);
             var blob = container.GetBlockBlobReference(rec.BlobName);
             return await blob.OpenReadAsync(
                        new AccessCondition(),
